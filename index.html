@@ -63,6 +63,43 @@ document.addEventListener('DOMContentLoaded', async function() {
       (e.filename ? ' (' + e.filename.slice(0, 60) + ':' + e.lineno + ')' : '');
   }, true);
 
+  // Simple client-side password gate. Not real security (anyone can read the
+  // source), just a deterrent against casual visitors to the public link.
+  function ensureUnlocked() {
+    if (localStorage.getItem('__tj_unlocked') === '1') return Promise.resolve();
+    const PASSWORD = '[REMOVED]';
+    if (loading) loading.style.display = 'none';
+    const gate = document.createElement('div');
+    gate.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:#070b12;';
+    gate.innerHTML = '<form id="__pw_form" style="display:flex;flex-direction:column;gap:12px;width:260px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">' +
+      '<div style="color:#e6e6e6;font-size:15px;text-align:center;margin-bottom:4px;">Nhap mat khau de tiep tuc</div>' +
+      '<input id="__pw_input" type="password" autocomplete="off" style="padding:10px 12px;border-radius:8px;border:1px solid #2a3340;background:#0e1520;color:#fff;font-size:14px;outline:none;" />' +
+      '<button type="submit" style="padding:10px 12px;border-radius:8px;border:none;background:#3b82f6;color:#fff;font-size:14px;cursor:pointer;">Mo khoa</button>' +
+      '<div id="__pw_error" style="color:#ff8a80;font-size:13px;text-align:center;min-height:16px;"></div>' +
+      '</form>';
+    document.body.appendChild(gate);
+    const form = gate.querySelector('#__pw_form');
+    const input = gate.querySelector('#__pw_input');
+    const err = gate.querySelector('#__pw_error');
+    input.focus();
+    return new Promise(function(resolve) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (input.value === PASSWORD) {
+          localStorage.setItem('__tj_unlocked', '1');
+          gate.remove();
+          if (loading) loading.style.display = '';
+          resolve();
+        } else {
+          err.textContent = 'Sai mat khau';
+          input.value = '';
+          input.focus();
+        }
+      });
+    });
+  }
+  await ensureUnlocked();
+
   try {
     const manifestEl = document.querySelector('script[type="__bundler/manifest"]');
     const templateEl = document.querySelector('script[type="__bundler/template"]');
