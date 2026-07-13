@@ -52,6 +52,12 @@ def main():
     print(f"Watchlist hien tai: {', '.join(w['symbol'] for w in wl) or '(trong)'}")
 
     rel = "automation/watchlist.json"
+    # Bot tren GitHub commit moi ngay -> keo ban moi ve truoc, neu khong push se bi tu choi
+    pull = subprocess.run(["git", "-C", str(ROOT), "pull", "--rebase", "--autostash"],
+                          capture_output=True, text=True, timeout=180)
+    if pull.returncode != 0:
+        print("[!] git pull loi:", (pull.stdout + pull.stderr).strip()[:300])
+        sys.exit(1)
     subprocess.run(["git", "-C", str(ROOT), "add", rel], check=True)
     r = subprocess.run(["git", "-C", str(ROOT), "commit", "-m",
                         f"Cap nhat watchlist {datetime.now():%Y-%m-%d %H:%M}", "--", rel],
