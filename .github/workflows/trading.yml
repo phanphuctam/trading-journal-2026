@@ -1,0 +1,53 @@
+name: Trading bot
+
+on:
+  schedule:
+    - cron: '0 2 * * *'           # 09:00 sang VN — scan Trend Template + check watchlist EOD
+    - cron: '*/30 13-21 * * 1-5'  # phien My (script tu bo qua khi thi truong dong cua)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trading-bot
+  cancel-in-progress: false
+
+jobs:
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Cai thu vien
+        run: pip install --quiet tradingview-screener requests pandas
+
+      - name: Scan Trend Template + check watchlist (9h sang VN)
+        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 2 * * *'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CHART_LAYOUT_ID: zg2TshOU
+        run: |
+          python automation/scan_trend_template.py --no-push
+          python automation/alert_watcher.py --force
+
+      - name: Check watchlist trong phien My
+        if: github.event.schedule == '*/30 13-21 * * 1-5'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CHART_LAYOUT_ID: zg2TshOU
+        run: python automation/alert_watcher.py
+
+      - name: Commit ket qua (scan + state)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scans/latest.json automation/state.json
+          git diff --cached --quiet || { git commit -m "bot: scan/state $(date -u '+%Y-%m-%d %H:%M') UTC"; git push; }

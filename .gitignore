@@ -3,9 +3,7 @@ app-src.html
 index.orig.html
 app-src.orig.html
 *.txt
-# Automation: khong commit token/du lieu ca nhan
+# Automation: khong commit token (watchlist/state can nam trong repo cho GitHub Actions)
 automation/config.json
-automation/state.json
-automation/watchlist.json
 automation/scans/
 __pycache__/

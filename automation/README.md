@@ -23,31 +23,31 @@
    ```
    → điện thoại nhận được tin nhắn là xong.
 
-## Bước 2 — Lịch chạy tự động (ĐÃ CÀI SẴN)
+## Bước 2 — Bot 24/7 trên GitHub Actions (không cần máy bật)
 
-Task Scheduler **"TJ-DailyScan"** chạy `daily_run.py` **9h00 sáng mỗi ngày** (giờ VN, máy phải đang bật):
-1. Scan Trend Template + RS Rating → gửi top 15 qua Telegram
-2. Check watchlist với giá đóng cửa phiên gần nhất → báo pivot/stop
+Workflow `.github/workflows/trading.yml` chạy trên máy chủ GitHub:
+- **9h00 sáng VN mỗi ngày**: scan Trend Template + check watchlist EOD → Telegram, tự commit `scans/latest.json` → Netlify tự cập nhật
+- **30 phút/lần trong phiên Mỹ** (20h30–3h sáng VN): check watchlist realtime → báo ngay khi vượt pivot / chạm stop
 
-Lệnh quản lý:
-```powershell
-schtasks /Run /TN "TJ-DailyScan"       # chay thu ngay
-schtasks /Query /TN "TJ-DailyScan"     # xem trang thai
-schtasks /Delete /TN "TJ-DailyScan" /F # xoa lich
-```
+Cài 1 lần trên web GitHub (repo → **Settings**):
+1. **General → Danger Zone → Change visibility → Private** (bảo vệ watchlist)
+2. **Secrets and variables → Actions → New repository secret**, tạo 2 cái:
+   - `TELEGRAM_BOT_TOKEN` = token từ BotFather
+   - `TELEGRAM_CHAT_ID` = chat id của bạn
+3. Tab **Actions** → workflow "Trading bot" → **Run workflow** để chạy thử
 
-Nếu sau này muốn alert **realtime trong phiên** (20h30–3h sáng VN, máy phải bật):
-```powershell
-schtasks --% /Create /TN "TJ-AlertWatcher" /SC MINUTE /MO 5 /F /TR "\"C:\Users\tamph\AppData\Local\Programs\Python\Python313\pythonw.exe\" \"C:\Users\tamph\Desktop\CLAUDE CODE\Journal Trading\automation\alert_watcher.py\""
-```
-(script tự nghỉ khi thị trường Mỹ đóng cửa nên không tốn tài nguyên)
+Backup trên máy (nếu không dùng Actions): task "TJ-DailyScan" 9h sáng — `schtasks /Delete /TN "TJ-DailyScan" /F` để xóa khi Actions đã chạy ổn.
 
 ## Quy trình dùng hằng ngày
 
 1. **9h sáng**: bot Telegram gửi kết quả scan — **bấm tên mã để mở thẳng chart TradingView** (layout riêng của bạn) + cảnh báo watchlist (🚀 vượt pivot / 👀 gần pivot / 🛑 chạm stop)
 2. Scan xong script tự ghi `scans/latest.json` → **commit + push GitHub → Netlify tự deploy** → mở https://phantam.netlify.app tab **Watch** thấy bảng kết quả scan (kèm giờ scan), bấm mã mở chart, bấm **＋** để đưa vào watchlist
-3. Điền pivot + stop cho mã vừa thêm → bấm **⬇ watchlist.json** → chép file từ Downloads vào thư mục `automation\` (ghi đè)
-4. Vào lệnh xong thì ghi vào journal như bình thường, xóa mã khỏi Watch
+3. Điền pivot + stop cho mã vừa thêm → bấm **⬇ watchlist.json** → chạy:
+   ```powershell
+   python "automation\push_watchlist.py"
+   ```
+   (tự tìm file mới nhất trong Downloads, chép vào `automation\`, commit + push — bot 24/7 dùng ngay)
+4. Vào lệnh xong thì ghi vào journal như bình thường, xóa mã khỏi Watch → export + push lại
 
 Cấu hình thêm trong `config.json`:
 - `chart_layout_id`: ID layout chart TradingView của bạn (lấy từ URL, vd `zg2TshOU`) — link mở chart sẽ kèm indicator Minervini của bạn

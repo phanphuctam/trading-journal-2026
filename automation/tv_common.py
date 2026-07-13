@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Ham dung chung: doc config, gui Telegram, lay gia tu TradingView scanner."""
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -26,10 +27,16 @@ def save_json(path: Path, data):
 
 
 def load_config() -> dict:
+    """Doc config.json (may local), bien moi truong ghi de (GitHub Actions)."""
     cfg = load_json(BASE / "config.json", {})
-    if not cfg:
-        print("[!] Chua co automation/config.json — tao tu config.example.json")
-        sys.exit(1)
+    for key, envk in (("telegram_bot_token", "TELEGRAM_BOT_TOKEN"),
+                      ("telegram_chat_id", "TELEGRAM_CHAT_ID"),
+                      ("chart_layout_id", "CHART_LAYOUT_ID")):
+        if os.environ.get(envk, "").strip():
+            cfg[key] = os.environ[envk].strip()
+    cfg.setdefault("approach_pct", 1.5)
+    if not cfg.get("telegram_bot_token"):
+        print("[!] Chua co token Telegram (config.json hoac bien TELEGRAM_BOT_TOKEN) — chay dry-run")
     return cfg
 
 
