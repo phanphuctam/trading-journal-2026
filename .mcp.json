@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tradingview": {
+      "command": "C:\\Users\\tamph\\AppData\\Local\\Programs\\Python\\Python313\\Scripts\\tradingview-mcp.exe",
+      "args": []
+    }
+  }
+}

@@ -3,3 +3,9 @@ app-src.html
 index.orig.html
 app-src.orig.html
 *.txt
+# Automation: khong commit token/du lieu ca nhan
+automation/config.json
+automation/state.json
+automation/watchlist.json
+automation/scans/
+__pycache__/
