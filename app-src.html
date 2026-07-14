@@ -2,7 +2,7 @@
 <html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#141317" id="tjThemeColor">
+<meta name="theme-color" content="#1F1A1E" id="tjThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -594,26 +594,27 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
 html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
 body{font-family:'Be Vietnam Pro',system-ui,sans-serif;font-size:13px;font-variant-numeric:tabular-nums;letter-spacing:-.005em;background:var(--bg);color:var(--text);transition:background .2s,color .2s}
 :root{
-  --bg:#141317;--card:#1d1b21;--panel:#100f13;
-  --border:#2b2831;--border2:#3a3641;
-  --accent:#b6a3f8;--accent-soft:rgba(182,163,248,.14);
-  --text:#f4f2ea;--text2:#b8b3a8;--text3:#8e897d;
-  --green:#5fe0a0;--green-soft:rgba(95,224,160,.14);
-  --red:#f8887b;--red-soft:rgba(248,136,123,.14);
-  --amber:#eec25f;--amber-soft:rgba(238,194,95,.14);
+  /* Palette throxy.com — dark: #241F23/#1F1A1E/#1A1618, cream #F8F4F0, mint #BEFFCB, lavender #D1BEFF, orange #FB651E */
+  --bg:#1F1A1E;--card:#241F23;--panel:#1A1618;
+  --border:#352D33;--border2:#3A3539;
+  --accent:#D1BEFF;--accent-soft:rgba(209,190,255,.14);
+  --text:#F8F4F0;--text2:#969696;--text3:#85806D;
+  --green:#BEFFCB;--green-soft:rgba(190,255,203,.13);
+  --red:#FB651E;--red-soft:rgba(251,101,30,.15);
+  --amber:#FDA26E;--amber-soft:rgba(253,162,110,.14);
   --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 26px rgba(0,0,0,.38);
-  --blow:rgba(248,136,123,.16);--btn-fg:#17131f;--blue:#8fb0f5;
+  --blow:rgba(251,101,30,.13);--btn-fg:#241F23;--blue:#C4ADFF;
 }
 body.theme-light{
-  --bg:#f6f4ee;--card:#fdfcf9;--panel:#efece3;
-  --border:#e2ddcf;--border2:#eae6da;
-  --accent:#6a4ff0;--accent-soft:rgba(106,79,240,.09);
-  --text:#16151a;--text2:#57544b;--text3:#8a8476;
-  --green:#0f9256;--green-soft:rgba(15,146,86,.1);
-  --red:#d2493d;--red-soft:rgba(210,73,61,.1);
-  --amber:#a3690a;--amber-soft:rgba(163,105,10,.12);
-  --shadow:0 1px 2px rgba(45,38,20,.05),0 6px 18px rgba(45,38,20,.08);
-  --blow:rgba(210,73,61,.07);--btn-fg:#fff;--blue:#3f5bd6;
+  --bg:#F8F4F0;--card:#FFFFFF;--panel:#F2EDE6;
+  --border:rgba(36,31,35,.14);--border2:rgba(36,31,35,.07);
+  --accent:#7A5AD9;--accent-soft:rgba(209,190,255,.28);
+  --text:#241F23;--text2:#484848;--text3:#969696;
+  --green:#1E8743;--green-soft:rgba(190,255,203,.45);
+  --red:#FB651E;--red-soft:rgba(251,101,30,.10);
+  --amber:#C24A0E;--amber-soft:rgba(251,101,30,.09);
+  --shadow:0 1px 2px rgba(36,31,35,.05),0 6px 18px rgba(36,31,35,.07);
+  --blow:rgba(251,101,30,.07);--btn-fg:#fff;--blue:#7A5AD9;
 }
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -635,7 +636,7 @@ details summary::-webkit-details-marker{display:none}
 .tj-btngroup button{border:none;border-left:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;padding:0 10px;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
 .tj-btngroup button:first-child{border-left:none}
 .tj-btngroup button:hover{background:var(--accent-soft);color:var(--accent)}
-@media(max-width:900px){#tjGrid{grid-template-columns:1fr!important;overflow:visible!important;height:auto!important}#tjGrid>div{overflow-y:visible!important}html,body{overflow-x:hidden!important;overflow-y:auto!important}.tj-tabbar{top:52px}}
+@media(max-width:900px){#tjGrid{grid-template-columns:minmax(0,1fr)!important;overflow:visible!important;height:auto!important}#tjGrid>div{overflow-y:visible!important}html,body{overflow-x:hidden!important;overflow-y:auto!important}.tj-tabbar{top:52px}}
 @media(max-width:600px){
   html,body{overflow-x:hidden!important}
   .tj-top{padding:0 10px!important;gap:9px!important}
@@ -646,15 +647,21 @@ details summary::-webkit-details-marker{display:none}
   .tj-actions{position:absolute!important;top:100%!important;left:0!important;right:0!important;width:auto!important;flex-wrap:wrap!important;gap:4px!important;row-gap:6px!important;padding:8px 10px!important;margin:0!important;background:var(--card)!important;border-bottom:1px solid var(--border)!important;box-shadow:var(--shadow)!important;z-index:50!important}
   .tj-actions button{padding:6px 8px!important;font-size:10px!important;flex-shrink:0!important}
   .tj-actions-break{display:block!important;flex-basis:100%!important;width:0!important;height:0!important}
-  .tj-formgrid{grid-template-columns:1fr 1fr!important}
-  .tj-deprow{grid-template-columns:1fr 1fr!important}
-  .tj-ministrip{grid-template-columns:1fr 1fr!important}
-  #tjGrid>div{padding-left:12px!important;padding-right:12px!important}
+  .tj-formgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .tj-deprow{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .tj-ministrip{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #tjGrid>div{padding-left:12px!important;padding-right:12px!important;max-width:100vw}
   .tj-tabbar{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}
+  .tj-tabbar>div{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tj-tabbar>div::-webkit-scrollbar{display:none}
+  .tj-tabbar button{white-space:nowrap;flex-shrink:0}
+  input[type=date]{width:100%}
+  #tjPeriodBar{max-width:100%;overflow-x:auto}
+  #search{flex:1;min-width:0}
 }
 @media(max-width:380px){
-  .tj-formgrid{grid-template-columns:1fr!important}
-  .tj-deprow{grid-template-columns:1fr!important}
+  .tj-formgrid{grid-template-columns:minmax(0,1fr)!important}
+  .tj-deprow{grid-template-columns:minmax(0,1fr)!important}
 }
 </style>
 
@@ -691,11 +698,11 @@ details summary::-webkit-details-marker{display:none}
     </div>
   </div>
 </div>
-<div id="tj_toast" style="position:fixed;bottom:24px;right:24px;z-index:999;background:var(--green);color:var(--btn-fg);font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;box-shadow:0 4px 20px rgba(95,224,160,.3);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none"></div>
+<div id="tj_toast" style="position:fixed;bottom:24px;right:24px;z-index:999;background:var(--green);color:var(--btn-fg);font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;box-shadow:0 4px 20px rgba(190,255,203,.3);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none"></div>
 <input type="file" id="csvIn" accept=".csv,text/csv" style="display:none">
 
 <!-- ══ MAIN LAYOUT ══ -->
-<div id="tjGrid" style="display:grid;grid-template-columns:6fr 4fr;height:100vh;padding-top:52px;overflow:hidden">
+<div id="tjGrid" style="display:grid;grid-template-columns:minmax(0,6fr) minmax(0,4fr);height:100vh;padding-top:52px;overflow:hidden">
 
   <!-- ═══ LEFT COL ═══ -->
   <div style="overflow-y:auto;padding:16px 18px 20px">
@@ -733,7 +740,7 @@ details summary::-webkit-details-marker{display:none}
       </div>
       <sc-if value="{{ formOpen }}" hint-placeholder-val="{{ true }}">
         <div style="padding:14px 16px">
-          <div class="tj-formgrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <div class="tj-formgrid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px">
             <div style="display:flex;flex-direction:column;gap:4px">
               <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFEntryDate }}</label>
               <input id="f_d" type="date" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%">
@@ -784,7 +791,7 @@ details summary::-webkit-details-marker{display:none}
           </div>
           <details style="margin-top:10px">
             <summary style="font-size:10.5px;color:var(--text3);font-weight:600;padding:5px 0">{{ lbFAdvanced }}</summary>
-            <div class="tj-formgrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px">
+            <div class="tj-formgrid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px">
               <div style="display:flex;flex-direction:column;gap:4px">
                 <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFEntryPrice }}</label>
                 <input id="f_o" type="number" step="any" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;font-family:'JetBrains Mono',monospace;width:100%">
@@ -909,7 +916,7 @@ details summary::-webkit-details-marker{display:none}
           <div id="fundBox"></div>
           <div style="margin-top:14px">
             <div style="font-size:10.5px;font-weight:700;color:var(--text2);margin-bottom:8px">{{ lbDepBook }} (<span id="depCnt">0</span> {{ lbDepTimes }})</div>
-            <div class="tj-deprow" style="display:grid;grid-template-columns:1fr 1fr 1.5fr auto;gap:5px;margin-bottom:8px">
+            <div class="tj-deprow" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) auto;gap:5px;margin-bottom:8px">
               <input id="depDate" type="date" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;min-width:0">
               <input id="depAmt" type="number" step="any" placeholder="{{ lbDepAmtPh }}" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;font-family:'JetBrains Mono',monospace;min-width:0">
               <input id="depNote" placeholder="{{ lbDepNotePh }}" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;min-width:0">
@@ -926,7 +933,7 @@ details summary::-webkit-details-marker{display:none}
         </div>
         <div style="padding:12px 14px">
           <div style="display:flex;gap:6px;margin-bottom:8px">
-            <input id="noteDate" type="date" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;min-width:0;flex-shrink:0">
+            <input id="noteDate" type="date" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;min-width:0;flex:0 1 150px">
             <textarea id="noteTxt" rows="2" placeholder="{{ lbNotesPh }}" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;flex:1;min-width:0;resize:none"></textarea>
             <button onclick="{{ addNote }}" style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap;align-self:flex-end">＋</button>
           </div>
@@ -970,7 +977,7 @@ const TJ_NORM = a => (Array.isArray(a) ? a : []).map(t => {
   return (ex || e) ? { ...t, ...(ex ? {ex} : {}), ...(e ? {e} : {}) } : t;
 });
 const TJ_MILES = [900,1800,5000,10000,50000];
-const TJ_PAL = ['#8b74f6','#3fbf7f','#f2775f','#e0a63a','#5f8ef0','#3fc4bc','#e56aa2','#9fb838','#98938a'];
+const TJ_PAL = ['#D1BEFF','#BEFFCB','#FB651E','#7A5AD9','#1E8743','#FDA26E','#85806D','#C4ADFF','#969696'];
 const TJ_TR = {
   vi: {
     subtitle:'2026–2036 · 1R = 1% tài sản',
@@ -1327,7 +1334,7 @@ class Component extends DCLogic {
   _applyTheme() {
     document.body.classList.toggle('theme-light', this.state.theme === 'light');
     const mc = document.getElementById('tjThemeColor');
-    if (mc) mc.setAttribute('content', this.state.theme === 'light' ? '#f6f4ee' : '#141317');
+    if (mc) mc.setAttribute('content', this.state.theme === 'light' ? '#F8F4F0' : '#1F1A1E');
   }
 
   _setupPWA() {
@@ -1336,7 +1343,7 @@ class Component extends DCLogic {
       const manifest = {
         name: 'Trading Journal 2026', short_name: 'TJ·26',
         start_url: '.', scope: '.', display: 'standalone',
-        orientation: 'any', background_color: '#141317', theme_color: '#141317',
+        orientation: 'any', background_color: '#1F1A1E', theme_color: '#1F1A1E',
         description: 'Personal trading journal 2026', icons: [],
       };
       const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
@@ -1349,13 +1356,14 @@ class Component extends DCLogic {
   _tc() {
     const dark = this.state.theme === 'dark';
     return {
-      tick: dark ? '#8e897d' : '#8a8476', grid: dark ? '#26242c' : '#e7e3d6',
-      accent: dark ? '#b6a3f8' : '#6a4ff0',
-      green: dark ? '#5fe0a0' : '#0f9256',
-      red: dark ? '#f8887b' : '#d2493d',
-      amber: dark ? '#eec25f' : '#a3690a',
-      card: dark ? '#1d1b21' : '#fdfcf9', text2: dark ? '#b8b3a8' : '#57544b',
-      line: dark ? '#a6a196' : '#6f6a5e',
+      tick: dark ? '#85806D' : '#969696', grid: dark ? 'rgba(248,244,240,.08)' : 'rgba(36,31,35,.08)',
+      accent: dark ? '#D1BEFF' : '#7A5AD9',
+      green: dark ? '#BEFFCB' : '#1E8743',
+      red: '#FB651E',
+      amber: dark ? '#FDA26E' : '#C24A0E',
+      card: dark ? '#241F23' : '#FFFFFF', text2: dark ? '#969696' : '#484848',
+      line: dark ? '#F8F4F0' : '#352D33',
+      winFill: '#BEFFCB', lossFill: '#FB651E', drawFill: '#D1BEFF',
     };
   }
 
@@ -1778,7 +1786,7 @@ class Component extends DCLogic {
         </div>
       </div>
       <div style="padding:12px 14px">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:5px;margin-bottom:5px">
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:5px;margin-bottom:5px">
           <input id="wlSym" placeholder="${tr.wlSym}" style="${inp};text-transform:uppercase">
           <input id="wlPivot" type="number" step="any" placeholder="${tr.wlPivot}" style="${inp};font-family:'JetBrains Mono',monospace">
           <input id="wlStop" type="number" step="any" placeholder="${tr.wlStop}" style="${inp};font-family:'JetBrains Mono',monospace">
@@ -2408,8 +2416,8 @@ class Component extends DCLogic {
     let labels=[], data=[], colors=[];
     if (dm==='res') {
       const w=a.filter(t=>t._all>0).length, l=a.filter(t=>t._all<0).length, b=a.filter(t=>t._all===0).length;
-      labels=[tr.donutWin,tr.donutLoss]; data=[w,l]; colors=[c.green,c.red];
-      if (b) { labels.push(tr.donutDraw); data.push(b); colors.push(c.text2); }
+      labels=[tr.donutWin,tr.donutLoss]; data=[w,l]; colors=[c.winFill,c.lossFill];
+      if (b) { labels.push(tr.donutDraw); data.push(b); colors.push(c.drawFill); }
     } else {
       const key=dm==='setup'?'su':'e', m={};
       a.forEach(t=>{ const k=t[key]||'?'; m[k]=(m[k]||0)+1; });
