@@ -2,7 +2,7 @@
 <html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1F1A1E" id="tjThemeColor">
+<meta name="theme-color" content="#1A1618" id="tjThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -595,10 +595,10 @@ html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
 body{font-family:'Be Vietnam Pro',system-ui,sans-serif;font-size:13px;font-variant-numeric:tabular-nums;letter-spacing:-.005em;background:var(--bg);color:var(--text);transition:background .2s,color .2s}
 :root{
   /* Palette throxy.com — dark: #241F23/#1F1A1E/#1A1618, cream #F8F4F0, mint #BEFFCB, lavender #D1BEFF, coral #FF6B6D */
-  --bg:#1F1A1E;--card:#241F23;--panel:#1A1618;
-  --border:#352D33;--border2:#3A3539;
+  --bg:#1A1618;--card:#241F23;--panel:#2E2830;
+  --border:rgba(248,244,240,.12);--border2:#3A3539;
   --accent:#D1BEFF;--accent-soft:rgba(209,190,255,.14);
-  --text:#F8F4F0;--text2:#969696;--text3:#85806D;
+  --text:#F8F4F0;--text2:#B8B3B0;--text3:#969696;
   --green:#BEFFCB;--green-soft:rgba(190,255,203,.13);
   --red:#FF6B6D;--red-soft:rgba(255,107,109,.15);
   --amber:#FFB49B;--amber-soft:rgba(255,180,155,.14);
@@ -1334,7 +1334,7 @@ class Component extends DCLogic {
   _applyTheme() {
     document.body.classList.toggle('theme-light', this.state.theme === 'light');
     const mc = document.getElementById('tjThemeColor');
-    if (mc) mc.setAttribute('content', this.state.theme === 'light' ? '#F8F4F0' : '#1F1A1E');
+    if (mc) mc.setAttribute('content', this.state.theme === 'light' ? '#F8F4F0' : '#1A1618');
   }
 
   _setupPWA() {
@@ -1343,7 +1343,7 @@ class Component extends DCLogic {
       const manifest = {
         name: 'Trading Journal 2026', short_name: 'TJ·26',
         start_url: '.', scope: '.', display: 'standalone',
-        orientation: 'any', background_color: '#1F1A1E', theme_color: '#1F1A1E',
+        orientation: 'any', background_color: '#1A1618', theme_color: '#1A1618',
         description: 'Personal trading journal 2026', icons: [],
       };
       const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
@@ -1356,12 +1356,12 @@ class Component extends DCLogic {
   _tc() {
     const dark = this.state.theme === 'dark';
     return {
-      tick: dark ? '#85806D' : '#969696', grid: dark ? 'rgba(248,244,240,.08)' : 'rgba(36,31,35,.08)',
+      tick: '#969696', grid: dark ? 'rgba(248,244,240,.08)' : 'rgba(36,31,35,.08)',
       accent: dark ? '#D1BEFF' : '#7A5AD9',
       green: dark ? '#BEFFCB' : '#1E8743',
       red: dark ? '#FF6B6D' : '#F0494C',
       amber: dark ? '#FFB49B' : '#C05B44',
-      card: dark ? '#241F23' : '#FFFFFF', text2: dark ? '#969696' : '#484848',
+      card: dark ? '#241F23' : '#FFFFFF', text2: dark ? '#B8B3B0' : '#484848',
       line: dark ? '#F8F4F0' : '#352D33',
       winFill: '#BEFFCB', lossFill: '#FF6B6D', drawFill: '#D1BEFF',
     };
