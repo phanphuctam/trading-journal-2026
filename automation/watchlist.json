@@ -1,13 +1,13 @@
 [
   {
-    "symbol": "ALAB",
-    "pivot": 437,
+    "symbol": "ASTH",
+    "pivot": 52,
     "stop": null,
-    "note": "RS 97 · scan 2026-07-14"
+    "note": "RS 91 · scan 2026-07-14"
   },
   {
     "symbol": "DELL",
-    "pivot": 460,
+    "pivot": 464,
     "stop": null,
     "note": "RS 98 · scan 2026-07-14"
   }
