@@ -42,12 +42,10 @@ Backup trên máy (nếu không dùng Actions): task "TJ-DailyScan" 9h sáng —
 
 1. **9h sáng**: bot Telegram gửi kết quả scan — **bấm tên mã để mở thẳng chart TradingView** (layout riêng của bạn) + cảnh báo watchlist (🚀 vượt pivot / 👀 gần pivot / 🛑 chạm stop)
 2. Scan xong script tự ghi `scans/latest.json` → **commit + push GitHub → Netlify tự deploy** → mở https://phantam.netlify.app tab **Watch** thấy bảng kết quả scan (kèm giờ scan), bấm mã mở chart, bấm **＋** để đưa vào watchlist
-3. Điền pivot + stop cho mã vừa thêm → bấm **⬇ watchlist.json** → chạy:
-   ```powershell
-   python "automation\push_watchlist.py"
-   ```
-   (tự tìm file mới nhất trong Downloads, chép vào `automation\`, commit + push — bot 24/7 dùng ngay)
-4. Vào lệnh xong thì ghi vào journal như bình thường, xóa mã khỏi Watch → export + push lại
+3. Điền pivot + stop cho mã vừa thêm → bấm **⤴ Push GitHub** ngay trong tab Watch — xong, bot 24/7 dùng ngay.
+   - Lần đầu bấm sẽ hỏi GitHub token: tạo **fine-grained PAT** tại github.com → Settings → Developer settings → Fine-grained tokens → chỉ chọn repo `trading-journal-2026`, quyền **Contents: Read and write**. Token chỉ lưu trong trình duyệt.
+   - Đường dự phòng (không cần token): bấm **⬇ watchlist.json** rồi chạy `python "automation\push_watchlist.py"` (hoặc double-click `Cap nhat watchlist.bat`).
+4. Vào lệnh xong thì ghi vào journal như bình thường, xóa mã khỏi Watch → bấm ⤴ Push GitHub lại
 
 Cấu hình thêm trong `config.json`:
 - `chart_layout_id`: ID layout chart TradingView của bạn (lấy từ URL, vd `zg2TshOU`) — link mở chart sẽ kèm indicator Minervini của bạn
