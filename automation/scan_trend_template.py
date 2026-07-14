@@ -157,8 +157,11 @@ def push_site_json():
     """Commit + push scans/latest.json de Netlify tu deploy."""
     rel = str(SITE_SCAN.relative_to(ROOT)).replace("\\", "/")
     try:
-        subprocess.run(["git", "-C", str(ROOT), "pull", "--rebase", "--autostash"],
-                       capture_output=True, timeout=180)
+        # git pull bi treo tren may nay — dung fetch + rebase tach buoc
+        subprocess.run(["git", "-C", str(ROOT), "fetch", "origin"],
+                       capture_output=True, timeout=120)
+        subprocess.run(["git", "-C", str(ROOT), "rebase", "--autostash", "origin/main"],
+                       capture_output=True, timeout=60)
         subprocess.run(["git", "-C", str(ROOT), "add", rel], check=True, capture_output=True)
         r = subprocess.run(
             ["git", "-C", str(ROOT), "commit", "-m",

@@ -53,10 +53,14 @@ def main():
 
     rel = "automation/watchlist.json"
     # Bot tren GitHub commit moi ngay -> keo ban moi ve truoc, neu khong push se bi tu choi
-    pull = subprocess.run(["git", "-C", str(ROOT), "pull", "--rebase", "--autostash"],
-                          capture_output=True, text=True, timeout=180)
-    if pull.returncode != 0:
-        print("[!] git pull loi:", (pull.stdout + pull.stderr).strip()[:300])
+    # (git pull bi treo tren may nay — dung fetch + rebase tach buoc)
+    subprocess.run(["git", "-C", str(ROOT), "fetch", "origin"],
+                   capture_output=True, text=True, timeout=120)
+    rb = subprocess.run(["git", "-C", str(ROOT), "rebase", "--autostash", "origin/main"],
+                        capture_output=True, text=True, timeout=60)
+    if rb.returncode != 0:
+        subprocess.run(["git", "-C", str(ROOT), "rebase", "--abort"], capture_output=True)
+        print("[!] git rebase loi:", (rb.stdout + rb.stderr).strip()[:300])
         sys.exit(1)
     subprocess.run(["git", "-C", str(ROOT), "add", rel], check=True)
     r = subprocess.run(["git", "-C", str(ROOT), "commit", "-m",
