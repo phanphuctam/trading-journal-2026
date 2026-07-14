@@ -67,7 +67,13 @@ document.addEventListener('DOMContentLoaded', async function() {
   // source), just a deterrent against casual visitors to the public link.
   function ensureUnlocked() {
     if (localStorage.getItem('__tj_unlocked') === '1') return Promise.resolve();
-    const PASSWORD = '[REMOVED]';
+    // SHA-256 hex of the password; the plaintext never appears in the source.
+    const PASS_SHA256 = 'e84d118da19d022baf5dcd37c92fa354ac969001a9218057c6a6dfb50b786e33';
+    async function passMatches(v) {
+      if (!(window.crypto && crypto.subtle)) return false;
+      const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(v));
+      return Array.from(new Uint8Array(d)).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('') === PASS_SHA256;
+    }
     if (loading) loading.style.display = 'none';
     const gate = document.createElement('div');
     gate.style.cssText = 'position:fixed;inset:0;z-index:10001;display:flex;align-items:center;justify-content:center;background:#070b12;';
@@ -83,9 +89,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     const err = gate.querySelector('#__pw_error');
     input.focus();
     return new Promise(function(resolve) {
-      form.addEventListener('submit', function(e) {
+      form.addEventListener('submit', async function(e) {
         e.preventDefault();
-        if (input.value === PASSWORD) {
+        if (await passMatches(input.value)) {
           localStorage.setItem('__tj_unlocked', '1');
           gate.remove();
           if (loading) loading.style.display = '';
