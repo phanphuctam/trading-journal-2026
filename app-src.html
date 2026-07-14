@@ -594,16 +594,16 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
 html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
 body{font-family:'Be Vietnam Pro',system-ui,sans-serif;font-size:13px;font-variant-numeric:tabular-nums;letter-spacing:-.005em;background:var(--bg);color:var(--text);transition:background .2s,color .2s}
 :root{
-  /* Palette throxy.com — dark: #241F23/#1F1A1E/#1A1618, cream #F8F4F0, mint #BEFFCB, lavender #D1BEFF, orange #FB651E */
+  /* Palette throxy.com — dark: #241F23/#1F1A1E/#1A1618, cream #F8F4F0, mint #BEFFCB, lavender #D1BEFF, coral #FF6B6D */
   --bg:#1F1A1E;--card:#241F23;--panel:#1A1618;
   --border:#352D33;--border2:#3A3539;
   --accent:#D1BEFF;--accent-soft:rgba(209,190,255,.14);
   --text:#F8F4F0;--text2:#969696;--text3:#85806D;
   --green:#BEFFCB;--green-soft:rgba(190,255,203,.13);
-  --red:#FB651E;--red-soft:rgba(251,101,30,.15);
-  --amber:#FDA26E;--amber-soft:rgba(253,162,110,.14);
+  --red:#FF6B6D;--red-soft:rgba(255,107,109,.15);
+  --amber:#FFB49B;--amber-soft:rgba(255,180,155,.14);
   --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 26px rgba(0,0,0,.38);
-  --blow:rgba(251,101,30,.13);--btn-fg:#241F23;--blue:#C4ADFF;
+  --blow:rgba(255,107,109,.13);--btn-fg:#241F23;--blue:#C4ADFF;
 }
 body.theme-light{
   --bg:#F8F4F0;--card:#FFFFFF;--panel:#F2EDE6;
@@ -611,10 +611,10 @@ body.theme-light{
   --accent:#7A5AD9;--accent-soft:rgba(209,190,255,.28);
   --text:#241F23;--text2:#484848;--text3:#969696;
   --green:#1E8743;--green-soft:rgba(190,255,203,.45);
-  --red:#FB651E;--red-soft:rgba(251,101,30,.10);
-  --amber:#C24A0E;--amber-soft:rgba(251,101,30,.09);
+  --red:#F0494C;--red-soft:rgba(255,107,109,.12);
+  --amber:#C05B44;--amber-soft:rgba(255,180,155,.30);
   --shadow:0 1px 2px rgba(36,31,35,.05),0 6px 18px rgba(36,31,35,.07);
-  --blow:rgba(251,101,30,.07);--btn-fg:#fff;--blue:#7A5AD9;
+  --blow:rgba(255,107,109,.08);--btn-fg:#fff;--blue:#7A5AD9;
 }
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -977,7 +977,7 @@ const TJ_NORM = a => (Array.isArray(a) ? a : []).map(t => {
   return (ex || e) ? { ...t, ...(ex ? {ex} : {}), ...(e ? {e} : {}) } : t;
 });
 const TJ_MILES = [900,1800,5000,10000,50000];
-const TJ_PAL = ['#D1BEFF','#BEFFCB','#FB651E','#7A5AD9','#1E8743','#FDA26E','#85806D','#C4ADFF','#969696'];
+const TJ_PAL = ['#D1BEFF','#BEFFCB','#FF6B6D','#7A5AD9','#1E8743','#FFB49B','#85806D','#C4ADFF','#969696'];
 const TJ_TR = {
   vi: {
     subtitle:'2026–2036 · 1R = 1% tài sản',
@@ -1359,11 +1359,11 @@ class Component extends DCLogic {
       tick: dark ? '#85806D' : '#969696', grid: dark ? 'rgba(248,244,240,.08)' : 'rgba(36,31,35,.08)',
       accent: dark ? '#D1BEFF' : '#7A5AD9',
       green: dark ? '#BEFFCB' : '#1E8743',
-      red: '#FB651E',
-      amber: dark ? '#FDA26E' : '#C24A0E',
+      red: dark ? '#FF6B6D' : '#F0494C',
+      amber: dark ? '#FFB49B' : '#C05B44',
       card: dark ? '#241F23' : '#FFFFFF', text2: dark ? '#969696' : '#484848',
       line: dark ? '#F8F4F0' : '#352D33',
-      winFill: '#BEFFCB', lossFill: '#FB651E', drawFill: '#D1BEFF',
+      winFill: '#BEFFCB', lossFill: '#FF6B6D', drawFill: '#D1BEFF',
     };
   }
 
@@ -2242,7 +2242,7 @@ class Component extends DCLogic {
         const ym = `${y}-${String(mi+1).padStart(2,'0')}`, d = monthly[ym];
         if (!d) return `<div style="background:var(--border2);border-radius:6px;height:38px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)">—</div>`;
         const alpha = 0.12+Math.min(Math.abs(d.net)/maxAbs,1)*0.65;
-        const rgb = d.net>=0?[63,191,127]:[240,106,90];
+        const rgb = d.net>=0?[190,255,203]:[255,107,109];
         const bg = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
         const eff = rgb.map((c,i)=>c*alpha+cardRgb[i]*(1-alpha));
         const lum = (0.2126*eff[0]+0.7152*eff[1]+0.0722*eff[2])/255;
