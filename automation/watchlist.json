@@ -1,5 +1,11 @@
 [
   {
+    "symbol": "ALAB",
+    "pivot": 437,
+    "stop": null,
+    "note": "RS 97 · scan 2026-07-14"
+  },
+  {
     "symbol": "DELL",
     "pivot": 460,
     "stop": null,
