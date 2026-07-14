@@ -1011,6 +1011,8 @@ const TJ_TR = {
     wlScanTitle:'📊 Kết quả scan Trend Template',wlScanSub:'Tự cập nhật sau scan 9h sáng · bấm mã để mở chart TradingView',
     wlScanNone:'Chưa tải được dữ liệu scan (scans/latest.json). Site sẽ tự hiển thị sau lần scan + deploy kế tiếp.',
     wlScanAt:'Scan lúc',wlScanPass:'mã đạt chuẩn',wlOffHigh:'cách đỉnh',
+    wlScanSeenT:'Đánh dấu đã xem / chưa xem',wlScanNoteT:'Ghi chú cho mã này',wlScanHideT:'Ẩn khỏi danh sách (scan mới sẽ hiện lại)',wlScanUnhideT:'Hiện lại mã này',
+    wlScanHidden:'mã đã ẩn',wlScanNotePh:'Ghi chú… (Enter lưu · Esc hủy)',wlScanSeenHint:'bấm mã / ＋ tự đánh dấu ✓ đã xem',
     kpiROI:'ROI',kpiDD:'Max DD',
     kpiPeak:'Đỉnh',kpiTimes:'lần nạp',kpiOnCap:'trên vốn nạp',
     mExpect:'Kỳ vọng/lệnh',mAvgWin:'TB thắng',mAvgLoss:'TB thua',mStreak:'Chuỗi hiện tại',mWinShort:'W',mLossShort:'L',
@@ -1108,6 +1110,8 @@ const TJ_TR = {
     wlScanTitle:'📊 Trend Template scan results',wlScanSub:'Auto-updates after the 9AM scan · click a symbol to open its TradingView chart',
     wlScanNone:'Scan data not available yet (scans/latest.json). The site shows it after the next scan + deploy.',
     wlScanAt:'Scanned at',wlScanPass:'stocks passed',wlOffHigh:'off high',
+    wlScanSeenT:'Toggle seen / unseen',wlScanNoteT:'Note for this symbol',wlScanHideT:'Hide from list (reappears on next scan)',wlScanUnhideT:'Unhide this symbol',
+    wlScanHidden:'hidden',wlScanNotePh:'Note… (Enter save · Esc cancel)',wlScanSeenHint:'clicking symbol / ＋ marks it ✓ seen',
     kpiROI:'ROI',kpiDD:'Max DD',
     kpiPeak:'Peak',kpiTimes:'deposits',kpiOnCap:'on capital',
     mExpect:'Expectancy',mAvgWin:'Avg Win',mAvgLoss:'Avg Loss',mStreak:'Current Streak',mWinShort:'W',mLossShort:'L',
@@ -1808,6 +1812,46 @@ class Component extends DCLogic {
     if (si) { si.value = sym; si.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     if (ni && !ni.value) ni.value = 'RS ' + rs + ' · scan ' + this._today();
     if (pi) pi.focus();
+    this._scanMark(sym, { s: String(this._scanData?.scanned_at || '') });
+  }
+
+  // ── Đánh dấu đã xem / ẩn / ghi chú cho từng mã scan (lưu localStorage, không đụng dữ liệu scan) ──
+  _scanMkGet() {
+    if (!this._scanMk) { try { this._scanMk = JSON.parse(localStorage.getItem('tj_scanmarks_v1') || '{}') || {}; } catch (e) { this._scanMk = {}; } }
+    return this._scanMk;
+  }
+  _scanMkSave() {
+    const cur = String(this._scanData?.scanned_at || ''), m = this._scanMkGet(), now = Date.now(), keep = {};
+    for (const k in m) {
+      const e = m[k];
+      if (e.n && now - (e.t || now) > 60 * 864e5) delete e.n; // ghi chú quá 60 ngày thì bỏ
+      if (e.n || e.s === cur || e.h === cur) keep[k] = e;      // đã xem/ẩn chỉ có giá trị với scan hiện tại
+    }
+    this._scanMk = keep;
+    localStorage.setItem('tj_scanmarks_v1', JSON.stringify(keep));
+  }
+  _scanMark(sym, patch) {
+    const m = this._scanMkGet();
+    m[sym] = Object.assign(m[sym] || {}, patch);
+    this._scanMkSave(); this._loadScanResults();
+  }
+  seenScan = (sym, force) => {
+    const cur = String(this._scanData?.scanned_at || '');
+    const seen = (this._scanMkGet()[sym] || {}).s === cur;
+    this._scanMark(sym, { s: (force || !seen) ? cur : '' });
+  }
+  hideScan = sym => {
+    const cur = String(this._scanData?.scanned_at || '');
+    const hid = (this._scanMkGet()[sym] || {}).h === cur;
+    this._scanMark(sym, { h: hid ? '' : cur });
+  }
+  showHiddenScan = () => { this._scanShowHidden = !this._scanShowHidden; this._loadScanResults(); }
+  editScanNote = sym => { this._scanNoteEdit = sym; this._loadScanResults(); }
+  saveScanNote = (sym, val) => {
+    if (sym === null) { this._scanNoteEdit = null; this._loadScanResults(); return; } // Esc: hủy
+    if (this._scanNoteEdit !== sym) return;
+    this._scanNoteEdit = null;
+    this._scanMark(sym, { n: String(val || '').trim(), t: Date.now() });
   }
 
   async _loadScanResults() {
@@ -1830,15 +1874,36 @@ class Component extends DCLogic {
     } else {
       const base = d.chart_base || 'https://www.tradingview.com/chart/';
       const badges = { SEPA: '🏆', EARLY: '🚀', IPO: '🌱' };
-      body = d.results.slice(0, 40).map(r => `
-        <div style="display:grid;grid-template-columns:76px 30px 1.2fr 1fr auto;gap:6px;align-items:center;padding:5px 0;border-bottom:1px dashed var(--border)">
-          <a href="${base}?symbol=${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener" title="${esc(r.desc)} — ${esc(r.sector)}${r.tier ? ' — ' + esc(r.tier) : ''}" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${badges[r.tier] ? badges[r.tier] + ' ' : ''}${esc(r.symbol)} ↗</a>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${r.rs >= 90 ? 'var(--green)' : 'var(--text2)'}">${r.rs}</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:11px">$${this._fmt(r.close, 2)} <span style="color:${r.change >= 0 ? 'var(--green)' : 'var(--red)'}">${r.change >= 0 ? '+' : ''}${this._fmt(r.change, 1)}%</span></span>
-          <span style="font-size:10px;color:var(--text3)">${tr.wlOffHigh} ${this._fmt(r.off_high, 1)}%</span>
-          <span onclick="window._tj.pickScan('${esc(r.symbol)}',${+r.rs || 0})" style="cursor:pointer;color:var(--accent);font-weight:700;padding:1px 7px;border:1px solid var(--accent);border-radius:6px;font-size:11px" title="${tr.wlToastAdd}">＋</span>
-        </div>`).join('');
-      body += `<div style="font-size:9px;color:var(--text3);margin-top:6px">🏆 SEPA · 🚀 Early Stage · 🌱 IPO ≤5Y · 📈 Trend</div>`;
+      const marks = this._scanMkGet(), cur = String(d.scanned_at || '');
+      const list = d.results.slice(0, 40);
+      const nHid = list.filter(r => (marks[r.symbol] || {}).h === cur).length;
+      const shown = list.filter(r => this._scanShowHidden || (marks[r.symbol] || {}).h !== cur);
+      const act = (fn, icon, title, style) => `<span onclick="${fn}" title="${title}" style="cursor:pointer;font-size:11px;line-height:1;padding:2px 4px;border-radius:6px;${style}">${icon}</span>`;
+      body = shown.map(r => {
+        const sym = esc(r.symbol), mk = marks[r.symbol] || {};
+        const seen = mk.s === cur, hid = mk.h === cur, editing = this._scanNoteEdit === r.symbol;
+        const noteLine = editing
+          ? `<input id="wlScanNoteInp" value="${esc(mk.n)}" placeholder="${tr.wlScanNotePh}" onkeydown="if(event.key==='Enter')this.blur();else if(event.key==='Escape')window._tj.saveScanNote(null)" onblur="window._tj.saveScanNote('${sym}',this.value)" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--accent);border-radius:6px;padding:4px 7px;font-size:11px;color:var(--text)">`
+          : (mk.n ? `<div onclick="window._tj.editScanNote('${sym}')" title="${tr.wlScanNoteT}" style="cursor:pointer;font-size:10.5px;color:var(--amber);margin-top:2px;line-height:1.4">📝 ${esc(mk.n)}</div>` : '');
+        return `
+        <div style="padding:5px 0;border-bottom:1px dashed var(--border)${seen && !editing ? ';opacity:.5' : ''}">
+          <div style="display:grid;grid-template-columns:76px 30px 1.2fr 1fr auto;gap:6px;align-items:center">
+            <a href="${base}?symbol=${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener" onclick="window._tj.seenScan('${sym}',1)" title="${esc(r.desc)} — ${esc(r.sector)}${r.tier ? ' — ' + esc(r.tier) : ''}" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${badges[r.tier] ? badges[r.tier] + ' ' : ''}${sym} ↗</a>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${r.rs >= 90 ? 'var(--green)' : 'var(--text2)'}">${r.rs}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px">$${this._fmt(r.close, 2)} <span style="color:${r.change >= 0 ? 'var(--green)' : 'var(--red)'}">${r.change >= 0 ? '+' : ''}${this._fmt(r.change, 1)}%</span></span>
+            <span style="font-size:10px;color:var(--text3)">${tr.wlOffHigh} ${this._fmt(r.off_high, 1)}%</span>
+            <span style="display:flex;gap:3px;align-items:center;flex-shrink:0">
+              ${act(`window._tj.seenScan('${sym}')`, seen ? '✓' : '◌', tr.wlScanSeenT, `font-weight:700;color:${seen ? 'var(--green)' : 'var(--text3)'}`)}
+              ${act(`window._tj.editScanNote('${sym}')`, '✎', tr.wlScanNoteT, `color:${mk.n ? 'var(--amber)' : 'var(--text3)'}`)}
+              ${act(`window._tj.pickScan('${sym}',${+r.rs || 0})`, '＋', tr.wlToastAdd, 'color:var(--accent);font-weight:700;border:1px solid var(--accent);padding:1px 6px')}
+              ${act(`window._tj.hideScan('${sym}')`, hid ? '↩' : '✕', hid ? tr.wlScanUnhideT : tr.wlScanHideT, 'color:var(--text3)')}
+            </span>
+          </div>
+          ${noteLine}
+        </div>`;
+      }).join('');
+      const hidTog = nHid ? ` · <span onclick="window._tj.showHiddenScan()" style="cursor:pointer;color:var(--accent);font-weight:700">${this._scanShowHidden ? '▾' : '▸'} ${nHid} ${tr.wlScanHidden}</span>` : '';
+      body += `<div style="font-size:9px;color:var(--text3);margin-top:6px">🏆 SEPA · 🚀 Early Stage · 🌱 IPO ≤5Y · 📈 Trend · ${tr.wlScanSeenHint}${hidTog}</div>`;
     }
     box.innerHTML = `
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
@@ -1851,6 +1916,7 @@ class Component extends DCLogic {
       </div>
       <div style="padding:6px 14px 12px">${body}</div>
     </div>`;
+    if (this._scanNoteEdit) { const i = document.getElementById('wlScanNoteInp'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
   }
 
   _renderNotes() {
@@ -2499,6 +2565,8 @@ class Component extends DCLogic {
       delNote: (d,i)=>this.delNote(d,i),
       addWatch: ()=>this.addWatch(), delWatch: i=>this.delWatch(i), pushWatchlist: ()=>this.pushWatchlist(), exportWatchlist: ()=>this.exportWatchlist(),
       pickScan: (s,r)=>this.pickScan(s,r), reloadScan: ()=>this.reloadScan(),
+      seenScan: (s,f)=>this.seenScan(s,f), hideScan: s=>this.hideScan(s), showHiddenScan: ()=>this.showHiddenScan(),
+      editScanNote: s=>this.editScanNote(s), saveScanNote: (s,v)=>this.saveScanNote(s,v),
       setPeriod: p=>{ localStorage.setItem('tj_period',p); this.setState({period:p}); },
       addSetup: ()=>this.addSetup(),
       calPrev: ()=>this.setState(s=>{let m=s.calMonth-1,y=s.calYear;if(m<0){m=11;y--;}return{calMonth:m,calYear:y};}),
