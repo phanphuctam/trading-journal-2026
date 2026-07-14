@@ -2,7 +2,7 @@
 <html><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0e141f" id="tjThemeColor">
+<meta name="theme-color" content="#141317" id="tjThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -594,26 +594,26 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
 html,body{height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
 body{font-family:'Be Vietnam Pro',system-ui,sans-serif;font-size:13px;font-variant-numeric:tabular-nums;letter-spacing:-.005em;background:var(--bg);color:var(--text);transition:background .2s,color .2s}
 :root{
-  --bg:#0e141f;--card:#19222f;--panel:#0a1019;
-  --border:#243348;--border2:#33455d;
-  --accent:#29c5f6;--accent-soft:rgba(41,197,246,.13);
-  --text:#eef4fb;--text2:#aebfd4;--text3:#7e94ad;
-  --green:#3ddc84;--green-soft:rgba(61,220,132,.14);
-  --red:#fa6a6a;--red-soft:rgba(250,106,106,.14);
-  --amber:#ffb02e;--amber-soft:rgba(255,176,46,.14);
-  --shadow:0 1px 2px rgba(0,0,0,.45),0 8px 26px rgba(0,0,0,.34);
-  --blow:rgba(250,106,106,.16);--btn-fg:#04121b;--blue:#64a0ff;
+  --bg:#141317;--card:#1d1b21;--panel:#100f13;
+  --border:#2b2831;--border2:#3a3641;
+  --accent:#b6a3f8;--accent-soft:rgba(182,163,248,.14);
+  --text:#f4f2ea;--text2:#b8b3a8;--text3:#8e897d;
+  --green:#5fe0a0;--green-soft:rgba(95,224,160,.14);
+  --red:#f8887b;--red-soft:rgba(248,136,123,.14);
+  --amber:#eec25f;--amber-soft:rgba(238,194,95,.14);
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 26px rgba(0,0,0,.38);
+  --blow:rgba(248,136,123,.16);--btn-fg:#17131f;--blue:#8fb0f5;
 }
 body.theme-light{
-  --bg:#eef1f7;--card:#ffffff;--panel:#e7ecf5;
-  --border:#d0dae8;--border2:#dfe7f2;
-  --accent:#2563eb;--accent-soft:rgba(37,99,235,.08);
-  --text:#101a2e;--text2:#52617d;--text3:#5f7189;
-  --green:#0d8043;--green-soft:rgba(13,128,67,.1);
-  --red:#d32f2f;--red-soft:rgba(211,47,47,.1);
-  --amber:#b45309;--amber-soft:rgba(180,83,9,.12);
-  --shadow:0 1px 2px rgba(16,30,60,.05),0 6px 18px rgba(16,30,60,.08);
-  --blow:rgba(211,47,47,.07);--btn-fg:#fff;--blue:#2f5fb8;
+  --bg:#f6f4ee;--card:#fdfcf9;--panel:#efece3;
+  --border:#e2ddcf;--border2:#eae6da;
+  --accent:#6a4ff0;--accent-soft:rgba(106,79,240,.09);
+  --text:#16151a;--text2:#57544b;--text3:#8a8476;
+  --green:#0f9256;--green-soft:rgba(15,146,86,.1);
+  --red:#d2493d;--red-soft:rgba(210,73,61,.1);
+  --amber:#a3690a;--amber-soft:rgba(163,105,10,.12);
+  --shadow:0 1px 2px rgba(45,38,20,.05),0 6px 18px rgba(45,38,20,.08);
+  --blow:rgba(210,73,61,.07);--btn-fg:#fff;--blue:#3f5bd6;
 }
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -627,7 +627,15 @@ details summary{cursor:pointer;list-style:none;user-select:none}
 details summary::-webkit-details-marker{display:none}
 .tj-actions-break{display:none}
 .tj-actions-toggle{display:none}
-@media(max-width:900px){#tjGrid{grid-template-columns:1fr!important;overflow-y:auto!important;height:auto!important}html,body{overflow-x:hidden!important;overflow-y:auto!important}}
+.tj-tabbar{position:sticky;top:0;z-index:40;margin:0 -14px 14px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--border)}
+.tj-abtn{height:30px;padding:0 11px;border:1px solid var(--border);border-radius:8px;background:var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s,background .15s}
+.tj-abtn:hover{color:var(--accent);border-color:var(--accent)}
+.tj-abtn-accent{background:var(--accent-soft);border:1.5px solid var(--accent);color:var(--accent);font-weight:700;letter-spacing:.06em}
+.tj-btngroup{display:flex;align-items:stretch;height:30px;border:1px solid var(--border);border-radius:8px;background:var(--border2);overflow:hidden;flex-shrink:0}
+.tj-btngroup button{border:none;border-left:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;padding:0 10px;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
+.tj-btngroup button:first-child{border-left:none}
+.tj-btngroup button:hover{background:var(--accent-soft);color:var(--accent)}
+@media(max-width:900px){#tjGrid{grid-template-columns:1fr!important;overflow:visible!important;height:auto!important}#tjGrid>div{overflow-y:visible!important}html,body{overflow-x:hidden!important;overflow-y:auto!important}.tj-tabbar{top:52px}}
 @media(max-width:600px){
   html,body{overflow-x:hidden!important}
   .tj-top{padding:0 10px!important;gap:9px!important}
@@ -642,6 +650,7 @@ details summary::-webkit-details-marker{display:none}
   .tj-deprow{grid-template-columns:1fr 1fr!important}
   .tj-ministrip{grid-template-columns:1fr 1fr!important}
   #tjGrid>div{padding-left:12px!important;padding-right:12px!important}
+  .tj-tabbar{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}
 }
 @media(max-width:380px){
   .tj-formgrid{grid-template-columns:1fr!important}
@@ -667,18 +676,22 @@ details summary::-webkit-details-marker{display:none}
   </div>
   <button class="tj-actions-toggle" onclick="{{ toggleActions }}" style="background:var(--border2);border:1px solid var(--border);border-radius:8px;color:var(--text2);cursor:pointer">{{ actionsToggleIcon }}</button>
   <div class="tj-actions" style="{{ actionsStyle }}">
-    <button onclick="{{ toggleLang }}" style="background:var(--accent-soft);border:1.5px solid var(--accent);border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent);letter-spacing:.06em;font-family:'Be Vietnam Pro',system-ui,sans-serif">{{ langBtn }}</button>
-    <button onclick="{{ toggleTheme }}" style="background:var(--border2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;color:var(--text2)">{{ themeIcon }}</button>
-    <button onclick="{{ doExportCSV }}" style="background:var(--border2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text2)">⬇ CSV</button>
-    <button onclick="{{ doBackup }}" style="background:var(--border2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text2)">💾</button>
+    <button class="tj-abtn tj-abtn-accent" onclick="{{ toggleLang }}">{{ langBtn }}</button>
+    <button class="tj-abtn" onclick="{{ toggleTheme }}" title="Dark / Light" style="font-size:13px;padding:0 9px">{{ themeIcon }}</button>
     <div class="tj-actions-break"></div>
-    <button onclick="{{ doDriveBackup }}" title="{{ driveUpTitle }}" style="{{ driveUpStyle }}">☁⬆</button>
-    <button onclick="{{ doDriveRestore }}" title="Khoi phuc tu Google Drive" style="background:var(--border2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text2)">☁⬇</button>
-    <button onclick="{{ doRestore }}" style="background:var(--border2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text2)">↥ JSON</button>
-    <button onclick="{{ doImportCSV }}" style="background:var(--border2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text2)">↥ CSV</button>
+    <div class="tj-btngroup" title="Xuất / nhập dữ liệu">
+      <button onclick="{{ doExportCSV }}" title="Xuất CSV / Export CSV">⬇ CSV</button>
+      <button onclick="{{ doImportCSV }}" title="Nhập CSV / Import CSV">↥ CSV</button>
+      <button onclick="{{ doRestore }}" title="Khôi phục từ file JSON / Restore JSON">↥ JSON</button>
+    </div>
+    <div class="tj-btngroup" title="Backup">
+      <button onclick="{{ doBackup }}" title="Tải file backup JSON / Download backup">💾</button>
+      <button onclick="{{ doDriveBackup }}" title="{{ driveUpTitle }}" style="{{ driveUpStyle }}">☁⬆</button>
+      <button onclick="{{ doDriveRestore }}" title="Khôi phục từ Google Drive / Restore from Drive">☁⬇</button>
+    </div>
   </div>
 </div>
-<div id="tj_toast" style="position:fixed;bottom:24px;right:24px;z-index:999;background:var(--green);color:var(--btn-fg);font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;box-shadow:0 4px 20px rgba(74,222,128,.3);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none"></div>
+<div id="tj_toast" style="position:fixed;bottom:24px;right:24px;z-index:999;background:var(--green);color:var(--btn-fg);font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;box-shadow:0 4px 20px rgba(95,224,160,.3);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none"></div>
 <input type="file" id="csvIn" accept=".csv,text/csv" style="display:none">
 
 <!-- ══ MAIN LAYOUT ══ -->
@@ -855,16 +868,18 @@ details summary::-webkit-details-marker{display:none}
   </div>
 
   <!-- ═══ RIGHT COL ═══ -->
-  <div style="overflow-y:auto;background:var(--panel);border-left:1px solid var(--border);padding:14px 14px 20px">
-    <!-- TAB NAV -->
-    <div style="display:flex;gap:2px;margin-bottom:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:3px">
-      <button onclick="{{ goOverview }}" style="{{ tabOverviewStyle }}">{{ lbTabOv }}</button>
-      <button onclick="{{ goWatch }}" style="{{ tabWatchBtnStyle }}">{{ lbTabWl }}</button>
-      <button onclick="{{ goSystem }}" style="{{ tabSystemStyle }}">{{ lbTabSys }}</button>
-      <button onclick="{{ goSetups }}" style="{{ tabSetupsStyle }}">{{ lbTabSu }}</button>
-      <button onclick="{{ goEmotions }}" style="{{ tabEmotionsStyle }}">{{ lbTabEm }}</button>
-      <button onclick="{{ goCalendar }}" style="{{ tabCalendarStyle }}">{{ lbTabCal }}</button>
-      <button onclick="{{ goHeatmap }}" style="{{ tabHeatmapStyle }}">{{ lbTabHm }}</button>
+  <div style="overflow-y:auto;background:var(--panel);border-left:1px solid var(--border);padding:0 14px 20px">
+    <!-- TAB NAV (sticky khi cuộn) -->
+    <div class="tj-tabbar">
+      <div style="display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:3px;box-shadow:var(--shadow)">
+        <button onclick="{{ goOverview }}" style="{{ tabOverviewStyle }}">{{ lbTabOv }}</button>
+        <button onclick="{{ goWatch }}" style="{{ tabWatchBtnStyle }}">{{ lbTabWl }}</button>
+        <button onclick="{{ goSystem }}" style="{{ tabSystemStyle }}">{{ lbTabSys }}</button>
+        <button onclick="{{ goSetups }}" style="{{ tabSetupsStyle }}">{{ lbTabSu }}</button>
+        <button onclick="{{ goEmotions }}" style="{{ tabEmotionsStyle }}">{{ lbTabEm }}</button>
+        <button onclick="{{ goCalendar }}" style="{{ tabCalendarStyle }}">{{ lbTabCal }}</button>
+        <button onclick="{{ goHeatmap }}" style="{{ tabHeatmapStyle }}">{{ lbTabHm }}</button>
+      </div>
     </div>
     <!-- KPI GRID (always visible) -->
     <div id="kpiGrid" style="margin-bottom:14px"></div>
@@ -955,7 +970,7 @@ const TJ_NORM = a => (Array.isArray(a) ? a : []).map(t => {
   return (ex || e) ? { ...t, ...(ex ? {ex} : {}), ...(e ? {e} : {}) } : t;
 });
 const TJ_MILES = [900,1800,5000,10000,50000];
-const TJ_PAL = ['#00c8ff','#4ade80','#f87171','#ffab00','#7c3aed','#06b6d4','#f43f5e','#84cc16','#8b949e'];
+const TJ_PAL = ['#8b74f6','#3fbf7f','#f2775f','#e0a63a','#5f8ef0','#3fc4bc','#e56aa2','#9fb838','#98938a'];
 const TJ_TR = {
   vi: {
     subtitle:'2026–2036 · 1R = 1% tài sản',
@@ -1312,7 +1327,7 @@ class Component extends DCLogic {
   _applyTheme() {
     document.body.classList.toggle('theme-light', this.state.theme === 'light');
     const mc = document.getElementById('tjThemeColor');
-    if (mc) mc.setAttribute('content', this.state.theme === 'light' ? '#eef1f7' : '#0e141f');
+    if (mc) mc.setAttribute('content', this.state.theme === 'light' ? '#f6f4ee' : '#141317');
   }
 
   _setupPWA() {
@@ -1321,7 +1336,7 @@ class Component extends DCLogic {
       const manifest = {
         name: 'Trading Journal 2026', short_name: 'TJ·26',
         start_url: '.', scope: '.', display: 'standalone',
-        orientation: 'any', background_color: '#0e141f', theme_color: '#0e141f',
+        orientation: 'any', background_color: '#141317', theme_color: '#141317',
         description: 'Personal trading journal 2026', icons: [],
       };
       const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
@@ -1334,13 +1349,13 @@ class Component extends DCLogic {
   _tc() {
     const dark = this.state.theme === 'dark';
     return {
-      tick: dark ? '#647d99' : '#6e7f97', grid: dark ? '#1c2942' : '#dde4ef',
-      accent: dark ? '#29c5f6' : '#2563eb',
-      green: dark ? '#3ddc84' : '#0d8043',
-      red: dark ? '#fa6a6a' : '#d32f2f',
-      amber: dark ? '#ffb02e' : '#b45309',
-      card: dark ? '#19222f' : '#ffffff', text2: dark ? '#7e94ad' : '#52617d',
-      line: dark ? '#9fb2c7' : '#546e7a',
+      tick: dark ? '#8e897d' : '#8a8476', grid: dark ? '#26242c' : '#e7e3d6',
+      accent: dark ? '#b6a3f8' : '#6a4ff0',
+      green: dark ? '#5fe0a0' : '#0f9256',
+      red: dark ? '#f8887b' : '#d2493d',
+      amber: dark ? '#eec25f' : '#a3690a',
+      card: dark ? '#1d1b21' : '#fdfcf9', text2: dark ? '#b8b3a8' : '#57544b',
+      line: dark ? '#a6a196' : '#6f6a5e',
     };
   }
 
@@ -2219,7 +2234,7 @@ class Component extends DCLogic {
         const ym = `${y}-${String(mi+1).padStart(2,'0')}`, d = monthly[ym];
         if (!d) return `<div style="background:var(--border2);border-radius:6px;height:38px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3)">—</div>`;
         const alpha = 0.12+Math.min(Math.abs(d.net)/maxAbs,1)*0.65;
-        const rgb = d.net>=0?[74,222,128]:[248,113,113];
+        const rgb = d.net>=0?[63,191,127]:[240,106,90];
         const bg = `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
         const eff = rgb.map((c,i)=>c*alpha+cardRgb[i]*(1-alpha));
         const lum = (0.2126*eff[0]+0.7152*eff[1]+0.0722*eff[2])/255;
@@ -2528,8 +2543,8 @@ class Component extends DCLogic {
     const s = this.state, st = this._stats(), tr = this._tr();
     const sgn = v => v >= 0 ? '+' : '';
     const tabSt = name => ({
-      flex:1, background:s.rightTab===name?'var(--border2)':'transparent',
-      border:'none', borderRadius:'7px', padding:'6px 2px', fontSize:'9.5px',
+      flex:1, background:s.rightTab===name?'var(--accent-soft)':'transparent',
+      border:'none', borderRadius:'7px', padding:'7px 2px', fontSize:'10px',
       fontWeight:700, cursor:'pointer', fontFamily:"'Be Vietnam Pro',system-ui,sans-serif",
       color:s.rightTab===name?'var(--accent)':'var(--text3)', transition:'all .15s',
     });
@@ -2550,10 +2565,9 @@ class Component extends DCLogic {
       themeIcon: s.theme==='dark'?'☀️':'🌙',
       driveUpTitle: (() => { const last = +localStorage.getItem('tj_gdrive_last_backup') || 0;
         return last ? tr.bkLastAt + new Date(last).toLocaleString(s.lang==='vi'?'vi-VN':'en-US') : tr.bkNever; })(),
-      driveUpStyle: (() => { const od = this._backupOverdue(); return {
-        background: od?'var(--amber-soft)':'var(--border2)', border: od?'1px solid var(--amber)':'1px solid var(--border)',
-        borderRadius:'8px', padding:'6px 10px', fontSize:'11px', fontWeight:600, cursor:'pointer',
-        color: od?'var(--amber)':'var(--text2)' }; })(),
+      driveUpStyle: (() => { const od = this._backupOverdue(); return od
+        ? { background:'var(--amber-soft)', color:'var(--amber)', boxShadow:'inset 0 0 0 1px var(--amber)' }
+        : { background:'transparent', color:'var(--text2)' }; })(),
       actionsToggleIcon: s.actionsOpen?'✕':'⋯',
       actionsStyle: { display: (window.innerWidth>600||s.actionsOpen)?'flex':'none', gap:'6px', flexShrink:0 },
       // Position sizing labels
