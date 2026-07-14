@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
-"""Scan Trend Template (Mark Minervini) + RS Rating tren toan bo co phieu My.
+"""Scan Trend Template (Mark Minervini) + RS Rating + phan bac theo 3 screen cua user.
 
-Tieu chi (tu sach "Trade Like a Stock Market Wizard"):
-  1. Gia > SMA150 va > SMA200
-  2. SMA150 > SMA200
-  3. SMA50 > SMA150 > SMA200
-  4. Gia > SMA50
-  5. Gia cao hon day 52 tuan it nhat 30%
-  6. Gia cach dinh 52 tuan toi da 25%
-  7. RS Rating >= nguong (mac dinh 70) — tinh percentile nhu IBD tren toan universe
-  (Tieu chi "SMA200 doc len >= 1 thang" scanner khong ho tro truc tiep —
-   thay bang dieu kien Perf.3M > 0)
+Vong 1 — cong ky thuat (noi long theo screen rong nhat cua user):
+  gia > SMA50 > SMA150 > SMA200, tren day 52W >= 20%, cach dinh 52W <= 30%,
+  Perf.3M > 0, gia > 10 USD, KLTB 30 ngay > 300K, RS Rating >= nguong (mac dinh 70)
 
-Loc thanh khoan: gia > 10 USD, KLTB 30 ngay > 500K (giong screen tren TradingView).
+Vong 2 — gan nhan tier theo fundamentals (uu tien tu cao xuong):
+  🏆 SEPA  : Perf.3M>=20, Perf.6M>=30, Revenue QYoY>=20%, EPS QoQ>=40%, EPS QYoY>=40%
+             (= screen "Mark Minervini" cua user)
+  🚀 EARLY : Perf.3M>=10, Perf.6M>=20, EPS QoQ>=20%, ROE>=15%
+             (= screen "Early Stage 2")
+  🌱 IPO   : niem yet <=5 nam (Perf.5Y == Perf.All) + gross margin FY >= 20%
+             (= screen "IPO Base")
+  📈 TREND : chi dat ky thuat — khong bi loai, chi xep sau
+
+Khong bao gio "trang tay": tier tren 0 ma thi van thay tier duoi.
+(Tieu chi "SMA200 doc len 1 thang" API khong ho tro — proxy bang Perf.3M > 0)
 
 Cach dung:
-    python scan_trend_template.py                 # scan + gui top 15 qua Telegram
-    python scan_trend_template.py --top 30        # gui top 30
+    python scan_trend_template.py                 # scan + gui Telegram + push
     python scan_trend_template.py --rs 80         # nguong RS >= 80
-    python scan_trend_template.py --no-telegram   # chi in ra man hinh + luu file
+    python scan_trend_template.py --no-telegram --no-push   # chay thu
 """
 import argparse
 import json
@@ -42,8 +44,11 @@ LIQUID_FILTERS = [
     col("type") == "stock",
     col("is_primary") == True,  # noqa: E712
     col("close") > 10,
-    col("average_volume_30d_calc") > 500_000,
+    col("average_volume_30d_calc") > 300_000,
 ]
+
+TIER_ORDER = {"SEPA": 0, "EARLY": 1, "IPO": 2, "TREND": 3}
+TIER_BADGE = {"SEPA": "🏆", "EARLY": "🚀", "IPO": "🌱", "TREND": ""}
 
 
 def rs_rating(df: pd.DataFrame) -> pd.Series:
@@ -74,15 +79,19 @@ def fetch_trend_template() -> pd.DataFrame:
             "average_volume_30d_calc", "market_cap_basic", "sector",
             "SMA50", "SMA150", "SMA200",
             "price_52_week_high", "price_52_week_low",
-            "Perf.3M", "Perf.6M", "Perf.Y",
+            "Perf.3M", "Perf.6M", "Perf.Y", "Perf.5Y", "Perf.All",
+            "total_revenue_yoy_growth_fq",
+            "earnings_per_share_diluted_yoy_growth_fq",
+            "earnings_per_share_diluted_qoq_growth_fq",
+            "gross_margin_fy", "return_on_equity",
         )
         .where(
             *LIQUID_FILTERS,
             col("close") > col("SMA50"),
             col("SMA50") > col("SMA150"),
             col("SMA150") > col("SMA200"),
-            col("close").above_pct("price_52_week_low", 1.30),
-            col("close").above_pct("price_52_week_high", 0.75),
+            col("close").above_pct("price_52_week_low", 1.20),
+            col("close").above_pct("price_52_week_high", 0.70),
             col("Perf.3M") > 0,
         )
         .set_markets("america")
@@ -90,6 +99,29 @@ def fetch_trend_template() -> pd.DataFrame:
         .get_scanner_data()
     )
     return df
+
+
+def classify(df: pd.DataFrame):
+    """Gan tier theo 3 screen TradingView cua user. NaN tu dong khong dat."""
+    num = lambda c: pd.to_numeric(df[c], errors="coerce")
+    p3, p6 = num("Perf.3M"), num("Perf.6M")
+    rev_yoy = num("total_revenue_yoy_growth_fq")
+    eps_yoy = num("earnings_per_share_diluted_yoy_growth_fq")
+    eps_qoq = num("earnings_per_share_diluted_qoq_growth_fq")
+    roe = num("return_on_equity")
+    gm = num("gross_margin_fy")
+    # Niem yet <= 5 nam: TradingView dien Perf.5Y = Perf.All khi lich su ngan hon 5 nam
+    young = (num("Perf.5Y") - num("Perf.All")).abs() < 1e-6
+
+    sepa = (p3 >= 20) & (p6 >= 30) & (rev_yoy >= 20) & (eps_qoq >= 40) & (eps_yoy >= 40)
+    early = (p3 >= 10) & (p6 >= 20) & (eps_qoq >= 20) & (roe >= 15)
+    ipo = young & (gm >= 20)
+
+    tier = pd.Series("TREND", index=df.index)
+    tier[ipo] = "IPO"
+    tier[early] = "EARLY"
+    tier[sepa] = "SEPA"
+    return tier, young
 
 
 def chart_url(cfg: dict, ticker: str) -> str:
@@ -109,8 +141,9 @@ def write_site_json(cfg: dict, df: pd.DataFrame, scanned_at: str, rs_min: int):
             "sector": r["sector"], "close": round(float(r["close"]), 2),
             "change": round(float(r["change"]), 2), "rs": int(r["RS"]),
             "off_high": float(r["off_high_%"]), "above_low": float(r["above_low_%"]),
+            "tier": r["tier"], "young": bool(r["young"]),
         }
-        for _, r in df.head(50).iterrows()
+        for _, r in df.head(60).iterrows()
     ]
     SITE_SCAN.parent.mkdir(exist_ok=True)
     with open(SITE_SCAN, "w", encoding="utf-8") as f:
@@ -167,15 +200,19 @@ def main():
     df = df[df["RS"] >= args.rs].copy()
     df["off_high_%"] = ((df["close"] / df["price_52_week_high"] - 1) * 100).round(1)
     df["above_low_%"] = ((df["close"] / df["price_52_week_low"] - 1) * 100).round(0)
-    df = df.sort_values("RS", ascending=False).reset_index(drop=True)
-    print(f"  {len(df)} ma dat RS >= {args.rs}.")
+    df["tier"], df["young"] = classify(df)
+    df["_tier_rank"] = df["tier"].map(TIER_ORDER)
+    df = df.sort_values(["_tier_rank", "RS"], ascending=[True, False]).reset_index(drop=True)
+    counts = df["tier"].value_counts()
+    print(f"  {len(df)} ma dat RS >= {args.rs}: "
+          + " | ".join(f"{t} {counts.get(t, 0)}" for t in TIER_ORDER))
 
     # Luu ket qua
     now_vn = datetime.now(VN)
     scanned_at = now_vn.strftime("%d/%m/%Y %H:%M") + " (VN)"
     SCAN_DIR.mkdir(exist_ok=True)
     today = now_vn.strftime("%Y-%m-%d")
-    out_cols = ["name", "ticker", "description", "sector", "close", "change", "RS",
+    out_cols = ["name", "ticker", "tier", "young", "description", "sector", "close", "change", "RS",
                 "off_high_%", "above_low_%", "volume", "market_cap_basic"]
     df[out_cols].to_csv(SCAN_DIR / f"scan_{today}.csv", index=False, encoding="utf-8-sig")
     df[out_cols].to_json(SCAN_DIR / f"scan_{today}.json", orient="records", force_ascii=False, indent=2)
@@ -193,25 +230,40 @@ def main():
         prev = pd.read_json(prev_files[-2])
         new_names = set(df["name"]) - set(prev["name"])
 
-    top = df.head(args.top)
-    lines = [f"📊 <b>Trend Template Scan</b> — {scanned_at}",
-             f"{len(df)} ma dat chuan (RS ≥ {args.rs}). Top {len(top)} theo RS:", ""]
-    for _, r in top.iterrows():
+    def fmt_row(r):
         flag = " 🆕" if r["name"] in new_names else ""
+        seed = " 🌱" if r["young"] and r["tier"] != "IPO" else ""
         link = chart_url(cfg, r["ticker"])
-        lines.append(
-            f"<a href=\"{link}\"><b>{r['name']}</b></a>{flag} RS {r['RS']} | ${r['close']:,.2f} "
-            f"({r['change']:+.1f}%) | cach dinh {r['off_high_%']}%"
-        )
-    if new_names:
-        extra = new_names - set(top["name"])
-        if extra:
-            lines += ["", "🆕 Moi lot vao hom nay: " + ", ".join(sorted(extra))]
+        return (f"<a href=\"{link}\"><b>{r['name']}</b></a>{seed}{flag} RS {r['RS']} | "
+                f"${r['close']:,.2f} ({r['change']:+.1f}%) | cach dinh {r['off_high_%']}%")
+
+    sections = [
+        ("SEPA", "🏆 <b>SEPA</b> — ky thuat + EPS ≥40%, doanh thu ≥20%", 10),
+        ("EARLY", "🚀 <b>Early Stage</b> — EPS QoQ ≥20%, ROE ≥15%", 8),
+        ("IPO", "🌱 <b>IPO ≤5 nam</b> — bien lai gop ≥20%", 8),
+        ("TREND", "📈 <b>Trend khac</b> (top RS)", 5),
+    ]
+    lines = [f"📊 <b>Trend Template Scan</b> — {scanned_at}",
+             f"{len(df)} ma dat ky thuat + RS ≥ {args.rs}"]
+    for tname, title, cap in sections:
+        sub = df[df["tier"] == tname]
+        if not len(sub):
+            if tname in ("SEPA", "EARLY"):
+                lines += ["", f"{title}: 0 ma (thi truong chua co setup chuan)"]
+            continue
+        lines += ["", f"{title}: {len(sub)} ma"]
+        lines += [fmt_row(r) for _, r in sub.head(cap).iterrows()]
+        if len(sub) > cap:
+            lines.append(f"…va {len(sub) - cap} ma nua (xem tab Watch)")
+    new_shown = set(df.head(60)["name"])
+    extra_new = new_names - new_shown
+    if extra_new:
+        lines += ["", "🆕 Moi lot vao hom nay: " + ", ".join(sorted(extra_new))]
     lines += ["", "👉 Xem day du: https://phantam.netlify.app (tab Watch)"]
     text = "\n".join(lines)
 
     print()
-    print(top[["name", "RS", "close", "change", "off_high_%", "sector"]].to_string(index=False))
+    print(df.head(args.top)[["name", "tier", "RS", "close", "change", "off_high_%", "sector"]].to_string(index=False))
 
     if not args.no_telegram:
         send_telegram(cfg, text)
