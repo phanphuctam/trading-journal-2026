@@ -26,7 +26,7 @@
 ## Bước 2 — Bot 24/7 trên GitHub Actions (không cần máy bật)
 
 Workflow `.github/workflows/trading.yml` chạy trên máy chủ GitHub:
-- **9h00 sáng VN mỗi ngày**: scan Trend Template + check watchlist EOD → Telegram, tự commit `scans/latest.json` → Netlify tự cập nhật
+- **9h00 sáng VN mỗi ngày**: scan Trend Template + check watchlist EOD → Telegram, tự commit `scans/latest.json` → GitHub Pages tự cập nhật
 - **30 phút/lần trong phiên Mỹ** (20h30–3h sáng VN): check watchlist realtime → báo ngay khi vượt pivot / chạm stop
 
 Cài 1 lần trên web GitHub (repo → **Settings**):
@@ -41,7 +41,7 @@ Backup trên máy (nếu không dùng Actions): task "TJ-DailyScan" 9h sáng —
 ## Quy trình dùng hằng ngày
 
 1. **9h sáng**: bot Telegram gửi kết quả scan — **bấm tên mã để mở thẳng chart TradingView** (layout riêng của bạn) + cảnh báo watchlist (🚀 vượt pivot / 👀 gần pivot / 🛑 chạm stop)
-2. Scan xong script tự ghi `scans/latest.json` → **commit + push GitHub → Netlify tự deploy** → mở https://phantam.netlify.app tab **Watch** thấy bảng kết quả scan (kèm giờ scan), bấm mã mở chart, bấm **＋** để đưa vào watchlist
+2. Scan xong script tự ghi `scans/latest.json` → **commit + push GitHub → GitHub Pages tự deploy** → mở https://phanphuctam.github.io/trading-journal-2026 tab **Watch** thấy bảng kết quả scan (kèm giờ scan), bấm mã mở chart, bấm **＋** để đưa vào watchlist
 3. Điền pivot + stop cho mã vừa thêm → bấm **⤴ Push GitHub** ngay trong tab Watch — xong, bot 24/7 dùng ngay.
    - Lần đầu bấm sẽ hỏi GitHub token: tạo **fine-grained PAT** tại github.com → Settings → Developer settings → Fine-grained tokens → chỉ chọn repo `trading-journal-2026`, quyền **Contents: Read and write**. Token chỉ lưu trong trình duyệt.
    - Đường dự phòng (không cần token): bấm **⬇ watchlist.json** rồi chạy `python "automation\push_watchlist.py"` (hoặc double-click `Cap nhat watchlist.bat`).
@@ -68,11 +68,11 @@ python "automation\alert_watcher.py" --force                    # check gia ngay
 
 ## Sửa giao diện journal
 
-`index.html` (bản deploy Netlify) được đóng gói từ `app-src.html`:
+`index.html` (bản deploy GitHub Pages) được đóng gói từ `app-src.html`:
 
 ```powershell
 # 1. Sua app-src.html
 # 2. Nhung lai vao index.html:
 python "automation\rebuild_index.py"
-# 3. Mo index.html kiem tra, roi keo tha len Netlify
+# 3. Mo index.html kiem tra, roi push GitHub (Pages tu deploy)
 ```

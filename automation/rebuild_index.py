@@ -4,7 +4,7 @@
 Quy trinh sua giao dien journal:
   1. Sua app-src.html
   2. python automation/rebuild_index.py
-  3. Mo index.html kiem tra roi deploy Netlify
+  3. Mo index.html kiem tra roi push GitHub (Pages tu deploy)
 """
 import json
 import re

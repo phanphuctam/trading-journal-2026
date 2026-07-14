@@ -132,7 +132,7 @@ def chart_url(cfg: dict, ticker: str) -> str:
 
 
 def write_site_json(cfg: dict, df: pd.DataFrame, scanned_at: str, rs_min: int):
-    """Ghi scans/latest.json o goc repo de journal tren Netlify doc duoc."""
+    """Ghi scans/latest.json o goc repo de journal tren GitHub Pages doc duoc."""
     layout = (cfg.get("chart_layout_id") or "").strip()
     chart_base = f"https://www.tradingview.com/chart/{layout}/" if layout else "https://www.tradingview.com/chart/"
     results = [
@@ -154,7 +154,7 @@ def write_site_json(cfg: dict, df: pd.DataFrame, scanned_at: str, rs_min: int):
 
 
 def push_site_json():
-    """Commit + push scans/latest.json de Netlify tu deploy."""
+    """Commit + push scans/latest.json de GitHub Pages tu deploy."""
     rel = str(SITE_SCAN.relative_to(ROOT)).replace("\\", "/")
     try:
         # git pull bi treo tren may nay — dung fetch + rebase tach buoc
@@ -172,7 +172,7 @@ def push_site_json():
             return
         p = subprocess.run(["git", "-C", str(ROOT), "push"], capture_output=True, text=True, timeout=120)
         if p.returncode == 0:
-            print("Da push len GitHub — Netlify se tu deploy sau ~1 phut.")
+            print("Da push len GitHub — GitHub Pages se tu deploy sau ~1 phut.")
         else:
             print("[!] Push loi:", (p.stdout + p.stderr).strip()[:300])
     except Exception as e:
@@ -221,7 +221,7 @@ def main():
     df[out_cols].to_json(SCAN_DIR / f"scan_{today}.json", orient="records", force_ascii=False, indent=2)
     print(f"Da luu: automation/scans/scan_{today}.csv / .json")
 
-    # JSON cho journal tren Netlify (+ commit/push de site tu cap nhat)
+    # JSON cho journal tren GitHub Pages (+ commit/push de site tu cap nhat)
     write_site_json(cfg, df, scanned_at, args.rs)
     if not args.no_push:
         push_site_json()
@@ -262,7 +262,7 @@ def main():
     extra_new = new_names - new_shown
     if extra_new:
         lines += ["", "🆕 Moi lot vao hom nay: " + ", ".join(sorted(extra_new))]
-    lines += ["", "👉 Xem day du: https://phantam.netlify.app (tab Watch)"]
+    lines += ["", "👉 Xem day du: https://phanphuctam.github.io/trading-journal-2026 (tab Watch)"]
     text = "\n".join(lines)
 
     print()
