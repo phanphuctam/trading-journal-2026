@@ -2,7 +2,7 @@ name: Trading bot
 
 on:
   schedule:
-    - cron: '0 2 * * *'           # 09:00 sang VN — scan Trend Template + check watchlist EOD
+    - cron: '0 2 * * 6'           # 09:00 sang thu Bay VN (tuan 1 lan, sau khi My dong phien thu Sau) — scan Trend Template + check watchlist EOD
     - cron: '*/30 13-21 * * 1-5'  # phien My (script tu bo qua khi thi truong dong cua)
   workflow_dispatch: {}
 
@@ -27,8 +27,8 @@ jobs:
       - name: Cai thu vien
         run: pip install --quiet tradingview-screener requests pandas
 
-      - name: Scan Trend Template + check watchlist (9h sang VN)
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 2 * * *'
+      - name: Scan Trend Template + check watchlist (9h sang thu Bay VN)
+        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 2 * * 6'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
