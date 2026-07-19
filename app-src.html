@@ -1856,10 +1856,10 @@ class Component extends DCLogic {
       u: t => `https://www.google.com/search?q=${t}+earnings+call+transcript+latest+quarter`,
       w: 'Đọc phần <b>Guidance</b> và <b>Q&amp;A</b> — bỏ qua đoạn đọc lại số liệu',
       p: 'Có xúc tác rõ: sản phẩm mới, thị trường mới, hợp đồng lớn, ban lãnh đạo mới' },
-    { k: 'ed', g: '7 · Lịch báo cáo', must: 1, s: 'Earnings Whispers',
-      u: t => `https://www.earningswhispers.com/stocks/${t}`,
-      w: 'Ngày báo cáo tài chính kế tiếp',
-      p: 'Còn &gt; 2 tuần, hoặc bạn đã có sẵn lãi 15–20% làm đệm',
+    { k: 'ed', g: '7 · Lịch báo cáo', must: 1, s: 'stockanalysis · trang mã',
+      u: t => `https://stockanalysis.com/stocks/${t}/`,
+      w: 'Ô <b>Earnings Date</b> ở bảng thông tin bên phải',
+      p: t => `Còn &gt; 2 tuần, hoặc bạn đã có sẵn lãi 15–20% làm đệm · sát mốc 2 tuần thì đối chiếu <a href="https://www.earningswhispers.com/stocks/${t}" target="_blank" rel="noopener" style="color:var(--accent)">Earnings Whispers</a> — chỉ trang đó phân biệt ngày <b>đã xác nhận</b> với <b>ước tính</b>`,
       f: 'Còn &lt; 2 tuần mà chưa có lãi đệm → không vào lệnh mới, dù chart đẹp' },
   ]
 
@@ -1909,6 +1909,7 @@ class Component extends DCLogic {
     else if (nOk >= 6) { verdict = `✅ Hạng B — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--green)'; }
     else { verdict = `Đang đọc — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--text2)'; }
 
+    const txt = x => typeof x === 'function' ? x(t) : x;   // w/p/f có thể là hàm nhận mã
     const rows = this._FA.map(s => {
       const v = st[s.k] || 0, dis = !t;
       const btn = (val, icon, col) => `<span onclick="${dis ? '' : `window._tj.markFA('${s.k}',${val})`}" title="${val === 1 ? 'Đạt' : 'Không đạt'}" style="cursor:${dis ? 'default' : 'pointer'};font-size:12px;font-weight:700;line-height:1;padding:3px 7px;border-radius:6px;border:1px solid ${v === val ? col : 'var(--border)'};background:${v === val ? col : 'transparent'};color:${v === val ? 'var(--btn-fg)' : 'var(--text3)'}">${icon}</span>`;
@@ -1920,9 +1921,9 @@ class Component extends DCLogic {
           ${s.must ? '<span style="font-size:8.5px;font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:5px;padding:1px 5px;flex-shrink:0">BẮT BUỘC</span>' : ''}
           <span style="display:flex;gap:4px;flex-shrink:0">${btn(1, '✓', 'var(--green)')}${btn(-1, '✕', 'var(--red)')}</span>
         </div>
-        <div style="font-size:10.5px;color:var(--text2);line-height:1.6;margin-top:3px">👁 ${s.w}</div>
-        <div style="font-size:10.5px;color:var(--green);line-height:1.6;margin-top:2px">✓ ${s.p}</div>
-        ${s.f ? `<div style="font-size:10.5px;color:var(--red);line-height:1.6;margin-top:2px">✕ ${s.f}</div>` : ''}
+        <div style="font-size:10.5px;color:var(--text2);line-height:1.6;margin-top:3px">👁 ${txt(s.w)}</div>
+        <div style="font-size:10.5px;color:var(--green);line-height:1.6;margin-top:2px">✓ ${txt(s.p)}</div>
+        ${s.f ? `<div style="font-size:10.5px;color:var(--red);line-height:1.6;margin-top:2px">✕ ${txt(s.f)}</div>` : ''}
       </div>`;
     }).join('');
 
