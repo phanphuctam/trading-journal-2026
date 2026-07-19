@@ -1819,47 +1819,49 @@ class Component extends DCLogic {
   // ══ BẢNG ĐỌC YẾU TỐ CƠ BẢN (SEPA) ══
   // Điền mã 1 lần → mọi link tự có sẵn. Mỗi bước ghi rõ xem gì / đạt khi nào.
   // Bước có must:1 là kill switch — hỏng là loại, không cần đọc tiếp.
+  _TV = (t, page, q) => `https://www.tradingview.com/symbols/${t}/financials-${page}/${q ? '?statements-period=FQ' : ''}`
   _FA = [
-    { k: 'eps', g: '1 · Động lượng lợi nhuận', must: 1, s: 'stockanalysis · Income (quý)',
-      u: t => `https://stockanalysis.com/stocks/${t}/financials/?p=quarterly`,
-      w: 'Dòng <b>Revenue</b> và <b>EPS (Diluted)</b> → cột <b>Growth (YoY)</b>, 4 quý gần nhất',
+    { k: 'eps', g: '1 · Động lượng lợi nhuận', must: 1, s: 'TradingView · Income statement (quý)',
+      u: t => this._TV(t, 'income-statement', 1),
+      w: 'Dòng <b>Total revenue → YoY growth</b> và <b>Diluted EPS → YoY growth</b>, 4 quý gần nhất',
       p: 'EPS YoY ≥ 20% <b>VÀ đang tăng tốc</b> (vd 10→18→35) · doanh thu YoY ≥ 15%',
       f: 'EPS &lt; 20%, hoặc giảm tốc 2 quý liền (80→50→30) → loại ngay' },
-    { k: 'bs', g: '2 · Chất lượng lợi nhuận', must: 1, s: 'stockanalysis · Balance Sheet (quý)',
-      u: t => `https://stockanalysis.com/stocks/${t}/financials/balance-sheet/?p=quarterly`,
-      w: '<b>Accounts Receivable</b> và <b>Inventory</b> — so tốc độ tăng với doanh thu ở bước 1',
+    { k: 'bs', g: '2 · Chất lượng lợi nhuận', must: 1, s: 'TradingView · Balance sheet (quý)',
+      u: t => this._TV(t, 'balance-sheet', 1),
+      w: '<b>Accounts receivable</b> và <b>Inventories</b> — so tốc độ tăng với doanh thu ở bước 1',
       p: 'Cả hai tăng chậm hơn doanh thu',
       f: 'Cả hai phình ≥ 1,5× tốc độ doanh thu = <b>Double Trouble</b> → loại' },
-    { k: 'cf', must: 1, s: 'stockanalysis · Cash Flow (quý)',
-      u: t => `https://stockanalysis.com/stocks/${t}/financials/cash-flow-statement/?p=quarterly`,
-      w: '<b>Operating Cash Flow</b> so với Net Income · dòng <b>Shares Outstanding</b>',
-      p: 'OCF ≥ Net Income · số cổ phiếu không tăng &gt; 5% YoY (giảm = buyback, điểm cộng)',
+    { k: 'cf', must: 1, s: 'TradingView · Cash flow (quý)',
+      u: t => this._TV(t, 'cash-flow', 1),
+      w: '<b>Cash from operating activities</b> so với <b>Net income</b>',
+      p: 'OCF ≥ Net income và cùng chiều tăng',
       f: 'Lãi kế toán bùng nổ mà OCF èo uột = lãi trên giấy → loại' },
-    { k: 'mg', g: '3 · Biên lợi nhuận', s: 'stockanalysis · Ratios (quý)',
-      u: t => `https://stockanalysis.com/stocks/${t}/financials/ratios/?p=quarterly`,
-      w: '<b>Gross / Operating / Profit Margin</b> qua 4 quý',
-      p: 'Biên <b>mở rộng</b> (không cần cao). EPS + doanh thu + biên cùng tăng tốc 3 quý = <b>Code 33</b>' },
-    { k: 'zk', g: '4 · Kỳ vọng Phố Wall', s: 'Zacks · Detailed Estimates',
+    { k: 'mg', g: '3 · Biên lợi nhuận & pha loãng', s: 'TradingView · Statistics & ratios (quý)',
+      u: t => this._TV(t, 'statistics-and-ratios', 1),
+      w: '<b>Gross / Operating / Net margin %</b> · <b>Return on equity %</b> · <b>Total common shares outstanding</b>',
+      p: 'Biên <b>mở rộng</b> qua từng quý (không cần cao) · ROE ≥ 15% · số cổ phiếu không tăng &gt; 5% YoY (giảm = buyback, điểm cộng) · EPS + doanh thu + biên cùng tăng tốc 3 quý = <b>Code 33</b>' },
+    { k: 'er', g: '4 · Beat / miss', s: 'TradingView · Earnings',
+      u: t => this._TV(t, 'earnings'),
+      w: 'Bảng <b>Reported / Estimate / Surprise %</b> và biểu đồ cột: xanh = thực tế, xám = dự phóng',
+      p: 'Beat 3–4 quý liên tiếp. <b>Quan trọng hơn:</b> giá phản ứng thế nào sau tin — beat mà gap down = tổ chức đang xả' },
+    { k: 'zk', g: '5 · Điều chỉnh dự phóng', s: 'Zacks · Detailed Estimates',
       u: t => `https://www.zacks.com/stock/quote/${t}/detailed-estimates`,
       w: 'Bảng <b>Agreement — Estimate Revisions</b> và <b>Magnitude — Consensus Estimate Trend</b>',
-      p: 'Analyst <b>nâng</b> dự phóng trong 60 ngày qua (mũi tên xanh, số nâng &gt; số hạ)' },
-    { k: 'fc', s: 'stockanalysis · Forecast',
-      u: t => `https://stockanalysis.com/stocks/${t}/forecast/`,
-      w: 'Lịch sử beat/miss + dự phóng EPS quý tới',
-      p: 'Beat 3–4 quý liên tiếp. <b>Quan trọng hơn:</b> giá phản ứng thế nào sau tin — beat mà gap down = tổ chức đang xả' },
-    { k: 'ft', g: '5 · Dòng tiền tổ chức', s: 'Fintel · Ownership',
+      p: 'Analyst <b>nâng</b> dự phóng trong 60 ngày qua (số nâng &gt; số hạ)',
+      f: 'TradingView không có dữ liệu điều chỉnh dự phóng — bắt buộc sang Zacks' },
+    { k: 'ft', g: '6 · Dòng tiền tổ chức', s: 'Fintel · Ownership',
       u: t => `https://fintel.io/so/us/${t.toLowerCase()}`,
       w: '<b>Số lượng quỹ 13F</b> nắm giữ qua từng quý',
       p: 'Số quỹ tăng đều 2–3 quý liên tiếp',
-      f: '⚠️ Đừng nhìn <b>% institutional</b> — đa số mid-cap Mỹ có 80–95% chỉ vì quỹ chỉ số, con số này vô nghĩa' },
-    { k: 'ct', g: '6 · Catalyst', s: 'Google · earnings call transcript',
+      f: 'TradingView không có 13F. Và đừng nhìn <b>% institutional</b> — đa số mid-cap Mỹ có 80–95% chỉ vì quỹ chỉ số, con số này vô nghĩa' },
+    { k: 'ct', g: '7 · Catalyst', s: 'Google · earnings call transcript',
       u: t => `https://www.google.com/search?q=${t}+earnings+call+transcript+latest+quarter`,
       w: 'Đọc phần <b>Guidance</b> và <b>Q&amp;A</b> — bỏ qua đoạn đọc lại số liệu',
       p: 'Có xúc tác rõ: sản phẩm mới, thị trường mới, hợp đồng lớn, ban lãnh đạo mới' },
-    { k: 'ed', g: '7 · Lịch báo cáo', must: 1, s: 'stockanalysis · trang mã',
-      u: t => `https://stockanalysis.com/stocks/${t}/`,
-      w: 'Ô <b>Earnings Date</b> ở bảng thông tin bên phải',
-      p: t => `Còn &gt; 2 tuần, hoặc bạn đã có sẵn lãi 15–20% làm đệm · sát mốc 2 tuần thì đối chiếu <a href="https://www.earningswhispers.com/stocks/${t}" target="_blank" rel="noopener" style="color:var(--accent)">Earnings Whispers</a> — chỉ trang đó phân biệt ngày <b>đã xác nhận</b> với <b>ước tính</b>`,
+    { k: 'ed', g: '8 · Lịch báo cáo', must: 1, s: 'TradingView · Earnings → Next report date',
+      u: t => this._TV(t, 'earnings'),
+      w: 'Ô <b>Next report date</b> ở đầu trang — cùng trang với bước 4, không cần mở lại',
+      p: t => `Còn &gt; 2 tuần, hoặc bạn đã có sẵn lãi 15–20% làm đệm · sát mốc 2 tuần thì đối chiếu <a href="https://www.earningswhispers.com/stocks/${t}" target="_blank" rel="noopener" style="color:var(--accent)">Earnings Whispers</a> — hai nguồn có thể lệch vài ngày, chỉ EW phân biệt ngày <b>đã xác nhận</b> với <b>ước tính</b>`,
       f: 'Còn &lt; 2 tuần mà chưa có lãi đệm → không vào lệnh mới, dù chart đẹp' },
   ]
 
@@ -1883,7 +1885,9 @@ class Component extends DCLogic {
   }
   openAllFA = () => {
     const t = this._faSym; if (!t) return;
-    this._FA.forEach((s, i) => setTimeout(() => window.open(s.u(t), '_blank', 'noopener'), i * 260));
+    // Buoc 4 va 8 cung trang Earnings cua TradingView -> bo trung
+    [...new Set(this._FA.map(s => s.u(t)))].forEach((url, i) =>
+      setTimeout(() => window.open(url, '_blank', 'noopener'), i * 260));
   }
   faToNote = () => {
     const sym = this._faSym; if (!sym) return;
