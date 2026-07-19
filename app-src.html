@@ -700,6 +700,7 @@ details summary::-webkit-details-marker{display:none}
 </div>
 <div id="tj_toast" style="position:fixed;bottom:24px;right:24px;z-index:999;background:var(--green);color:var(--btn-fg);font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;box-shadow:0 4px 20px rgba(190,255,203,.3);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none"></div>
 <input type="file" id="csvIn" accept=".csv,text/csv" style="display:none">
+<div id="tj_fa"></div>
 
 <!-- ══ MAIN LAYOUT ══ -->
 <div id="tjGrid" style="display:grid;grid-template-columns:minmax(0,6fr) minmax(0,4fr);height:100vh;padding-top:52px;overflow:hidden">
@@ -1815,6 +1816,140 @@ class Component extends DCLogic {
     this._scanMark(sym, { s: String(this._scanData?.scanned_at || '') });
   }
 
+  // ══ BẢNG ĐỌC YẾU TỐ CƠ BẢN (SEPA) ══
+  // Điền mã 1 lần → mọi link tự có sẵn. Mỗi bước ghi rõ xem gì / đạt khi nào.
+  // Bước có must:1 là kill switch — hỏng là loại, không cần đọc tiếp.
+  _FA = [
+    { k: 'eps', g: '1 · Động lượng lợi nhuận', must: 1, s: 'stockanalysis · Income (quý)',
+      u: t => `https://stockanalysis.com/stocks/${t}/financials/?p=quarterly`,
+      w: 'Dòng <b>Revenue</b> và <b>EPS (Diluted)</b> → cột <b>Growth (YoY)</b>, 4 quý gần nhất',
+      p: 'EPS YoY ≥ 20% <b>VÀ đang tăng tốc</b> (vd 10→18→35) · doanh thu YoY ≥ 15%',
+      f: 'EPS &lt; 20%, hoặc giảm tốc 2 quý liền (80→50→30) → loại ngay' },
+    { k: 'bs', g: '2 · Chất lượng lợi nhuận', must: 1, s: 'stockanalysis · Balance Sheet (quý)',
+      u: t => `https://stockanalysis.com/stocks/${t}/financials/balance-sheet/?p=quarterly`,
+      w: '<b>Accounts Receivable</b> và <b>Inventory</b> — so tốc độ tăng với doanh thu ở bước 1',
+      p: 'Cả hai tăng chậm hơn doanh thu',
+      f: 'Cả hai phình ≥ 1,5× tốc độ doanh thu = <b>Double Trouble</b> → loại' },
+    { k: 'cf', must: 1, s: 'stockanalysis · Cash Flow (quý)',
+      u: t => `https://stockanalysis.com/stocks/${t}/financials/cash-flow-statement/?p=quarterly`,
+      w: '<b>Operating Cash Flow</b> so với Net Income · dòng <b>Shares Outstanding</b>',
+      p: 'OCF ≥ Net Income · số cổ phiếu không tăng &gt; 5% YoY (giảm = buyback, điểm cộng)',
+      f: 'Lãi kế toán bùng nổ mà OCF èo uột = lãi trên giấy → loại' },
+    { k: 'mg', g: '3 · Biên lợi nhuận', s: 'stockanalysis · Ratios (quý)',
+      u: t => `https://stockanalysis.com/stocks/${t}/financials/ratios/?p=quarterly`,
+      w: '<b>Gross / Operating / Profit Margin</b> qua 4 quý',
+      p: 'Biên <b>mở rộng</b> (không cần cao). EPS + doanh thu + biên cùng tăng tốc 3 quý = <b>Code 33</b>' },
+    { k: 'zk', g: '4 · Kỳ vọng Phố Wall', s: 'Zacks · Detailed Estimates',
+      u: t => `https://www.zacks.com/stock/quote/${t}/detailed-estimates`,
+      w: 'Bảng <b>Agreement — Estimate Revisions</b> và <b>Magnitude — Consensus Estimate Trend</b>',
+      p: 'Analyst <b>nâng</b> dự phóng trong 60 ngày qua (mũi tên xanh, số nâng &gt; số hạ)' },
+    { k: 'fc', s: 'stockanalysis · Forecast',
+      u: t => `https://stockanalysis.com/stocks/${t}/forecast/`,
+      w: 'Lịch sử beat/miss + dự phóng EPS quý tới',
+      p: 'Beat 3–4 quý liên tiếp. <b>Quan trọng hơn:</b> giá phản ứng thế nào sau tin — beat mà gap down = tổ chức đang xả' },
+    { k: 'ft', g: '5 · Dòng tiền tổ chức', s: 'Fintel · Ownership',
+      u: t => `https://fintel.io/so/us/${t.toLowerCase()}`,
+      w: '<b>Số lượng quỹ 13F</b> nắm giữ qua từng quý',
+      p: 'Số quỹ tăng đều 2–3 quý liên tiếp',
+      f: '⚠️ Đừng nhìn <b>% institutional</b> — đa số mid-cap Mỹ có 80–95% chỉ vì quỹ chỉ số, con số này vô nghĩa' },
+    { k: 'ct', g: '6 · Catalyst', s: 'Google · earnings call transcript',
+      u: t => `https://www.google.com/search?q=${t}+earnings+call+transcript+latest+quarter`,
+      w: 'Đọc phần <b>Guidance</b> và <b>Q&amp;A</b> — bỏ qua đoạn đọc lại số liệu',
+      p: 'Có xúc tác rõ: sản phẩm mới, thị trường mới, hợp đồng lớn, ban lãnh đạo mới' },
+    { k: 'ed', g: '7 · Lịch báo cáo', must: 1, s: 'Earnings Whispers',
+      u: t => `https://www.earningswhispers.com/stocks/${t}`,
+      w: 'Ngày báo cáo tài chính kế tiếp',
+      p: 'Còn &gt; 2 tuần, hoặc bạn đã có sẵn lãi 15–20% làm đệm',
+      f: 'Còn &lt; 2 tuần mà chưa có lãi đệm → không vào lệnh mới, dù chart đẹp' },
+  ]
+
+  _faGet() {
+    if (!this._faSt) { try { this._faSt = JSON.parse(localStorage.getItem('tj_fund_v1') || '{}') || {}; } catch (e) { this._faSt = {}; } }
+    return this._faSt;
+  }
+  openFA = (sym) => { this._faSym = String(sym || this._faSym || '').toUpperCase(); this._renderFA(); }
+  closeFA = () => { this._faSym = null; this._renderFA(); }
+  setFASym = (v) => {
+    this._faSym = String(v || '').toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
+    this._renderFA();
+    const i = document.getElementById('faSymInp'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+  }
+  markFA = (k, v) => {
+    const sym = this._faSym; if (!sym) return;
+    const st = this._faGet(); const e = st[sym] = st[sym] || {};
+    e[k] = (e[k] === v) ? 0 : v; e.t = Date.now();
+    localStorage.setItem('tj_fund_v1', JSON.stringify(st));
+    this._renderFA();
+  }
+  openAllFA = () => {
+    const t = this._faSym; if (!t) return;
+    this._FA.forEach((s, i) => setTimeout(() => window.open(s.u(t), '_blank', 'noopener'), i * 260));
+  }
+  faToNote = () => {
+    const sym = this._faSym; if (!sym) return;
+    const st = (this._faGet()[sym]) || {};
+    const ok = this._FA.filter(s => st[s.k] === 1).length;
+    const bad = this._FA.filter(s => st[s.k] === -1).map(s => s.k);
+    const txt = `CB ${ok}/${this._FA.length} đạt${bad.length ? ' · hỏng: ' + bad.join(',') : ''}`;
+    this._scanMark(sym, { n: txt, t: Date.now() });
+    this._toast('Đã ghi vào ghi chú scan ' + sym);
+  }
+
+  _renderFA() {
+    const host = document.getElementById('tj_fa'); if (!host) return;
+    if (!this._faSym && this._faSym !== '') { host.innerHTML = ''; return; }
+    const t = this._faSym, st = (this._faGet()[t]) || {};
+    const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const nOk = this._FA.filter(s => st[s.k] === 1).length;
+    const killed = this._FA.some(s => s.must && st[s.k] === -1);
+    let verdict, vcol;
+    if (!t) { verdict = 'Nhập mã cổ phiếu để bắt đầu'; vcol = 'var(--text3)'; }
+    else if (killed) { verdict = '❌ LOẠI — hỏng tiêu chí bắt buộc'; vcol = 'var(--red)'; }
+    else if (nOk >= 8) { verdict = `🏆 Hạng A — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--green)'; }
+    else if (nOk >= 6) { verdict = `✅ Hạng B — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--green)'; }
+    else { verdict = `Đang đọc — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--text2)'; }
+
+    const rows = this._FA.map(s => {
+      const v = st[s.k] || 0, dis = !t;
+      const btn = (val, icon, col) => `<span onclick="${dis ? '' : `window._tj.markFA('${s.k}',${val})`}" title="${val === 1 ? 'Đạt' : 'Không đạt'}" style="cursor:${dis ? 'default' : 'pointer'};font-size:12px;font-weight:700;line-height:1;padding:3px 7px;border-radius:6px;border:1px solid ${v === val ? col : 'var(--border)'};background:${v === val ? col : 'transparent'};color:${v === val ? 'var(--btn-fg)' : 'var(--text3)'}">${icon}</span>`;
+      return `
+      ${s.g ? `<div style="font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.04em;margin:10px 0 4px">${s.g.toUpperCase()}</div>` : ''}
+      <div style="padding:7px 0;border-bottom:1px dashed var(--border);opacity:${v === -1 ? '.55' : '1'}">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <a href="${t ? s.u(t) : '#'}" target="_blank" rel="noopener" onclick="${t ? '' : 'return false'}" style="font-size:11.5px;font-weight:700;color:${t ? 'var(--accent)' : 'var(--text3)'};text-decoration:none;flex:1;min-width:0">${s.s} ↗</a>
+          ${s.must ? '<span style="font-size:8.5px;font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:5px;padding:1px 5px;flex-shrink:0">BẮT BUỘC</span>' : ''}
+          <span style="display:flex;gap:4px;flex-shrink:0">${btn(1, '✓', 'var(--green)')}${btn(-1, '✕', 'var(--red)')}</span>
+        </div>
+        <div style="font-size:10.5px;color:var(--text2);line-height:1.6;margin-top:3px">👁 ${s.w}</div>
+        <div style="font-size:10.5px;color:var(--green);line-height:1.6;margin-top:2px">✓ ${s.p}</div>
+        ${s.f ? `<div style="font-size:10.5px;color:var(--red);line-height:1.6;margin-top:2px">✕ ${s.f}</div>` : ''}
+      </div>`;
+    }).join('');
+
+    host.innerHTML = `
+    <div onclick="if(event.target===this)window._tj.closeFA()" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.62);display:flex;align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:640px;margin:auto">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12.5px;font-weight:700">🔬 Đọc yếu tố cơ bản — SEPA</div>
+            <div style="font-size:9.5px;color:${vcol};margin-top:2px;font-weight:700">${verdict}</div>
+          </div>
+          <span onclick="window._tj.closeFA()" style="cursor:pointer;font-size:16px;color:var(--text3);padding:2px 6px;flex-shrink:0">✕</span>
+        </div>
+        <div style="padding:12px 16px 4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="faSymInp" value="${esc(t)}" placeholder="Mã cổ phiếu…" oninput="window._tj.setFASym(this.value)" style="flex:1;min-width:110px;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:7px 10px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text);letter-spacing:.06em">
+          <button onclick="window._tj.openAllFA()" ${t ? '' : 'disabled'} style="background:var(--accent);color:var(--btn-fg);border:0;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0">Mở tất cả ↗</button>
+          <button onclick="window._tj.faToNote()" ${t ? '' : 'disabled'} style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:11px;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0" title="Ghi kết quả vào ghi chú của mã trong bảng scan">→ Ghi chú</button>
+        </div>
+        <div style="padding:0 16px 14px">${rows}
+          <div style="font-size:9.5px;color:var(--text3);line-height:1.6;margin-top:10px">Tối thiểu để vào lệnh: 4 mục <b>BẮT BUỘC</b> đều đạt. Đánh dấu ✓/✕ được lưu trên máy bạn theo từng mã.</div>
+        </div>
+      </div>
+    </div>`;
+    const i = document.getElementById('faSymInp');
+    if (i && document.activeElement !== i && !t) i.focus();
+  }
+
   // ── Đánh dấu đã xem / ẩn / ghi chú cho từng mã scan (lưu localStorage, không đụng dữ liệu scan) ──
   _scanMkGet() {
     if (!this._scanMk) { try { this._scanMk = JSON.parse(localStorage.getItem('tj_scanmarks_v1') || '{}') || {}; } catch (e) { this._scanMk = {}; } }
@@ -1875,25 +2010,31 @@ class Component extends DCLogic {
       const base = d.chart_base || 'https://www.tradingview.com/chart/';
       const badges = { SEPA: '🏆', EARLY: '🚀', IPO: '🌱' };
       const marks = this._scanMkGet(), cur = String(d.scanned_at || '');
-      const list = d.results.slice(0, 40);
+      // 🎯 nền sớm là nhóm THÊM vào đầu bảng — phải nới slice để nhóm cũ (nền 3-4 mạnh) không bị đẩy văng
+      const nEarly = d.results.filter(r => r.early2).length;
+      const list = d.results.slice(0, 40 + nEarly);
       const nHid = list.filter(r => (marks[r.symbol] || {}).h === cur).length;
       const shown = list.filter(r => this._scanShowHidden || (marks[r.symbol] || {}).h !== cur);
       const act = (fn, icon, title, style) => `<span onclick="${fn}" title="${title}" style="cursor:pointer;font-size:11px;line-height:1;padding:2px 4px;border-radius:6px;${style}">${icon}</span>`;
-      body = shown.map(r => {
+      const firstRest = shown.findIndex(r => !r.early2);
+      body = shown.map((r, idx) => {
         const sym = esc(r.symbol), mk = marks[r.symbol] || {};
+        const sep = idx === firstRest && firstRest > 0
+          ? `<div style="font-size:9.5px;font-weight:700;color:var(--text3);letter-spacing:.04em;margin:10px 0 2px;padding-top:8px;border-top:1px solid var(--border)">CÒN LẠI — XẾP THEO TIER · RS (NỀN 2-4)</div>` : '';
         const seen = mk.s === cur, hid = mk.h === cur, editing = this._scanNoteEdit === r.symbol;
         const noteLine = editing
           ? `<input id="wlScanNoteInp" value="${esc(mk.n)}" placeholder="${tr.wlScanNotePh}" onkeydown="if(event.key==='Enter')this.blur();else if(event.key==='Escape')window._tj.saveScanNote(null)" onblur="window._tj.saveScanNote('${sym}',this.value)" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--accent);border-radius:6px;padding:4px 7px;font-size:11px;color:var(--text)">`
           : (mk.n ? `<div onclick="window._tj.editScanNote('${sym}')" title="${tr.wlScanNoteT}" style="cursor:pointer;font-size:10.5px;color:var(--amber);margin-top:2px;line-height:1.4">📝 ${esc(mk.n)}</div>` : '');
-        return `
+        return `${idx === 0 && r.early2 ? `<div style="font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.04em;margin:2px 0 2px">🎯 NỀN SỚM — ĐẦU STAGE 2, CHƯA CĂNG SO VỚI MA200</div>` : ''}${sep}
         <div style="padding:5px 0;border-bottom:1px dashed var(--border)${seen && !editing ? ';opacity:.5' : ''}">
           <div style="display:grid;grid-template-columns:76px 30px 1.2fr 1fr auto;gap:6px;align-items:center">
-            <a href="${base}?symbol=${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener" onclick="window._tj.seenScan('${sym}',1)" title="${esc(r.desc)} — ${esc(r.sector)}${r.tier ? ' — ' + esc(r.tier) : ''}" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${badges[r.tier] ? badges[r.tier] + ' ' : ''}${sym} ↗</a>
+            <a href="${base}?symbol=${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener" onclick="window._tj.seenScan('${sym}',1)" title="${esc(r.desc)} — ${esc(r.sector)}${r.tier ? ' — ' + esc(r.tier) : ''}${r.ext200 != null ? ` — trên MA200 ${this._fmt(r.ext200, 0)}%, trên đáy 52W ${this._fmt(r.above_low, 0)}%` : ''}${r.early2 ? ' — 🎯 nền sớm (đầu Stage 2)' : ''}${r.extended ? ' — ⚠️ đã căng, chờ hồi về MA50' : ''}" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${badges[r.tier] ? badges[r.tier] + ' ' : ''}${sym} ↗</a>
             <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${r.rs >= 90 ? 'var(--green)' : 'var(--text2)'}">${r.rs}</span>
             <span style="font-family:'JetBrains Mono',monospace;font-size:11px">$${this._fmt(r.close, 2)} <span style="color:${r.change >= 0 ? 'var(--green)' : 'var(--red)'}">${r.change >= 0 ? '+' : ''}${this._fmt(r.change, 1)}%</span></span>
-            <span style="font-size:10px;color:var(--text3)">${tr.wlOffHigh} ${this._fmt(r.off_high, 1)}%</span>
+            <span style="font-size:10px;color:var(--text3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tr.wlOffHigh} ${this._fmt(r.off_high, 1)}%${r.early2 || r.extended ? `<span style="font-size:9px;margin-left:3px" title="${[r.early2 ? '🎯 Nền sớm — đầu Stage 2, chưa căng so với MA200' : '', r.extended ? '⚠️ Đã căng — giá xa MA50/MA200, dễ mua đuổi' : ''].filter(Boolean).join(' · ')}">${r.early2 ? '🎯' : ''}${r.extended ? '⚠️' : ''}</span>` : ''}</span>
             <span style="display:flex;gap:3px;align-items:center;flex-shrink:0">
               ${act(`window._tj.seenScan('${sym}')`, seen ? '✓' : '◌', tr.wlScanSeenT, `font-weight:700;color:${seen ? 'var(--green)' : 'var(--text3)'}`)}
+              ${act(`window._tj.openFA('${sym}')`, '🔬', 'Đọc yếu tố cơ bản', 'color:var(--text3)')}
               ${act(`window._tj.editScanNote('${sym}')`, '✎', tr.wlScanNoteT, `color:${mk.n ? 'var(--amber)' : 'var(--text3)'}`)}
               ${act(`window._tj.pickScan('${sym}',${+r.rs || 0})`, '＋', tr.wlToastAdd, 'color:var(--accent);font-weight:700;border:1px solid var(--accent);padding:1px 6px')}
               ${act(`window._tj.hideScan('${sym}')`, hid ? '↩' : '✕', hid ? tr.wlScanUnhideT : tr.wlScanHideT, 'color:var(--text3)')}
@@ -1912,7 +2053,10 @@ class Component extends DCLogic {
           <div style="font-size:12px;font-weight:700">${tr.wlScanTitle}</div>
           <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${sub}</div>
         </div>
-        <button onclick="window._tj.reloadScan()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;color:var(--text2);flex-shrink:0" title="Reload">⟳</button>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="window._tj.openFA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent)" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn">🔬 Cơ bản</button>
+          <button onclick="window._tj.reloadScan()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;color:var(--text2)" title="Reload">⟳</button>
+        </div>
       </div>
       <div style="padding:6px 14px 12px">${body}</div>
     </div>`;
@@ -2567,6 +2711,8 @@ class Component extends DCLogic {
       pickScan: (s,r)=>this.pickScan(s,r), reloadScan: ()=>this.reloadScan(),
       seenScan: (s,f)=>this.seenScan(s,f), hideScan: s=>this.hideScan(s), showHiddenScan: ()=>this.showHiddenScan(),
       editScanNote: s=>this.editScanNote(s), saveScanNote: (s,v)=>this.saveScanNote(s,v),
+      openFA: s=>this.openFA(s), closeFA: ()=>this.closeFA(), setFASym: v=>this.setFASym(v),
+      markFA: (k,v)=>this.markFA(k,v), openAllFA: ()=>this.openAllFA(), faToNote: ()=>this.faToNote(),
       setPeriod: p=>{ localStorage.setItem('tj_period',p); this.setState({period:p}); },
       addSetup: ()=>this.addSetup(),
       calPrev: ()=>this.setState(s=>{let m=s.calMonth-1,y=s.calYear;if(m<0){m=11;y--;}return{calMonth:m,calYear:y};}),
