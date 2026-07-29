@@ -2007,7 +2007,8 @@ class Component extends DCLogic {
     const d = this._scanData;
     const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const ok = d && Array.isArray(d.results) && d.results.length;
-    const sub = ok ? `${tr.wlScanAt} <b>${esc(d.scanned_at)}</b> · ${d.total} ${tr.wlScanPass} (RS ≥ ${d.rs_min})` : tr.wlScanSub;
+    const dropTxt = ok && d.dropped_ath ? ` · <span title="Nhóm “cựu dẫn dắt / bị lãng quên” — cách đỉnh mọi thời đại quá xa, Minervini khuyên tránh hoàn toàn (Ch.6). Chỉ giữ lại nếu đạt SEPA/EARLY + qua kiểm tra turnaround.">đã loại ${d.dropped_ath} mã dưới ATH −40%</span>` : '';
+    const sub = ok ? `${tr.wlScanAt} <b>${esc(d.scanned_at)}</b> · ${d.total} ${tr.wlScanPass} (RS ≥ ${d.rs_min})${dropTxt}` : tr.wlScanSub;
     let body;
     if (!ok) {
       body = `<div style="color:var(--text3);font-size:11.5px;padding:6px 0;line-height:1.5">${tr.wlScanNone}</div>`;
@@ -2030,13 +2031,20 @@ class Component extends DCLogic {
         const noteLine = editing
           ? `<input id="wlScanNoteInp" value="${esc(mk.n)}" placeholder="${tr.wlScanNotePh}" onkeydown="if(event.key==='Enter')this.blur();else if(event.key==='Escape')window._tj.saveScanNote(null)" onblur="window._tj.saveScanNote('${sym}',this.value)" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--accent);border-radius:6px;padding:4px 7px;font-size:11px;color:var(--text)">`
           : (mk.n ? `<div onclick="window._tj.editScanNote('${sym}')" title="${tr.wlScanNoteT}" style="cursor:pointer;font-size:10.5px;color:var(--amber);margin-top:2px;line-height:1.4">📝 ${esc(mk.n)}</div>` : '');
-        return `${idx === 0 && r.early2 ? `<div style="font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.04em;margin:2px 0 2px">🎯 NỀN SỚM — ĐẦU STAGE 2, CHƯA CĂNG SO VỚI MA200</div>` : ''}${sep}
+        // Nhãn phụ (Ch.7-8): 🔥 Mật Mã 33, ⚡ bất ngờ EPS, 🔄 turnaround đã xác nhận
+        const qBadge = [
+          r.star ? ['⭐', `RS ${r.rs} ≥ 85 — vùng RS của siêu cổ phiếu tại điểm phá vỡ (TB 87)`] : null,
+          r.code33 ? ['🔥', 'Mật Mã 33 — doanh số tăng tốc + lợi nhuận tăng tốc + biên lợi nhuận nở'] : null,
+          r.surprise ? ['⚡', `Bất ngờ lợi nhuận quý gần nhất +${this._fmt(r.eps_surp, 1)}% so với ước tính`] : null,
+          r.turn ? ['🔄', 'Dưới đỉnh mọi thời đại nhưng đã qua kiểm tra turnaround: lợi nhuận quý dương, EPS 12 tháng tăng, biên lợi nhuận phục hồi'] : null,
+        ].filter(Boolean);
+        return `${idx === 0 && r.early2 ? `<div style="font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.04em;margin:2px 0 2px" title="Nền 1-2 của Giai đoạn 2 là cơ hội mua tốt nhất (Ch.5). Xếp theo thứ tự điểm phá vỡ: mã sát đỉnh 52 tuần nhất đứng trước (Ch.9).">🎯 NỀN 1-2 — SÁT ĐIỂM PHÁ VỠ, CHƯA CĂNG SO VỚI MA200</div>` : ''}${sep}
         <div style="padding:5px 0;border-bottom:1px dashed var(--border)${seen && !editing ? ';opacity:.5' : ''}">
           <div style="display:grid;grid-template-columns:76px 30px 1.2fr 1fr auto;gap:6px;align-items:center">
-            <a href="${base}?symbol=${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener" onclick="window._tj.seenScan('${sym}',1)" title="${esc(r.desc)} — ${esc(r.sector)}${r.tier ? ' — ' + esc(r.tier) : ''}${r.ext200 != null ? ` — trên MA200 ${this._fmt(r.ext200, 0)}%, trên đáy 52W ${this._fmt(r.above_low, 0)}%` : ''}${r.early2 ? ' — 🎯 nền sớm (đầu Stage 2)' : ''}${r.extended ? ' — ⚠️ đã căng, chờ hồi về MA50' : ''}" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${badges[r.tier] ? badges[r.tier] + ' ' : ''}${sym} ↗</a>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${r.rs >= 90 ? 'var(--green)' : 'var(--text2)'}">${r.rs}</span>
+            <a href="${base}?symbol=${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener" onclick="window._tj.seenScan('${sym}',1)" title="${esc(r.desc)} — ${esc(r.sector)}${r.tier ? ' — ' + esc(r.tier) : ''}${r.ext200 != null ? ` — trên MA200 ${this._fmt(r.ext200, 0)}%, trên đáy 52W ${this._fmt(r.above_low, 0)}%` : ''}${r.off_ath != null ? `, cách đỉnh mọi thời đại ${this._fmt(r.off_ath, 0)}%` : ''}${r.early2 ? ' — 🎯 nền 1-2, sát điểm phá vỡ' : ''}${r.extended ? ' — ⚠️ đã căng, chờ hồi về MA50' : ''}" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${badges[r.tier] ? badges[r.tier] + ' ' : ''}${sym} ↗</a>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${r.star ? 'var(--green)' : 'var(--text2)'}" title="RS Rating (IBD 40/20/20/20) — tối thiểu 70, lý tưởng ≥ 90">${r.rs}</span>
             <span style="font-family:'JetBrains Mono',monospace;font-size:11px">$${this._fmt(r.close, 2)} <span style="color:${r.change >= 0 ? 'var(--green)' : 'var(--red)'}">${r.change >= 0 ? '+' : ''}${this._fmt(r.change, 1)}%</span></span>
-            <span style="font-size:10px;color:var(--text3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tr.wlOffHigh} ${this._fmt(r.off_high, 1)}%${r.early2 || r.extended ? `<span style="font-size:9px;margin-left:3px" title="${[r.early2 ? '🎯 Nền sớm — đầu Stage 2, chưa căng so với MA200' : '', r.extended ? '⚠️ Đã căng — giá xa MA50/MA200, dễ mua đuổi' : ''].filter(Boolean).join(' · ')}">${r.early2 ? '🎯' : ''}${r.extended ? '⚠️' : ''}</span>` : ''}</span>
+            <span style="font-size:10px;color:var(--text3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tr.wlOffHigh} ${this._fmt(r.off_high, 1)}%${qBadge.length || r.extended ? `<span style="font-size:9px;margin-left:3px" title="${esc(qBadge.map(b => b[0] + ' ' + b[1]).concat(r.extended ? ['⚠️ Đã căng — giá xa MA50/MA200, dễ mua đuổi'] : []).join(' · '))}">${qBadge.map(b => b[0]).join('')}${r.extended ? '⚠️' : ''}</span>` : ''}</span>
             <span style="display:flex;gap:3px;align-items:center;flex-shrink:0">
               ${act(`window._tj.seenScan('${sym}')`, seen ? '✓' : '◌', tr.wlScanSeenT, `font-weight:700;color:${seen ? 'var(--green)' : 'var(--text3)'}`)}
               ${act(`window._tj.openFA('${sym}')`, '🔬', 'Đọc yếu tố cơ bản', 'color:var(--text3)')}
@@ -2049,7 +2057,7 @@ class Component extends DCLogic {
         </div>`;
       }).join('');
       const hidTog = nHid ? ` · <span onclick="window._tj.showHiddenScan()" style="cursor:pointer;color:var(--accent);font-weight:700">${this._scanShowHidden ? '▾' : '▸'} ${nHid} ${tr.wlScanHidden}</span>` : '';
-      body += `<div style="font-size:9px;color:var(--text3);margin-top:6px">🏆 SEPA · 🚀 Early Stage · 🌱 IPO ≤5Y · 📈 Trend · ${tr.wlScanSeenHint}${hidTog}</div>`;
+      body += `<div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.6">🏆 SEPA · 🚀 Early Stage · 🌱 IPO ≤5Y · 📈 Trend<br>⭐ RS≥85 · 🔥 Mật Mã 33 · ⚡ bất ngờ EPS ≥5% · 🔄 turnaround · ⚠️ đã căng · ${tr.wlScanSeenHint}${hidTog}</div>`;
     }
     box.innerHTML = `
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
