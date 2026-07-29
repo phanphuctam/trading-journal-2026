@@ -1819,50 +1819,88 @@ class Component extends DCLogic {
   // ══ BẢNG ĐỌC YẾU TỐ CƠ BẢN (SEPA) ══
   // Điền mã 1 lần → mọi link tự có sẵn. Mỗi bước ghi rõ xem gì / đạt khi nào.
   // Bước có must:1 là kill switch — hỏng là loại, không cần đọc tiếp.
+  // Mọi ngưỡng dưới đây đều trích từ sách, có ghi nguồn chương/trang trong `src`.
+  // Mục nào KHÔNG có trong Minervini/O'Neil thì đánh dấu rõ ở `f` để khỏi nhầm.
   _TV = (t, page, q) => `https://www.tradingview.com/symbols/${t}/financials-${page}/${q ? '?statements-period=FQ' : ''}`
   _FA = [
-    { k: 'eps', g: '1 · Động lượng lợi nhuận', must: 1, s: 'TradingView · Income statement (quý)',
+    { k: 'eps', g: '1 · Động lượng lợi nhuận (quý)', must: 1, s: 'TradingView · Income statement (quý)',
+      src: "O'Neil Ch.1 tr.24–36 · Minervini Ch.7 tr.145–172",
       u: t => this._TV(t, 'income-statement', 1),
       w: 'Dòng <b>Total revenue → YoY growth</b> và <b>Diluted EPS → YoY growth</b>, 4 quý gần nhất',
-      p: 'EPS YoY ≥ 20% <b>VÀ đang tăng tốc</b> (vd 10→18→35) · doanh thu YoY ≥ 15%',
-      f: 'EPS &lt; 20%, hoặc giảm tốc 2 quý liền (80→50→30) → loại ngay' },
-    { k: 'bs', g: '2 · Chất lượng lợi nhuận', must: 1, s: 'TradingView · Balance sheet (quý)',
+      p: 'EPS YoY ≥ 20% <b>VÀ đang tăng tốc</b> (vd 10→18→35) · <b>doanh thu YoY ≥ 25%</b> hoặc tăng tốc 3 quý liên tiếp<br><span style="opacity:.75">Lý tưởng: 3/4 trong 600 siêu cổ phiếu (1952–2001) có EPS quý tăng TB &gt; 70%. Minervini: thị trường bò nên đòi <b>40–100%+ trong 2–3 quý gần nhất</b>.</span>',
+      f: 'EPS &lt; 20% → loại · hoặc <b>2 quý liên tiếp tụt còn ≤ 2/3 tốc độ quý trước</b> (80→53→35) → loại<br><b>Doanh thu yếu mà EPS bùng nổ = bẫy</b>: Waste Management 1998 có EPS 24%→75%→268% nhưng doanh số chỉ +5% → giá từ $50 về $15' },
+    { k: 'one', s: 'TradingView · Income statement → dòng thu nhập ngoài hoạt động',
+      src: "O'Neil Ch.1 (bẫy #3) · Minervini Ch.8 tr.173–195",
+      u: t => this._TV(t, 'income-statement', 1),
+      w: 'Kiểm tra EPS quý có được thổi lên bởi <b>khoản lãi một lần</b> không (bán tài sản, thanh lý, sự kiện không tái diễn)',
+      p: 'Tăng trưởng đến từ hoạt động kinh doanh cốt lõi',
+      f: 'Ví dụ trong sách: EPS báo cáo $3,01 so với $2,40 (+25%) — trừ khoản bất thường $0,84 thì EPS thật là $2,17, tức <b>GIẢM 7%</b>. Con số YoY growth trên TradingView đã bao gồm khoản một lần' },
+    { k: 'ann', g: '2 · Lợi nhuận năm (chữ A của CAN SLIM)', must: 1, s: 'TradingView · Income statement (năm)',
+      src: "O'Neil Ch.2 tr.37–49 · Minervini Ch.7",
+      u: t => this._TV(t, 'income-statement'),
+      w: 'Chuyển sang tab <b>Annual</b> — đọc <b>Diluted EPS</b> 3–4 năm gần nhất',
+      p: 'EPS năm tăng <b>≥ 25%/năm trong 3 năm liên tiếp</b> · ROE ≥ 17%<br><span style="opacity:.75">Từ 1980–2000, tăng trưởng thường niên TB của mọi siêu cổ phiếu tại thời điểm bắt đầu tăng giá là <b>36%</b>. Riêng tiêu chuẩn 3 năm này loại bỏ <b>80% cổ phiếu</b> trong bất kỳ nhóm ngành nào.</span>',
+      f: 'Bẫy <b>"phục hồi giả"</b>: mẫu 4 → 5 → 6 → <b>2</b> → 2,5 đô. Năm cuối tăng 25% nghe hay, nhưng chỉ vì năm trước quá tệ và vẫn cách xa đỉnh 6 đô — <b>KHÔNG phải báo cáo tốt</b>.<br>Cổ phiếu mới chưa đủ 3 năm: tìm 5–8 quý gần nhất tăng trưởng mạnh + doanh số lớn. Một-hai quý có lãi là không đủ' },
+    { k: 'bs', g: '3 · Chất lượng lợi nhuận', must: 1, s: 'TradingView · Balance sheet (quý)',
+      src: 'Minervini Ch.8 tr.173–195',
       u: t => this._TV(t, 'balance-sheet', 1),
       w: '<b>Accounts receivable</b> và <b>Inventories</b> — so tốc độ tăng với doanh thu ở bước 1',
       p: 'Cả hai tăng chậm hơn doanh thu',
-      f: 'Cả hai phình ≥ 1,5× tốc độ doanh thu = <b>Double Trouble</b> → loại' },
-    { k: 'cf', must: 1, s: 'TradingView · Cash flow (quý)',
+      f: 'Cả hai cùng tăng <b>≥ 2× tốc độ doanh thu</b> mà không giải thích được = vấn đề nghiêm trọng → loại<br><b>Đọc kỹ tồn kho</b>: tồn kho <b>nguyên vật liệu</b> tăng vọt có khi là tín hiệu TỐT (chuẩn bị cho nhu cầu lớn — case Encore Wire ôm kho đồng giá rẻ trước khi giá đồng tăng → biên nở → siêu cổ phiếu). Chỉ khi <b>thành phẩm tăng nhanh hơn nguyên liệu + dở dang</b> mới là hàng ế<br>⚠️ Trang Balance sheet của TradingView có thể không hiện dòng chi tiết khi chưa đăng nhập — nếu không thấy, dùng <b>stockanalysis.com</b>' },
+    { k: 'cf', s: 'TradingView · Cash flow (quý)',
+      src: '⚠️ Không có trong Minervini/O\'Neil — bổ sung ngoài sách',
       u: t => this._TV(t, 'cash-flow', 1),
-      w: '<b>Cash from operating activities</b> so với <b>Net income</b>',
+      w: '<b>Cash flow from operating activities</b> so với <b>Net income</b>',
       p: 'OCF ≥ Net income và cùng chiều tăng',
-      f: 'Lãi kế toán bùng nổ mà OCF èo uột = lãi trên giấy → loại' },
-    { k: 'mg', g: '3 · Biên lợi nhuận & pha loãng', s: 'TradingView · Statistics & ratios (quý)',
+      f: 'Lãi kế toán bùng nổ mà OCF èo uột = lãi trên giấy.<br>⚠️ <b>Đây KHÔNG phải tiêu chí của Minervini hay O\'Neil</b> — là nguyên tắc kế toán bổ sung, nên dùng để tham khảo chứ không loại thẳng' },
+    { k: 'mg', g: '4 · Biên lợi nhuận & pha loãng', s: 'TradingView · Statistics & ratios (quý)',
+      src: "Minervini Ch.8 · O'Neil Ch.2, Ch.4",
       u: t => this._TV(t, 'statistics-and-ratios', 1),
       w: '<b>Gross / Operating / Net margin %</b> · <b>Return on equity %</b> · <b>Total common shares outstanding</b>',
-      p: 'Biên <b>mở rộng</b> qua từng quý (không cần cao) · ROE ≥ 15% · số cổ phiếu không tăng &gt; 5% YoY (giảm = buyback, điểm cộng) · EPS + doanh thu + biên cùng tăng tốc 3 quý = <b>Code 33</b>' },
-    { k: 'er', g: '4 · Beat / miss', s: 'TradingView · Earnings',
+      p: 'Biên <b>mở rộng</b> qua từng quý (không cần cao) · <b>ROE ≥ 17%</b>, lý tưởng 25–50% · EPS + doanh thu + biên cùng tăng tốc 3 quý = <b>Mật Mã 33</b><br><span style="opacity:.75">17% là ROE thấp nhất quan sát được ở cổ phiếu thành công nhất trong 50 năm. Biên cải thiện tốt nhất phải đến từ <b>quyền định giá</b> — Apple: biên ròng 1,2% (2003) → 23,9% (2011), giá tăng hơn 6.000%.</span>',
+      f: 'Số cổ phiếu lưu hành tăng = pha loãng EPS; giảm = buyback, điểm cộng (Teledyne thu vốn từ 88 triệu xuống 15 triệu cổ phần → EPS $0,61 lên gần $20)<br><span style="opacity:.7">Ngưỡng "không tăng &gt; 5% YoY" là quy ước thực dụng, không có trong sách</span>' },
+    { k: 'er', g: '5 · Beat / miss & phản ứng giá', s: 'TradingView · Earnings',
+      src: 'Minervini Ch.7 tr.145–172, Ch.8 tr.173–195',
       u: t => this._TV(t, 'earnings'),
       w: 'Bảng <b>Reported / Estimate / Surprise %</b> và biểu đồ cột: xanh = thực tế, xám = dự phóng',
-      p: 'Beat 3–4 quý liên tiếp. <b>Quan trọng hơn:</b> giá phản ứng thế nào sau tin — beat mà gap down = tổ chức đang xả' },
-    { k: 'zk', g: '5 · Điều chỉnh dự phóng', s: 'Zacks · Detailed Estimates',
+      p: 'Beat 3–4 quý liên tiếp. <b>Nhưng quan trọng hơn là 3 phản ứng giá sau tin:</b><br>① phản ứng đầu tiên — tăng hay bị bán tháo?<br>② mức kháng cự sau đó — giữ được lãi trước áp lực chốt lời không?<br>③ khả năng đàn hồi — hồi phục nhanh sau phiên giảm không?<br><span style="opacity:.75">Siêu cổ phiếu thật sự không bao giờ bị bán tháo lấy đi toàn bộ đợt tăng trước đó.</span>',
+      f: 'Cảnh giác trò <b>"hứa ít, làm nhiều"</b>: ban lãnh đạo cố tình đưa guidance thấp để dễ "đánh bại" — chuỗi beat đẹp có thể là dàn dựng. Chỉ tin sự kiện đánh bại ước tính <b>một mức đáng kể</b><br><b>Beat mà giá sập = tổ chức đang xả</b> (differential disclosure): Crocs 31/10/2007 công bố EPS +144% nhưng giảm 36% trong 1 ngày → 1 năm sau còn $0,79, mất 99% từ đỉnh $75' },
+    { k: 'zk', g: '6 · Điều chỉnh dự phóng', s: 'Zacks · Detailed Estimates',
+      src: 'Minervini Ch.7 tr.145–172',
       u: t => `https://www.zacks.com/stock/quote/${t}/detailed-estimates`,
       w: 'Bảng <b>Agreement — Estimate Revisions</b> và <b>Magnitude — Consensus Estimate Trend</b>',
-      p: 'Analyst <b>nâng</b> dự phóng trong 60 ngày qua (số nâng &gt; số hạ)',
-      f: 'TradingView không có dữ liệu điều chỉnh dự phóng — bắt buộc sang Zacks' },
-    { k: 'ft', g: '6 · Dòng tiền tổ chức', s: 'Fintel · Ownership',
+      p: 'Tối thiểu: ước tính <b>quý hiện tại VÀ quý tới</b> cao hơn so với <b>30 ngày trước</b> (số nâng &gt; số hạ)<br>Mức nâng <b>≥ 5%</b> — nghiên cứu cho thấy ngưỡng này làm cổ phiếu tăng nhiều hơn bình thường',
+      f: 'Điều chỉnh <b>giảm</b> là dấu hiệu cảnh báo · TradingView không có dữ liệu này, bắt buộc sang Zacks' },
+    { k: 'ft', g: '7 · Bảo trợ của tổ chức', s: 'Fintel · Ownership',
+      src: "O'Neil Ch.6 tr.79–87",
       u: t => `https://fintel.io/so/us/${t.toLowerCase()}`,
       w: '<b>Số lượng quỹ 13F</b> nắm giữ qua từng quý',
-      p: 'Số quỹ tăng đều 2–3 quý liên tiếp',
-      f: 'TradingView không có 13F. Và đừng nhìn <b>% institutional</b> — đa số mid-cap Mỹ có 80–95% chỉ vì quỹ chỉ số, con số này vô nghĩa' },
-    { k: 'ct', g: '7 · Catalyst', s: 'Google · earnings call transcript',
+      p: 'Tối thiểu <b>~10 tổ chức</b> bảo trợ và số lượng <b>đang tăng</b> 2–3 quý liên tiếp<br><b>Chất lượng quan trọng hơn số lượng</b> — ưu tiên quỹ có thành tích tốt, và chú ý <b>vị thế MỚI mở hoặc củng cố trong quý gần nhất</b> (quỹ đang tăng vốn có nhiều khả năng tiếp tục mua)',
+      f: '⚠️ <b>"Lệ thuộc quá độ" (over-owned)</b> — quá nhiều tổ chức sở hữu là nguy cơ, vì nếu có bất ổn thì áp lực bán sẽ khủng khiếp. Cisco (hè 2000) và AOL (hè 2001) có <b>hơn một nghìn tổ chức</b> sở hữu → Cisco −83%, Yahoo! −95%, JDSU −94% tính tới 30/10/2001.<br>"Đến thời điểm thành tích một công ty rõ ràng đến nỗi mọi tổ chức đổ xô vào mua thì cơ hội tốt nhất đã qua."<br><span style="opacity:.7">Đừng nhìn <b>% institutional</b> — đa số mid-cap Mỹ có 80–95% chỉ vì quỹ chỉ số, con số này vô nghĩa</span>' },
+    { k: 'ind', g: '8 · Nhóm ngành', s: 'TradingView · Industries (Mỹ)',
+      src: "O'Neil Ch.15 · Minervini Ch.6 tr.119–143",
+      u: () => 'https://www.tradingview.com/markets/stocks-usa/sectorandindustry-industry/',
+      w: 'Tìm nhóm ngành của mã này trong bảng, xem <b>thứ hạng hiệu suất</b> của nhóm và các mã cùng nhóm',
+      p: 'Nhóm ngành đang mạnh <b>VÀ có ít nhất một cổ phiếu quan trọng khác cùng nhóm xác nhận</b><br><span style="opacity:.75">Nhóm ngành quyết định <b>~49% biến động giá</b> của một cổ phiếu (37% nhóm công nghiệp + 12% phân khúc). Hơn 60% siêu cổ phiếu tăng giá theo nhóm ngành.</span>',
+      f: '<b>Không mua cổ phiếu nào mà không có ít nhất một mã cùng nhóm xác nhận</b> — "khi cổ phiếu dẫn dắt hắt hơi, cả ngành cảm lạnh"<br>4 ngành hay sinh siêu cổ phiếu nhất: <b>tiêu dùng/bán lẻ · công nghệ-máy tính-phần mềm · thuốc-y tế-công nghệ sinh học · giải trí</b>' },
+    { k: 'co', g: '9 · Cấu trúc công ty', s: 'TradingView · Statistics & ratios',
+      src: "O'Neil Ch.4 tr.62–69 · Minervini Ch.11 tr.311–321",
+      u: t => this._TV(t, 'statistics-and-ratios', 1),
+      w: '<b>Total debt / Debt to equity</b> · <b>Total common shares outstanding</b> · tuổi niêm yết của công ty',
+      p: '<b>Công ty non trẻ</b> — Minervini gọi đây là "thành phần quan trọng nhất" trong tín hiệu của ông: hầu hết siêu cổ phiếu trở thành đại chúng trong <b>8–10 năm</b> trước khi bùng nổ; 80% cổ phiếu thắng bong bóng 1990 là IPO trong 8 năm trước đó<br><b>Tỉ suất nợ thấp</b>; công ty giảm mạnh nợ trong 2–3 năm qua rất đáng chú ý (lãi vay giảm → EPS tăng)',
+      f: '<b>Tách cổ phần quá mức là dấu hiệu xấu</b> — chỉ 18% cổ phiếu thành công nhất được tách trong năm trước cuộc tăng phi mã; cổ phiếu thường lên <b>đỉnh tuyệt đối sau lần tách thứ 2 hoặc 3</b><br>Cảnh giác cổ phiếu "danh tiếng" đã hết thời: Circuit City tăng hơn 63.000% (1981–2000) khi còn nhỏ, phá sản về $0 năm 2008 khi đã lớn' },
+    { k: 'ct', g: '10 · Chất xúc tác (chữ N)', s: 'Google · earnings call transcript',
+      src: "O'Neil Ch.3 tr.50–61 · Minervini Ch.6",
       u: t => `https://www.google.com/search?q=${t}+earnings+call+transcript+latest+quarter`,
       w: 'Đọc phần <b>Guidance</b> và <b>Q&amp;A</b> — bỏ qua đoạn đọc lại số liệu',
-      p: 'Có xúc tác rõ: sản phẩm mới, thị trường mới, hợp đồng lớn, ban lãnh đạo mới' },
-    { k: 'ed', g: '8 · Lịch báo cáo', must: 1, s: 'TradingView · Earnings → Next report date',
+      p: 'Phải có ít nhất <b>một trong ba</b> thứ "mới":<br>① <b>sản phẩm/dịch vụ mới</b> quan trọng<br>② <b>ban lãnh đạo mới</b><br>③ <b>điều kiện ngành mới</b> — thiếu hụt sản lượng, tăng giá, công nghệ cách mạng<br><span style="opacity:.75">Hơn <b>95%</b> trường hợp thành công vang dội 1953–2001 thỏa mãn ít nhất một điều kiện này.</span>',
+      f: 'Điều lý tưởng: công ty vừa <b>đánh bại ước tính</b> vừa <b>nâng guidance</b> quý tới/năm nay. Dự báo dài hạn của lãnh đạo: nghe với thái độ nửa tin nửa ngờ' },
+    { k: 'ed', g: '11 · Lịch báo cáo', must: 1, s: 'TradingView · Earnings → Next report date',
+      src: 'Minervini, Think & Trade Like a Champion, tr.221',
       u: t => this._TV(t, 'earnings'),
-      w: 'Ô <b>Next report date</b> ở đầu trang — cùng trang với bước 4, không cần mở lại',
-      p: t => `Còn &gt; 2 tuần, hoặc bạn đã có sẵn lãi 15–20% làm đệm · sát mốc 2 tuần thì đối chiếu <a href="https://www.earningswhispers.com/stocks/${t}" target="_blank" rel="noopener" style="color:var(--accent)">Earnings Whispers</a> — hai nguồn có thể lệch vài ngày, chỉ EW phân biệt ngày <b>đã xác nhận</b> với <b>ước tính</b>`,
-      f: 'Còn &lt; 2 tuần mà chưa có lãi đệm → không vào lệnh mới, dù chart đẹp' },
+      w: 'Ô <b>Next report date</b> ở đầu trang — cùng trang với bước 5, không cần mở lại',
+      p: t => `Không giữ vị thế lớn khi sắp có báo cáo, <b>trừ khi đã có "tấm đệm lợi nhuận" đáng kể — sách lấy mốc lãi 10%</b> · sát ngày báo cáo thì đối chiếu <a href="https://www.earningswhispers.com/stocks/${t}" target="_blank" rel="noopener" style="color:var(--accent)">Earnings Whispers</a> — hai nguồn có thể lệch vài ngày, chỉ EW phân biệt ngày <b>đã xác nhận</b> với <b>ước tính</b>`,
+      f: 'Nắm giữ qua báo cáo giống "chơi trò xúc xắc" — <b>ngay cả cổ phiếu đánh bại mọi dự báo vẫn có thể giảm mạnh ngay khi mở cửa</b><br><span style="opacity:.7">Mốc "còn &gt; 2 tuần" là quy ước thực dụng, không có trong sách</span>' },
   ]
 
   _faGet() {
@@ -1885,7 +1923,7 @@ class Component extends DCLogic {
   }
   openAllFA = () => {
     const t = this._faSym; if (!t) return;
-    // Buoc 4 va 8 cung trang Earnings cua TradingView -> bo trung
+    // Buoc 5 va 11 cung trang Earnings, buoc 1 va 1b cung Income statement -> bo trung
     [...new Set(this._FA.map(s => s.u(t)))].forEach((url, i) =>
       setTimeout(() => window.open(url, '_blank', 'noopener'), i * 260));
   }
@@ -1909,8 +1947,8 @@ class Component extends DCLogic {
     let verdict, vcol;
     if (!t) { verdict = 'Nhập mã cổ phiếu để bắt đầu'; vcol = 'var(--text3)'; }
     else if (killed) { verdict = '❌ LOẠI — hỏng tiêu chí bắt buộc'; vcol = 'var(--red)'; }
-    else if (nOk >= 8) { verdict = `🏆 Hạng A — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--green)'; }
-    else if (nOk >= 6) { verdict = `✅ Hạng B — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--green)'; }
+    else if (nOk >= this._FA.length - 2) { verdict = `🏆 Hạng A — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--green)'; }
+    else if (nOk >= Math.ceil(this._FA.length * 0.62)) { verdict = `✅ Hạng B — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--green)'; }
     else { verdict = `Đang đọc — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--text2)'; }
 
     const txt = x => typeof x === 'function' ? x(t) : x;   // w/p/f có thể là hàm nhận mã
@@ -1928,6 +1966,7 @@ class Component extends DCLogic {
         <div style="font-size:10.5px;color:var(--text2);line-height:1.6;margin-top:3px">👁 ${txt(s.w)}</div>
         <div style="font-size:10.5px;color:var(--green);line-height:1.6;margin-top:2px">✓ ${txt(s.p)}</div>
         ${s.f ? `<div style="font-size:10.5px;color:var(--red);line-height:1.6;margin-top:2px">✕ ${txt(s.f)}</div>` : ''}
+        ${s.src ? `<div style="font-size:9px;color:var(--text3);line-height:1.5;margin-top:3px;font-style:italic">📖 ${s.src}</div>` : ''}
       </div>`;
     }).join('');
 

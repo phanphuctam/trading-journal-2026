@@ -14,7 +14,7 @@ Vong 1 — Trend Template (8 tieu chi, Ch.5):
 
 Vong 2 — gan nhan tier theo fundamentals (uu tien tu cao xuong):
   🏆 SEPA  : Perf.3M>=20, Perf.6M>=30, Revenue QYoY>=20%, EPS QoQ>=40%, EPS QYoY>=40%
-  🚀 EARLY : Perf.3M>=10, Perf.6M>=20, EPS QoQ>=20%, ROE>=15%
+  🚀 EARLY : Perf.3M>=10, Perf.6M>=20, EPS QoQ>=20%, ROE>=17% (O'Neil Ch.2)
   🌱 IPO   : niem yet <=5 nam (Perf.5Y == Perf.All) + gross margin FY >= 20%
   📈 TREND : chi dat ky thuat — khong bi loai, chi xep sau
 
@@ -167,7 +167,9 @@ def classify(df: pd.DataFrame):
     young = (num("Perf.5Y") - num("Perf.All")).abs() < 1e-6
 
     sepa = (p3 >= 20) & (p6 >= 30) & (rev_yoy >= 20) & (eps_qoq >= 40) & (eps_yoy >= 40)
-    early = (p3 >= 10) & (p6 >= 20) & (eps_qoq >= 20) & (roe >= 15)
+    # ROE 17% = muc thap nhat quan sat duoc o co phieu thanh cong nhat 50 nam
+    # (O'Neil Ch.2 tr.37-49). Truoc day dung 15 — khong co nguon trong sach.
+    early = (p3 >= 10) & (p6 >= 20) & (eps_qoq >= 20) & (roe >= 17)
     ipo = young & (gm >= 20)
 
     tier = pd.Series("TREND", index=df.index)
@@ -383,7 +385,7 @@ def main():
 
     sections = [
         ("SEPA", "🏆 <b>SEPA</b> — ky thuat + EPS ≥40%, doanh thu ≥20%", 10),
-        ("EARLY", "🚀 <b>Early Stage</b> — EPS QoQ ≥20%, ROE ≥15%", 8),
+        ("EARLY", "🚀 <b>Early Stage</b> — EPS QoQ ≥20%, ROE ≥17%", 8),
         ("IPO", "🌱 <b>IPO ≤5 nam</b> — bien lai gop ≥20%", 8),
         ("TREND", "📈 <b>Trend khac</b>", 5),
     ]
