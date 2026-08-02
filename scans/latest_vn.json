@@ -1,7 +1,7 @@
 {
  "app": "trading-journal-2026",
  "market": "VN",
- "scanned_at": "2026-08-02 09:58",
+ "scanned_at": "2026-08-02 11:26",
  "bar_date": "2026-07-31",
  "liq_min": 10.0,
  "universe": 112,
@@ -12,6 +12,20 @@
   "VCP2": 3,
   "TREND": 11
  },
+ "regime": {
+  "index": "VNINDEX",
+  "breadth50": 20.5,
+  "breadth200": 18.8,
+  "date": "2026-07-31",
+  "close": 1735.78,
+  "ma50": 1809.74,
+  "ma200": 1772.75,
+  "above_ma50": false,
+  "ma50_above_ma200": true,
+  "state": "OFF",
+  "reason": "VN-Index 1,736 duoi MA50 1,810"
+ },
+ "entries_allowed": false,
  "chart_base": "https://www.tradingview.com/chart/",
  "results": [
   {

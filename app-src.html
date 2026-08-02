@@ -684,6 +684,10 @@ details summary::-webkit-details-marker{display:none}
   <button class="tj-actions-toggle" onclick="{{ toggleActions }}" style="background:var(--border2);border:1px solid var(--border);border-radius:8px;color:var(--text2);cursor:pointer">{{ actionsToggleIcon }}</button>
   <div class="tj-actions" style="{{ actionsStyle }}">
     <button class="tj-abtn tj-abtn-accent" onclick="{{ toggleLang }}">{{ langBtn }}</button>
+    <div class="tj-btngroup" title="Đơn vị tiền tệ">
+      <button onclick="{{ toggleCcy }}" title="{{ ccyTitle }}" style="{{ ccyStyle }}">{{ ccyBtn }}</button>
+      <button onclick="{{ editFx }}" title="{{ fxTitle }}" style="font-family:'JetBrains Mono',monospace">{{ fxBtn }}</button>
+    </div>
     <button class="tj-abtn" onclick="{{ toggleTheme }}" title="Dark / Light" style="font-size:13px;padding:0 9px">{{ themeIcon }}</button>
     <div class="tj-actions-break"></div>
     <div class="tj-btngroup" title="Xuất / nhập dữ liệu">
@@ -962,6 +966,15 @@ details summary::-webkit-details-marker{display:none}
 <script type="text/x-dc" data-dc-script="">
 const TJ_KEY = 'tj_2026_2036_v1';
 const TJ_DKEY = 'tj_deposits_v1';
+// ── Tiền tệ ──────────────────────────────────────────────────────────────────
+// Mỗi lệnh / lần nạp mang theo đơn vị gốc (`cc`) và tỉ giá lúc ghi (`fx`).
+// Nhờ vậy đổi nút hiển thị USD↔VND không vẽ lại lịch sử: một lệnh Mỹ ghi tháng
+// 3/2026 luôn quy ra cùng một số tiền VND, dù hôm nay tỉ giá bao nhiêu.
+// Bản ghi cũ không có `cc` được coi là USD (toàn bộ dữ liệu trước 08/2026).
+const TJ_CCY_KEY = 'tj_ccy';
+const TJ_FX_KEY = 'tj_fx';
+const TJ_FX_MANUAL_KEY = 'tj_fx_manual';
+const TJ_FX_FALLBACK = 26200;   // VND / 1 USD — dùng khi chưa tải được scans/fx.json
 const GDRIVE_CLIENT_ID = '486383706311-bgllvvl3uh4lu5foppu9j6r51vo72ljg.apps.googleusercontent.com';
 const GH_REPO = 'phanphuctam/trading-journal-2026';
 const GH_BRANCH = 'main';
@@ -989,9 +1002,9 @@ const TJ_TR = {
     fNewTrade:'✍ Ghi lệnh mới',fEditTrade:'✏ Sửa lệnh',
     fEntryDate:'Ngày vào',fSymbol:'Mã (Symbol)',fAction:'Action',fSetup:'Setup',
     fEntry:'Entry (cách vào)',fEntryPh:'Mô tả cách vào lệnh...',fCloseDate:'Ngày đóng',
-    fPeriod:'Period (ngày)',fExit:'Exit',fEmotion:'Cảm xúc',fNetPL:'Net P/L ($)',fR:'R-Multiple',
+    fPeriod:'Period (ngày)',fExit:'Exit',fEmotion:'Cảm xúc',fNetPL:'Net P/L',fR:'R-Multiple',
     fAdvanced:'▸ Nâng cao — Giá · Commission · Ảnh · Ghi chú',
-    fEntryPrice:'Giá vào',fExitPrice:'Giá ra',fComm:'Commission ($)',fDisplayDay:'Day (hiển thị)',
+    fEntryPrice:'Giá vào',fExitPrice:'Giá ra',fComm:'Commission',fDisplayDay:'Day (hiển thị)',
     fImgEntry:'Link ảnh vào (TradingView)',fImgExit:'Link ảnh ra (TradingView)',
     fDetail:'Detail emotion / Bài học rút ra',fDetailPh:'Lý do vào lệnh, cảm xúc, bài học...',
     pvAll:'All Profit',pvPct:'P/L %',pvAsset:'Tài sản sau',pvR:'R-Multiple',
@@ -1028,7 +1041,7 @@ const TJ_TR = {
     donutWin:'Thắng',donutLoss:'Thua',donutDraw:'Hòa',
     fundTitle:'💰 Vốn & Tài sản',fundSub:'Sổ nạp vốn nhập tay theo tháng thực tế',
     fundTotalDep:'Tổng vốn đã nạp',fundTotalPL:'Tổng lãi/lỗ',fundCurrent:'Tài sản hiện tại',
-    depBook:'💵 Sổ nạp vốn',times:'lần',depAmtPh:'$ Số tiền',depNotePh:'Ghi chú',noDeposits:'Chưa có khoản nạp nào.',
+    depBook:'💵 Sổ nạp vốn',times:'lần',depAmtPh:'Số tiền',depNotePh:'Ghi chú',noDeposits:'Chưa có khoản nạp nào.',
     profitTag:'lãi',lossTag:'lỗ',vsCapital:'so với vốn đã nạp',
     notesTitle:'📝 Ghi chú ngày',notesSub:'Market plan · nhận xét · tâm lý từng ngày',
     notesPh:'Ghi chú market, tâm lý, kế hoạch hôm nay...',noNotes:'Chưa có ghi chú nào.',
@@ -1038,9 +1051,9 @@ const TJ_TR = {
     hmTitle:'🗓 Heatmap hiệu suất',hmSub:'P/L theo tháng — hover để xem chi tiết',lenh:'lệnh',
     setupTitle:'Thống kê theo Setup',emoTitle:'Thống kê theo Cảm xúc',
     colSetup:'Setup',colEmo:'Cảm xúc',colN:'N',colWin:'Win',colLoss:'Loss',
-    colWR:'WR%',colAvgR:'Avg R',colTotR:'Total R',colNet:'Net $',colAvgNet:'Avg Net',colTotNet:'Total Net',
+    colWR:'WR%',colAvgR:'Avg R',colTotR:'Total R',colNet:'Net',colAvgNet:'Avg Net',colTotNet:'Total Net',
     noData:'Chưa có dữ liệu',noTrades:'Chưa có lệnh nào khớp.',
-    thDate:'Vào',thSymbol:'Mã',thBS:'B/S',thSetup:'Setup',thNet:'Net $',thR:'R',thAsset:'Asset',thEmo:'Cảm xúc',
+    thDate:'Vào',thSymbol:'Mã',thBS:'B/S',thSetup:'Setup',thNet:'Net',thR:'R',thAsset:'Asset',thEmo:'Cảm xúc',
     dEntry:'Entry:',dExit:'Exit:',dEmo:'Cảm xúc:',dPrice:'Giá vào→ra:',dClose:'Đóng:',dPeriod:'Period:',dComm:'Commission:',dPLPct:'P/L%:',dContrib:'%ĐG:',
     confirmDel:'Xóa lệnh {s} ngày {d}?',confirmDepDel:'Xóa khoản nạp ${amt} ngày {d}?',
     confirmCSV:'Import {n} lệnh từ CSV? (Sẽ GHI ĐÈ dữ liệu hiện tại)',
@@ -1089,9 +1102,9 @@ const TJ_TR = {
     fNewTrade:'✍ New Trade',fEditTrade:'✏ Edit Trade',
     fEntryDate:'Entry Date',fSymbol:'Symbol',fAction:'Action',fSetup:'Setup',
     fEntry:'Entry (how)',fEntryPh:'Describe your entry...',fCloseDate:'Close Date',
-    fPeriod:'Period (days)',fExit:'Exit',fEmotion:'Emotion',fNetPL:'Net P/L ($)',fR:'R-Multiple',
+    fPeriod:'Period (days)',fExit:'Exit',fEmotion:'Emotion',fNetPL:'Net P/L',fR:'R-Multiple',
     fAdvanced:'▸ Advanced — Price · Commission · Charts · Notes',
-    fEntryPrice:'Entry Price',fExitPrice:'Exit Price',fComm:'Commission ($)',fDisplayDay:'Display Date',
+    fEntryPrice:'Entry Price',fExitPrice:'Exit Price',fComm:'Commission',fDisplayDay:'Display Date',
     fImgEntry:'Entry chart (TradingView)',fImgExit:'Exit chart (TradingView)',
     fDetail:'Detail emotion / Lesson learned',fDetailPh:'Reason, emotion, lesson learned...',
     pvAll:'All Profit',pvPct:'P/L %',pvAsset:'Assets After',pvR:'R-Multiple',
@@ -1128,7 +1141,7 @@ const TJ_TR = {
     donutWin:'Win',donutLoss:'Loss',donutDraw:'Break Even',
     fundTitle:'💰 Capital & Assets',fundSub:'Manual deposit log by actual month',
     fundTotalDep:'Total deposited',fundTotalPL:'Total P/L',fundCurrent:'Current Assets',
-    depBook:'💵 Deposit Log',times:'deposits',depAmtPh:'$ Amount',depNotePh:'Note',noDeposits:'No deposits yet.',
+    depBook:'💵 Deposit Log',times:'deposits',depAmtPh:'Amount',depNotePh:'Note',noDeposits:'No deposits yet.',
     profitTag:'up',lossTag:'down',vsCapital:'vs. deposited capital',
     notesTitle:'📝 Daily Notes',notesSub:'Market plan · review · daily mindset',
     notesPh:'Note market, mindset, plan for today...',noNotes:'No notes yet.',
@@ -1138,9 +1151,9 @@ const TJ_TR = {
     hmTitle:'🗓 Performance Heatmap',hmSub:'P/L by month — hover for details',lenh:'trades',
     setupTitle:'Stats by Setup',emoTitle:'Stats by Emotion',
     colSetup:'Setup',colEmo:'Emotion',colN:'N',colWin:'Win',colLoss:'Loss',
-    colWR:'WR%',colAvgR:'Avg R',colTotR:'Total R',colNet:'Net $',colAvgNet:'Avg Net',colTotNet:'Total Net',
+    colWR:'WR%',colAvgR:'Avg R',colTotR:'Total R',colNet:'Net',colAvgNet:'Avg Net',colTotNet:'Total Net',
     noData:'No data yet',noTrades:'No matching trades.',
-    thDate:'Date',thSymbol:'Symbol',thBS:'B/S',thSetup:'Setup',thNet:'Net $',thR:'R',thAsset:'Asset',thEmo:'Emotion',
+    thDate:'Date',thSymbol:'Symbol',thBS:'B/S',thSetup:'Setup',thNet:'Net',thR:'R',thAsset:'Asset',thEmo:'Emotion',
     dEntry:'Entry:',dExit:'Exit:',dEmo:'Emotion:',dPrice:'Entry→Exit:',dClose:'Close:',dPeriod:'Period:',dComm:'Commission:',dPLPct:'P/L%:',dContrib:'%Contrib:',
     confirmDel:'Delete trade {s} on {d}?',confirmDepDel:'Delete deposit ${amt} on {d}?',
     confirmCSV:'Import {n} trades from CSV? (WILL OVERWRITE current data)',
@@ -1199,6 +1212,9 @@ class Component extends DCLogic {
     donutMode: 'res',
     theme: localStorage.getItem('tj_theme') || 'dark',
     lang: localStorage.getItem('tj_lang') || 'vi',
+    ccy: localStorage.getItem(TJ_CCY_KEY) === 'VND' ? 'VND' : 'USD',
+    fx: +localStorage.getItem(TJ_FX_KEY) > 0 ? +localStorage.getItem(TJ_FX_KEY) : TJ_FX_FALLBACK,
+    fxSrc: localStorage.getItem(TJ_FX_MANUAL_KEY) ? 'tay' : '',
     formOpen: true,
     actionsOpen: false,
     search: '',
@@ -1217,8 +1233,104 @@ class Component extends DCLogic {
     return Number(n).toLocaleString('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d });
   }
   _today() { return new Date().toISOString().slice(0, 10); }
+
+  // ══ TIỀN TỆ ══
+  _fxRate() { return +this.state.fx > 0 ? +this.state.fx : TJ_FX_FALLBACK; }
+  _ccySym() { return this.state.ccy === 'VND' ? '₫' : '$'; }
+
+  // Quy một khoản tiền của bản ghi `rec` về đơn vị đang hiển thị.
+  // Dùng tỉ giá đóng băng trong chính bản ghi → số liệu quá khứ không đổi theo thời gian.
+  _cv(v, rec) {
+    const n = +v;
+    if (!isFinite(n)) return 0;
+    const from = (rec && rec.cc === 'VND') ? 'VND' : 'USD', to = this.state.ccy;
+    if (from === to) return n;
+    const fx = (rec && +rec.fx > 0) ? +rec.fx : this._fxRate();
+    return from === 'USD' ? n * fx : n / fx;
+  }
+
+  // Định dạng tiền theo đơn vị đang hiển thị. USD đặt ký hiệu trước, VND đặt sau.
+  // Dấu âm nằm ngay sau ký hiệu ($-8,51) — giữ đúng cách hiển thị cũ.
+  _m(n, d = 2) {
+    if (n == null || isNaN(n)) return '—';
+    return this.state.ccy === 'VND'
+      ? this._fmt(Math.round(+n), 0) + '₫'
+      : '$' + this._fmt(n, d);
+  }
+
+  // Giá một cổ phiếu — KHÔNG quy đổi. Giá VIC là 214.100 đ, quy ra 8,17 $ thì vô nghĩa.
+  // Luôn hiện theo đơn vị gốc của bản ghi.
+  _px(v, rec) {
+    if (v == null || v === '' || isNaN(v)) return '—';
+    return (rec && rec.cc === 'VND') ? this._fmt(+v, 0) + '₫' : '$' + this._fmt(+v, 2);
+  }
+
+  // Nhãn gọn cho trục biểu đồ / mốc — VND có 4-5 chữ số nữa nên phải rút gọn
+  _mS(n) {
+    if (n == null || isNaN(n)) return '—';
+    const a = Math.abs(+n);
+    if (this.state.ccy !== 'VND') return a >= 1000 ? '$' + this._fmt(n / 1000, a % 1000 ? 1 : 0) + 'k' : '$' + this._fmt(n, 0);
+    if (a >= 1e9) return this._fmt(n / 1e9, 1) + ' tỷ';
+    if (a >= 1e6) return this._fmt(n / 1e6, a >= 1e7 ? 0 : 1) + ' tr';
+    return this._fmt(n, 0) + '₫';
+  }
+
+  // Mốc tài sản gốc tính bằng USD → quy sang đơn vị đang hiển thị theo tỉ giá hiện tại
+  _miles() { return TJ_MILES.map(m => this._cv(m, { cc: 'USD' })); }
+
+  _setCcy(ccy, quiet) {
+    if (ccy !== 'USD' && ccy !== 'VND' || ccy === this.state.ccy) return;
+    localStorage.setItem(TJ_CCY_KEY, ccy);
+    this._cache = null;
+    this.setState({ ccy }, () => {
+      this._initAll();
+      if (this.state.rightTab === 'watchlist') this._renderWatchlist();
+      if (!quiet) this._toast(ccy === 'VND'
+        ? `₫ Đang hiển thị VND · 1 USD = ${this._fmt(this._fxRate(), 0)} ₫`
+        : '$ Đang hiển thị USD', 'var(--accent)');
+    });
+  }
+  toggleCcy = () => this._setCcy(this.state.ccy === 'USD' ? 'VND' : 'USD');
+
+  // Sửa tỉ giá bằng tay: ghim lại, bot không ghi đè nữa (bấm ⟳ để bỏ ghim)
+  editFx = () => {
+    const cur = this._fmt(this._fxRate(), 0);
+    const raw = prompt(`Tỉ giá 1 USD = ? VND\n\nĐể trống rồi OK = quay lại tỉ giá tự động.\nHiện tại: ${cur}${this.state.fxSrc ? ' (' + this.state.fxSrc + ')' : ''}`, String(Math.round(this._fxRate())));
+    if (raw === null) return;
+    const v = parseFloat(String(raw).replace(/[^\d.]/g, ''));
+    if (!raw.trim()) {
+      localStorage.removeItem(TJ_FX_MANUAL_KEY);
+      this.setState({ fxSrc: '' }, () => this._loadFx(true));
+      return;
+    }
+    if (!(v >= 1000 && v <= 100000)) { alert('Tỉ giá phải nằm trong khoảng 1.000 – 100.000.'); return; }
+    localStorage.setItem(TJ_FX_KEY, String(v));
+    localStorage.setItem(TJ_FX_MANUAL_KEY, '1');
+    this._cache = null;
+    this.setState({ fx: v, fxSrc: 'tay' }, () => {
+      this._initAll();
+      this._toast(`Tỉ giá: 1 USD = ${this._fmt(v, 0)} ₫ (đặt tay)`, 'var(--accent)');
+    });
+  }
+
+  // scans/fx.json do automation/fetch_fx.py cập nhật mỗi lần bot chạy
+  async _loadFx(force) {
+    if (!force && localStorage.getItem(TJ_FX_MANUAL_KEY)) return;
+    try {
+      const r = await fetch('scans/fx.json', { cache: 'no-store' });
+      if (!r.ok) return;
+      const j = await r.json(), v = +j.usdvnd;
+      if (!(v > 1000 && v < 100000)) return;
+      localStorage.setItem(TJ_FX_KEY, String(v));
+      this._cache = null;
+      this.setState({ fx: v, fxSrc: j.date || '' }, () => this._initAll());
+    } catch (e) { /* offline → giữ tỉ giá đã lưu */ }
+  }
+
   _contrib(dateStr) {
-    return this.state.deposits.filter(x => (x.d || '') <= (dateStr || '')).reduce((s, x) => s + (+x.amt || 0), 0);
+    return this.state.deposits
+      .filter(x => (x.d || '') <= (dateStr || ''))
+      .reduce((s, x) => s + this._cv(+x.amt || 0, x), 0);
   }
   _gv(id) { const el = document.getElementById(id); return el ? el.value : ''; }
   _num(id) { const v = parseFloat(this._gv(id)); return isNaN(v) ? 0 : v; }
@@ -1229,10 +1341,13 @@ class Component extends DCLogic {
     arr.sort((a, b) => (a.cd || a.d || '').localeCompare(b.cd || b.d || ''));
     let cumPL = 0;
     arr.forEach(t => {
-      const all = (+t.net || 0) + (+t.comm || 0);
+      // Quy về đơn vị đang hiển thị bằng tỉ giá của chính lệnh đó
+      const net = this._cv(+t.net || 0, t), comm = this._cv(+t.comm || 0, t);
+      const all = net + comm;
       const dt = t.cd || t.d || '';
       const cap = this._contrib(dt), prev = cap + cumPL;
-      t._prev = prev; t._all = all; t._plp = prev ? (+t.net || 0) / prev * 100 : 0;
+      t._net = net; t._comm = comm;
+      t._prev = prev; t._all = all; t._plp = prev ? net / prev * 100 : 0;
       cumPL += all; t._as = cap + cumPL;
       t._contrib = cap ? t._as / cap * 100 : 0;
     });
@@ -1425,14 +1540,16 @@ class Component extends DCLogic {
     const pv = ei >= 0 ? (this._computed().find(t => t._i === ei)?._prev ?? s.eq) : s.eq;
     const plp = pv ? net / pv * 100 : 0, r = this._num('f_r');
     const set = (id, txt, col) => { const el = document.getElementById(id); if (!el) return; el.textContent = txt; if (col) el.style.color = col; };
-    set('pvAll', (all >= 0 ? '+' : '') + '$' + this._fmt(all), all >= 0 ? 'var(--green)' : 'var(--red)');
+    set('pvAll', (all >= 0 ? '+' : '') + this._m(all), all >= 0 ? 'var(--green)' : 'var(--red)');
     set('pvPct', (plp >= 0 ? '+' : '') + this._fmt(plp) + '%', plp >= 0 ? 'var(--green)' : 'var(--red)');
-    set('pvAsset', '$' + this._fmt(pv + all, 0), null);
+    set('pvAsset', this._m(pv + all, 0), null);
     set('pvR', (r >= 0 ? '+' : '') + this._fmt(r) + 'R', r >= 0 ? 'var(--green)' : 'var(--red)');
   }
 
   _readForm() {
     return {
+      // Form luôn nhập theo đơn vị đang hiển thị → đóng băng đơn vị + tỉ giá vào lệnh
+      cc: this.state.ccy, fx: this._fxRate(),
       d: this._gv('f_d'), s: this._gv('f_s').toUpperCase().trim(), a: this._gv('f_a'),
       su: this._gv('f_su'), en: this._gv('f_en'), ex: this._gv('f_ex'), e: this._gv('f_e'),
       o: this._gv('f_o') ? +this._gv('f_o') : null, c: this._gv('f_c') ? +this._gv('f_c') : null,
@@ -1485,22 +1602,61 @@ class Component extends DCLogic {
     this._toastTimer = setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(8px)'; }, 2200);
   }
 
+  // ══ CỔNG CHẶN LỆNH NGOÀI KẾ HOẠCH ══
+  // Lệnh −40,91R (GOLD 03/03/2026) một mình xoá sạch thành quả của 20 lệnh còn lại.
+  // Nó không phải lỗi phương pháp — VCP vẫn dương. Nó là lệnh không nằm trong kế hoạch
+  // và không có stop. Cổng này bắt đúng ba dấu hiệu đó trước khi lệnh được ghi.
+  _planWarnings(t) {
+    const w = [], sym = (t.s || '').toUpperCase();
+    if (!this.state.watchlist.some(x => String(x.symbol || '').toUpperCase() === sym)) {
+      w.push(`• ${sym} KHÔNG có trong watchlist — đây là lệnh ngoài kế hoạch.`);
+    }
+    const reg = this._scanCache && this._scanCache.VN && this._scanCache.VN.regime;
+    if (t.a === 'Buy' && reg && reg.state !== 'ON') {
+      w.push(`• Thị trường đang ĐỨNG NGOÀI: ${reg.reason}. VN không cho bán khống — lúc này giữ tiền mặt.`);
+    }
+    const r = +t.r || 0;
+    if (r <= -2) w.push(`• Lệnh này lỗ ${this._fmt(r, 2)}R, vượt xa mức 1R. Stop đã không được tôn trọng.`);
+    return w;
+  }
+
   saveTrade = () => {
     const t = this._readForm(), tr = this._tr();
     if (!t.d || !t.s) { alert(tr.needMinFields); return; }
-    const trades = this.state.trades.slice();
     const isEdit = this.state.editIdx >= 0;
+    const old = isEdit ? this.state.trades[this.state.editIdx] : null;
+    // Sửa lệnh cũ: giữ nguyên tỉ giá lúc ghi, không đóng dấu lại theo tỉ giá hôm nay
+    if (old && +old.fx > 0) t.fx = +old.fx;
+
+    const warns = this._planWarnings(t);
+    if (warns.length && !(isEdit && old && old.np)) {
+      if (!confirm(`⚠️ LỆNH NGOÀI HỆ THỐNG\n\n${warns.join('\n')}\n\n`
+        + `Chỉ vào lệnh với mã đã có trong watchlist, khi thị trường cho phép.\n\n`
+        + `Bấm OK để vẫn ghi (lệnh sẽ bị đánh dấu NGOÀI KH và tính riêng ở tab Setups).\n`
+        + `Bấm Cancel để bỏ — đây thường là lựa chọn đúng.`)) return;
+      t.np = 1;
+    }
+
+    const trades = this.state.trades.slice();
     if (isEdit) trades[this.state.editIdx] = t; else trades.push(t);
     this._cache = null;
     this.setState({ trades, editIdx: -1 }, () => {
       this._persist(); this._clearForm();
-      this._toast(isEdit ? `${tr.toastUpdated} ${t.s}` : `${tr.toastAdded} ${t.s} · ${t.net >= 0 ? '+' : ''}$${t.net}`);
+      if (t.np) this._toast(`⚠️ ${t.s} — đã ghi, ĐÁNH DẤU NGOÀI KẾ HOẠCH`, 'var(--red)');
+      else this._toast(isEdit ? `${tr.toastUpdated} ${t.s}` : `${tr.toastAdded} ${t.s} · ${t.net >= 0 ? '+' : ''}${this._m(+t.net)}`);
     });
   }
 
   cancelEdit = () => { this.setState({ editIdx: -1 }); this._clearForm(); }
 
   editTrade = (i) => {
+    // Form luôn nhập theo đơn vị đang hiển thị → sửa lệnh cũ thì chuyển hiển thị
+    // về đúng đơn vị của lệnh đó, tránh gõ số VND vào một lệnh ghi bằng USD.
+    const rc = (this.state.trades[i] || {}).cc === 'VND' ? 'VND' : 'USD';
+    if (rc !== this.state.ccy) {
+      this._setCcy(rc, true);
+      this._toast(`Đã chuyển hiển thị sang ${rc} — lệnh này ghi bằng ${rc}`, 'var(--accent)');
+    }
     this.setState({ editIdx: i, formOpen: true }, () => {
       const t = this.state.trades[i];
       const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
@@ -1547,7 +1703,7 @@ class Component extends DCLogic {
     const d = this._gv('depDate'), amt = +this._gv('depAmt'), note = this._gv('depNote').trim(), tr = this._tr();
     if (!d || !amt) { alert(tr.needDepFields); return; }
     this._cache = null;
-    this.setState({ deposits: [...this.state.deposits, { d, amt, note }] }, () => {
+    this.setState({ deposits: [...this.state.deposits, { d, amt, note, cc: this.state.ccy, fx: this._fxRate() }] }, () => {
       this._persistD();
       const added = new Date(d + 'T00:00:00');
       const next = new Date(added.getFullYear(), added.getMonth() + 1, 1);
@@ -1570,14 +1726,14 @@ class Component extends DCLogic {
     const nd = d.toISOString().slice(0, 10);
     const note = this._depMonthLabel(d);
     this._cache = null;
-    this.setState({ deposits: [...this.state.deposits, { d: nd, amt: x.amt, note }] }, () => this._persistD());
+    this.setState({ deposits: [...this.state.deposits, { d: nd, amt: x.amt, note, cc: x.cc || 'USD', fx: +x.fx || this._fxRate() }] }, () => this._persistD());
   }
 
   doExportCSV = () => {
     const a = this._computed();
-    const H = ['Ngày vào','Mã','Action','Setup','Entry','Giá vào','Giá ra','Ngày đóng','Exit','Cảm xúc','Period','Commission','Net P/L','Profit %','All Profit','R-Multiple','Assets','% Đóng góp','Kỷ luật','MAE (R)','MFE (R)','Detail'];
+    const H = ['Ngày vào','Mã','Action','Setup','Entry','Giá vào','Giá ra','Ngày đóng','Exit','Cảm xúc','Period','Commission','Net P/L','Profit %','All Profit','R-Multiple','Assets','% Đóng góp','Kỷ luật','MAE (R)','MFE (R)','Đơn vị','Tỉ giá','Ngoài KH','Detail'];
     const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const lines = [H.join(',')].concat(a.map(t => [t.d,t.s,t.a,t.su,t.en,t.o,t.c,t.cd,t.ex,t.e,t.p,t.comm,t.net,t._plp.toFixed(2),t._all.toFixed(2),t.r,t._as.toFixed(2),t._contrib.toFixed(2),t.dis,t.mae,t.mfe,t.de].map(esc).join(',')));
+    const lines = [H.join(',')].concat(a.map(t => [t.d,t.s,t.a,t.su,t.en,t.o,t.c,t.cd,t.ex,t.e,t.p,t.comm,t.net,t._plp.toFixed(2),t._all.toFixed(2),t.r,t._as.toFixed(2),t._contrib.toFixed(2),t.dis,t.mae,t.mfe,t.cc||'USD',t.fx||'',t.np?1:'',t.de].map(esc).join(',')));
     const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const el = document.createElement('a'); el.href = url; el.download = 'trading-journal-2026.csv'; el.click(); URL.revokeObjectURL(url);
@@ -1711,7 +1867,8 @@ class Component extends DCLogic {
     const stopV = parseFloat(this._gv('wlStop'));
     const note = (this._gv('wlNote') || '').trim();
     if (!sym || !(pivot > 0)) { alert(tr.wlNeed); return; }
-    const watchlist = [{ symbol: sym, pivot, stop: isNaN(stopV) ? null : stopV, note }, ...this.state.watchlist.filter(w => w.symbol !== sym)];
+    const cc = this._scanMkt() === 'VN' ? 'VND' : 'USD';
+    const watchlist = [{ symbol: sym, pivot, stop: isNaN(stopV) ? null : stopV, note, cc }, ...this.state.watchlist.filter(w => w.symbol !== sym)];
     this.setState({ watchlist }, () => {
       this._persistWl();
       ['wlSym','wlPivot','wlStop','wlNote'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -1726,7 +1883,7 @@ class Component extends DCLogic {
   }
 
   exportWatchlist = () => {
-    const data = this.state.watchlist.map(w => ({ symbol: w.symbol, pivot: w.pivot, stop: w.stop == null ? null : w.stop, note: w.note || '' }));
+    const data = this.state.watchlist.map(w => ({ symbol: w.symbol, pivot: w.pivot, stop: w.stop == null ? null : w.stop, note: w.note || '', cc: w.cc || 'USD' }));
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const el = document.createElement('a'); el.href = url; el.download = 'watchlist.json'; el.click(); URL.revokeObjectURL(url);
@@ -1751,7 +1908,7 @@ class Component extends DCLogic {
       if (g.status === 200) { const j = await g.json(); sha = j.sha; oldB64 = (j.content || '').replace(/\s/g, ''); }
       else if (g.status === 401 || g.status === 403) { localStorage.removeItem('tj_gh_pat'); throw new Error(tr.ghBadToken); }
       else if (g.status !== 404) throw new Error('HTTP ' + g.status);
-      const data = this.state.watchlist.map(w => ({ symbol: w.symbol, pivot: w.pivot, stop: w.stop == null ? null : w.stop, note: w.note || '' }));
+      const data = this.state.watchlist.map(w => ({ symbol: w.symbol, pivot: w.pivot, stop: w.stop == null ? null : w.stop, note: w.note || '', cc: w.cc || 'USD' }));
       const body = JSON.stringify(data, null, 2) + '\n';
       const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(body)));
       if (oldB64 && oldB64 === b64) { this._toast(tr.wlPushNoChange, 'var(--accent)'); return; }
@@ -1775,8 +1932,8 @@ class Component extends DCLogic {
     const rows = wl.length ? wl.map((w, i) => `
       <div style="display:grid;grid-template-columns:60px 1fr 1fr 1.6fr auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--border)">
         <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent)">${esc(w.symbol)}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px">$${this._fmt(w.pivot, 2)}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:${w.stop != null ? 'var(--red)' : 'var(--text3)'}">${w.stop != null ? '$' + this._fmt(w.stop, 2) : '—'}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px">${this._px(w.pivot, w)}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:${w.stop != null ? 'var(--red)' : 'var(--text3)'}">${w.stop != null ? this._px(w.stop, w) : '—'}</div>
         <div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(w.note)}">${esc(w.note)}</div>
         <span onclick="window._tj.delWatch(${i})" style="cursor:pointer;color:var(--text3);font-size:12px;flex-shrink:0;padding:2px 4px">🗑</span>
       </div>`).join('') : `<div style="color:var(--text3);font-size:12px;padding:6px 0">${tr.wlEmpty}</div>`;
@@ -2068,15 +2225,58 @@ class Component extends DCLogic {
     this._scanMark(sym, { n: String(val || '').trim(), t: Date.now() });
   }
 
+  // Nạp sẵn scan VN ngay khi mở app — cổng chặn lệnh cần biết trạng thái thị trường
+  // kể cả khi người dùng chưa mở tab Watch lần nào.
+  async _preloadScanVN() {
+    this._scanCache = this._scanCache || {};
+    if (this._scanCache.VN !== undefined) return;
+    try {
+      const r = await fetch('scans/latest_vn.json', { cache: 'no-store' });
+      this._scanCache.VN = r.ok ? await r.json() : null;
+    } catch (e) { this._scanCache.VN = null; }
+    if (this.state.rightTab === 'watchlist') this._loadScanResults();
+  }
+
+  // ── Công tắc tổng: VN không cho bán khống, thị trường giảm thì lựa chọn duy nhất
+  //    là giữ tiền mặt. Chọn đúng thời điểm ăn đứt chọn đúng cổ phiếu ở HOSE. ──
+  _regimeBanner(d, esc) {
+    const r = d.regime;
+    if (!r || !r.state) return '';
+    const on = r.state === 'ON', unknown = r.state === 'UNKNOWN';
+    const col = on ? 'var(--green)' : unknown ? 'var(--amber)' : 'var(--red)';
+    const bg = on ? 'var(--green-soft)' : unknown ? 'var(--amber-soft)' : 'var(--red-soft)';
+    const head = on ? '🟢 ĐƯỢC PHÉP VÀO LỆNH'
+      : unknown ? '🟡 CHƯA XÁC ĐỊNH ĐƯỢC TRẠNG THÁI — coi như đứng ngoài'
+      : '🔴 ĐỨNG NGOÀI — KHÔNG VÀO LỆNH NÀO';
+    const breadth = r.breadth50 == null ? '' :
+      `<div style="font-size:9.5px;color:var(--text3);margin-top:3px">Độ rộng: <b style="color:var(--text2)">${this._fmt(r.breadth50, 0)}%</b> số mã trên MA50 · <b style="color:var(--text2)">${this._fmt(r.breadth200, 0)}%</b> trên MA200 <span title="Chỉ để tham khảo — độ rộng không tham gia quyết định, tránh thêm biến số chưa kiểm định">ⓘ</span></div>`;
+    const tail = on
+      ? 'Vẫn chỉ vào lệnh ở nhóm BREAKOUT, đúng pivot, stop 5-8%.'
+      : 'Giữ tiền mặt. Danh sách dưới đây chỉ để theo dõi nền giá — không phải tín hiệu mua.';
+    return `<div style="background:${bg};border:1px solid ${col};border-radius:9px;padding:8px 11px;margin-bottom:8px;line-height:1.5"
+        title="Quy tắc: VN-Index &gt; MA50 VÀ MA50 &gt; MA200. Không đạt cả hai thì đứng ngoài.">
+      <div style="font-size:11px;font-weight:700;color:${col}">${head}</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:2px">${esc(r.reason || '')}</div>
+      ${breadth}
+      <div style="font-size:9.5px;color:var(--text3);margin-top:4px">${tail}</div>
+    </div>`;
+  }
+
   // ── Bảng scan VN: nhóm theo mẫu hình VCP (không dùng RS — backtest HOSE cho alpha ≈ 0) ──
   _scanBodyVN(d, esc) {
     const tr = this._tr();
     const base = d.chart_base || 'https://www.tradingview.com/chart/';
     const marks = this._scanMkGet(), cur = String(d.scanned_at || '');
     const act = (fn, icon, title, style) => `<span onclick="${fn}" title="${title}" style="cursor:pointer;font-size:11px;line-height:1;padding:2px 4px;border-radius:6px;${style}">${icon}</span>`;
+    // Thị trường đóng thì "vượt pivot" chỉ là dữ kiện, không phải tín hiệu vào lệnh
+    const gateOn = d.entries_allowed === true;
     const GROUPS = [
-      ['BREAKOUT', '🎯 BREAKOUT HÔM NAY — vượt pivot kèm khối lượng ≥1,5×', 'var(--green)',
-       'Tín hiệu vào lệnh đã qua kiểm định: backtest HOSE 2018-2026 cho CAGR +10,4%, sụt giảm tối đa −15,9%, thắng 38,6% với tỷ lệ lãi/lỗ 3,75:1.'],
+      ['BREAKOUT',
+       gateOn ? '🎯 BREAKOUT HÔM NAY — vượt pivot kèm khối lượng ≥1,5×'
+              : '🚫 VƯỢT PIVOT HÔM NAY — chỉ ghi nhận, thị trường đang đứng ngoài',
+       gateOn ? 'var(--green)' : 'var(--text3)',
+       gateOn ? 'Tín hiệu vào lệnh đã qua kiểm định: backtest HOSE 2018-2026 cho CAGR +10,4%, sụt giảm tối đa −15,9%, thắng 38,6% với tỷ lệ lãi/lỗ 3,75:1.'
+              : 'Breakout khi chỉ số dưới MA50 có kỳ vọng âm — cả sàn chạy theo một nhịp. Ghi nhận để theo dõi, không vào lệnh.'],
       ['VCP3', '🔵 VCP 3 NÉN — đang nén, chờ phá vỡ', 'var(--accent)',
        'Ba lần nén biên độ nhỏ dần + khối lượng cạn. Đây là danh sách theo dõi chính: canh phiên vượt pivot.'],
       ['VCP2', '🟡 VCP 2 NÉN — chưa đạt kiểm định, chỉ tham khảo', 'var(--amber)',
@@ -2084,7 +2284,7 @@ class Component extends DCLogic {
       ['TREND', '📈 XU HƯỚNG TĂNG — chưa có VCP', 'var(--text3)',
        'Trên MA50 và MA200, trong vòng 25% đỉnh 52 tuần. Là bể chứa để chờ hình thành nền VCP.'],
     ];
-    let out = '';
+    let out = this._regimeBanner(d, esc);
     for (const [tier, title, color, why] of GROUPS) {
       const all = d.results.filter(r => r.tier === tier);
       if (!all.length) {
@@ -2259,7 +2459,7 @@ class Component extends DCLogic {
     const sgn = v => v >= 0 ? '+' : '';
     el.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
       ${card(tr.kpiROI, sgn(s.totNet)+this._fmt(s.capNow?s.totNet/s.capNow*100:0,1)+'%', s.totNet>=0?'var(--green)':'var(--red)', `${tr.kpiOnCap} · ${this.state.deposits.length} ${tr.kpiTimes}`, false)}
-      ${card(tr.kpiDD, this._fmt(s.maxDD,1)+'%', 'var(--red)', `${tr.kpiPeak} $${this._fmt(s.peak,0)} · ${s.win}W / ${s.loss}L`, false)}
+      ${card(tr.kpiDD, this._fmt(s.maxDD,1)+'%', 'var(--red)', `${tr.kpiPeak} ${this._m(s.peak,0)} · ${s.win}W / ${s.loss}L`, false)}
     </div>${this._advStripHTML(s, tr)}`;
   }
 
@@ -2274,9 +2474,9 @@ class Component extends DCLogic {
         <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;margin-top:3px;color:${col};line-height:1.1">${v}</div>${sub ? '<div style="font-size:9.5px;color:var(--text2);margin-top:2px;white-space:nowrap">'+sub+'</div>' : ''}
       </div>`;
     return `<div class="tj-ministrip" style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:7px">
-      ${mini(tr.mExpect, sgn(s.expectancy)+'$'+this._fmt(s.expectancy,1), s.expectancy>=0?'var(--green)':'var(--red)', `PF ${this._fmt(s.pf)} · Avg ${sgn(s.avgR)}${this._fmt(s.avgR,2)}R`)}
-      ${mini(tr.mAvgWin, '$'+this._fmt(s.avgWin,1), 'var(--green)')}
-      ${mini(tr.mAvgLoss, '-$'+this._fmt(s.avgLoss,1), 'var(--red)')}
+      ${mini(tr.mExpect, sgn(s.expectancy)+this._m(s.expectancy,1), s.expectancy>=0?'var(--green)':'var(--red)', `PF ${this._fmt(s.pf)} · Avg ${sgn(s.avgR)}${this._fmt(s.avgR,2)}R`)}
+      ${mini(tr.mAvgWin, this._m(s.avgWin,1), 'var(--green)')}
+      ${mini(tr.mAvgLoss, '-'+this._m(s.avgLoss,1), 'var(--red)')}
       ${mini(tr.mStreak, curTxt, curCol, `Max ${s.maxWStreak}${tr.mWinShort} · ${s.maxLStreak}${tr.mLossShort}`)}
     </div>`;
   }
@@ -2320,7 +2520,7 @@ class Component extends DCLogic {
     const quality =
       row(tr.sysEdge, fx(s.edge), grade3(s.edge, 1.2, 1.0), tr.sysTarget + ' > 1.0', tr.sysEdgeSub) +
       row(tr.sysPayoff, fx(s.payoff), grade3(s.payoff, 2, 1), tr.sysTarget + ' ≥ 2.0', '') +
-      row(tr.sysLGLL, fx(s.lgll), grade3(s.lgll, 2, 1), tr.sysTarget + ' > 2.0', 'LG +$' + this._fmt(s.LG, 0) + ' · LL -$' + this._fmt(s.LL, 0)) +
+      row(tr.sysLGLL, fx(s.lgll), grade3(s.lgll, 2, 1), tr.sysTarget + ' > 2.0', 'LG +' + this._m(s.LG, 0) + ' · LL -' + this._m(s.LL, 0)) +
       row(tr.sysHold, fx(s.holdRatio), grade3(s.holdRatio, 2, 1), tr.sysTarget + ' ≥ 2.0', tr.sysHoldSub.replace('{w}', this._fmt(s.holdW, 1)).replace('{l}', this._fmt(s.holdL, 1))) +
       row(tr.sysDD, '-' + this._fmt(s.curDD, 1) + '%', gDD, '≤ 10%', s.curDD > 0.05 ? tr.sysRecovSub.replace('{r}', fx(s.recov, 1)) : '') +
       row(tr.sysComp, s.compRate == null ? '—' : this._fmt(s.compRate, 0) + '%', gComp, tr.sysTarget + ' > 90%',
@@ -2424,11 +2624,11 @@ class Component extends DCLogic {
       if (q && !((t.s || '').toLowerCase().includes(q) || (t.de || '').toLowerCase().includes(q))) return false;
       if (fl === 'win' && t._all <= 0) return false;
       if (fl === 'loss' && t._all >= 0) return false;
-      if (fl === 'notplan' && t.su !== 'NOT IN PLAN') return false;
+      if (fl === 'notplan' && t.su !== 'NOT IN PLAN' && !t.np) return false;
       return true;
     });
     const TH = (t, r, c) => `<th style="text-align:${c?'center':r?'right':'left'};padding:7px 8px;font-size:8.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:1;white-space:nowrap">${t}</th>`;
-    const head = `<thead><tr>${TH('#')}${TH(tr.thDate)}${TH(tr.thSymbol)}${TH(tr.thBS,0,1)}${TH(tr.thSetup)}${TH(tr.thNet,1)}${TH(tr.thR,1)}${TH(tr.thAsset,1)}${TH(tr.thEmo,0,1)}${TH('📸',0,1)}${TH('')}</tr></thead>`;
+    const head = `<thead><tr>${TH('#')}${TH(tr.thDate)}${TH(tr.thSymbol)}${TH(tr.thBS,0,1)}${TH(tr.thSetup)}${TH(tr.thNet+' '+this._ccySym(),1)}${TH(tr.thR,1)}${TH(tr.thAsset,1)}${TH(tr.thEmo,0,1)}${TH('📸',0,1)}${TH('')}</tr></thead>`;
     const body = rows.length ? rows.map(t => {
       const num = a.indexOf(t) + 1, blow = t._all < -500;
       const isEditing = t._i === this.state.editIdx;
@@ -2437,7 +2637,8 @@ class Component extends DCLogic {
       const imgs = [(t.io?`<a href="${t.io}" target="_blank" style="color:var(--accent);font-size:13px;margin-right:3px">▣</a>`:''), (t.ic?`<a href="${t.ic}" target="_blank" style="color:var(--accent);font-size:13px">▢</a>`:'')].filter(Boolean).join('') || '<span style="color:var(--text3)">—</span>';
       const suBadge = t.su === 'NOT IN PLAN'
         ? `<span style="background:var(--red-soft);color:var(--red);border-radius:99px;padding:1px 6px;font-size:8.5px;font-weight:700">NIP</span>`
-        : `<span style="color:var(--text2);font-size:11.5px">${t.su||''}</span>`;
+        : `<span style="color:var(--text2);font-size:11.5px">${t.su||''}</span>`
+          + (t.np ? `<span title="Vào lệnh khi mã không có trong watchlist / thị trường đang đứng ngoài" style="margin-left:4px;background:var(--red-soft);color:var(--red);border-radius:99px;padding:1px 5px;font-size:8px;font-weight:700">NGOÀI KH</span>` : '');
       const emoColors = {
         'Confident (Tự tin)':['var(--green-soft)','var(--green)'],
         'FEAR (Sợ hãi)':['var(--amber-soft)','var(--amber)'],'GREED (Tham lam)':['var(--red-soft)','var(--red)'],
@@ -2455,10 +2656,10 @@ class Component extends DCLogic {
             <div><span style="color:var(--text3)">${tr.dEntry}</span> <span style="color:var(--text2)">${t.en||'—'}</span></div>
             <div><span style="color:var(--text3)">${tr.dExit}</span> <span style="color:var(--text2)">${t.ex||'—'}</span></div>
             <div><span style="color:var(--text3)">${tr.dEmo}</span> <span style="color:var(--text2)">${t.e||'—'}</span></div>
-            <div><span style="color:var(--text3)">${tr.dPrice}</span> <span style="font-family:'JetBrains Mono',monospace">${t.o!=null?this._fmt(t.o,2):'—'} → ${t.c!=null?this._fmt(t.c,2):'—'}</span></div>
+            <div><span style="color:var(--text3)">${tr.dPrice}</span> <span style="font-family:'JetBrains Mono',monospace">${this._px(t.o,t)} → ${this._px(t.c,t)}</span></div>
             <div><span style="color:var(--text3)">${tr.dClose}</span> <span>${t.cd||'—'}</span></div>
             <div><span style="color:var(--text3)">${tr.dPeriod}</span> <span>${t.p!=null?t.p+'d':'—'}</span></div>
-            <div><span style="color:var(--text3)">${tr.dComm}</span> <span style="font-family:'JetBrains Mono',monospace">$${this._fmt(t.comm)}</span></div>
+            <div><span style="color:var(--text3)">${tr.dComm}</span> <span style="font-family:'JetBrains Mono',monospace">${this._m(t._comm)}</span></div>
             <div><span style="color:var(--text3)">${tr.dPLPct}</span> <span style="color:${t._plp>=0?'var(--green)':'var(--red)'};font-family:'JetBrains Mono',monospace">${t._plp>=0?'+':''}${this._fmt(t._plp)}%</span></div>
             <div><span style="color:var(--text3)">${tr.dContrib}</span> <span style="font-family:'JetBrains Mono',monospace">${this._fmt(t._contrib,1)}%</span></div>
             <div><span style="color:var(--text3)">${tr.dDis}</span> <span style="font-family:'JetBrains Mono',monospace">${t.dis!=null&&t.dis!==''?t.dis+'/5':'—'}</span></div>
@@ -2478,9 +2679,9 @@ class Component extends DCLogic {
         <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${blow?'var(--red)':isEditing?'var(--accent)':'var(--text)'}">${t.s||''}</td>
         <td style="padding:6px 8px;text-align:center"><span style="background:${t.a==='Buy'?'var(--green-soft)':'var(--red-soft)'};color:${t.a==='Buy'?'var(--green)':'var(--red)'};border-radius:99px;padding:1px 6px;font-size:8.5px;font-weight:700">${t.a}</span></td>
         <td style="padding:6px 8px">${suBadge}</td>
-        <td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${nc};white-space:nowrap">${t._all>=0?'+':''}$${this._fmt(t._all)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${nc};white-space:nowrap">${t._all>=0?'+':''}${this._m(t._all)}</td>
         <td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:${rc};white-space:nowrap">${(+t.r||0)>=0?'+':''}${this._fmt(t.r)}R</td>
-        <td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">$${this._fmt(t._as,0)}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">${this._m(t._as,0)}</td>
         <td style="padding:6px 8px;text-align:center">${emoBadge}</td>
         <td style="padding:6px 8px;text-align:center">${imgs}</td>
         <td style="padding:6px 4px;text-align:center;white-space:nowrap">
@@ -2500,13 +2701,13 @@ class Component extends DCLogic {
     const lang = this.state.lang;
     const row = (l, v, col) => `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--border);font-size:12.5px"><span style="color:var(--text2)">${l}</span><b style="font-family:'JetBrains Mono',monospace;color:${col||'var(--text)'}">${v}</b></div>`;
     const profitSentence = lang === 'en'
-      ? `${diff>=0?'📈':'📉'} <b>${diff>=0?'Up':'Down'}</b> <b>$${this._fmt(Math.abs(diff),0)}</b> (${this._fmt(pct,1)}%) ${tr.vsCapital}.`
-      : `${diff>=0?'📈':'📉'} Đang <b>${diff>=0?tr.profitTag:tr.lossTag}</b> <b>$${this._fmt(Math.abs(diff),0)}</b> (${this._fmt(pct,1)}%) ${tr.vsCapital}.`;
-    fb.innerHTML = row(`${tr.fundTotalDep} (${this.state.deposits.length} ${tr.times})`, '$'+this._fmt(s.capNow,0))
+      ? `${diff>=0?'📈':'📉'} <b>${diff>=0?'Up':'Down'}</b> <b>${this._m(Math.abs(diff),0)}</b> (${this._fmt(pct,1)}%) ${tr.vsCapital}.`
+      : `${diff>=0?'📈':'📉'} Đang <b>${diff>=0?tr.profitTag:tr.lossTag}</b> <b>${this._m(Math.abs(diff),0)}</b> (${this._fmt(pct,1)}%) ${tr.vsCapital}.`;
+    fb.innerHTML = row(`${tr.fundTotalDep} (${this.state.deposits.length} ${tr.times})`, this._m(s.capNow,0))
       + row(tr.fundTotalPL, (s.totNet>=0?'+':'')+' $'+this._fmt(s.totNet,2), s.totNet>=0?'var(--green)':'var(--red)')
       + `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 6px;border-top:2px solid var(--border);margin-top:3px">
           <span style="font-size:13px;font-weight:700">${tr.fundCurrent}</span>
-          <b style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--accent)">$${this._fmt(s.eq,2)}</b>
+          <b style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--accent)">${this._m(s.eq,2)}</b>
         </div>`
       + `<div style="border-radius:9px;padding:8px 12px;font-size:12px;background:${diff>=0?'var(--green-soft)':'var(--red-soft)'};color:${diff>=0?'var(--green)':'var(--red)'};margin-top:2px;line-height:1.6">${profitSentence}</div>`;
     const dl = document.getElementById('depList'); if (!dl) return;
@@ -2517,7 +2718,7 @@ class Component extends DCLogic {
       return `<div style="display:flex;align-items:center;gap:8px;padding:5px 2px;border-bottom:1px dashed var(--border);font-size:11.5px">
         <span style="color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap">${x.d||''}</span>
         <span style="flex:1;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.note||''}</span>
-        <b style="color:var(--green);font-family:'JetBrains Mono',monospace;white-space:nowrap">+$${this._fmt(x.amt,0)}</b>
+        <b style="color:var(--green);font-family:'JetBrains Mono',monospace;white-space:nowrap">+${this._m(this._cv(+x.amt||0,x),0)}</b>
         <span onclick="window._tj.delDep(${i})" style="cursor:pointer;color:var(--text3);font-size:12px;padding:2px 4px">🗑</span>
       </div>`;
     }).join('') || `<div style="color:var(--text3);padding:8px 2px;font-size:12px">${tr.noDeposits}</div>`;
@@ -2555,7 +2756,7 @@ class Component extends DCLogic {
       { t:tr.colWR, r:1, mono:true, get: x => x.wr+'%', col: x => +x.wr>=50?'var(--green)':'var(--red)' },
       { t:tr.colAvgR, r:1, mono:true, get: x => sgn(+x.avgR,x.avgR+'R'), col: x => +x.avgR>=0?'var(--green)':'var(--red)' },
       { t:tr.colTotR, r:1, mono:true, get: x => sgn(x.totR,this._fmt(x.totR,1)+'R'), col: x => x.totR>=0?'var(--green)':'var(--red)' },
-      { t:tr.colNet, r:1, mono:true, get: x => sgn(x.totNet,'$'+this._fmt(x.totNet)), col: x => x.totNet>=0?'var(--green)':'var(--red)' },
+      { t:tr.colNet+' '+this._ccySym(), r:1, mono:true, get: x => sgn(x.totNet,this._m(x.totNet)), col: x => x.totNet>=0?'var(--green)':'var(--red)' },
     ]);
   }
 
@@ -2569,8 +2770,8 @@ class Component extends DCLogic {
       { t:tr.colWin, r:1, mono:true, get: x => x.win, col: () => 'var(--green)' },
       { t:tr.colLoss, r:1, mono:true, get: x => x.loss, col: () => 'var(--red)' },
       { t:tr.colWR, r:1, mono:true, get: x => x.wr+'%', col: x => +x.wr>=50?'var(--green)':'var(--red)' },
-      { t:tr.colAvgNet, r:1, mono:true, get: x => sgn(+x.avgNet,'$'+Math.abs(+x.avgNet).toFixed(2)), col: x => +x.avgNet>=0?'var(--green)':'var(--red)' },
-      { t:tr.colTotNet, r:1, mono:true, get: x => sgn(x.totNet,'$'+this._fmt(x.totNet)), col: x => x.totNet>=0?'var(--green)':'var(--red)' },
+      { t:tr.colAvgNet, r:1, mono:true, get: x => sgn(+x.avgNet,this._m(+x.avgNet)), col: x => +x.avgNet>=0?'var(--green)':'var(--red)' },
+      { t:tr.colTotNet, r:1, mono:true, get: x => sgn(x.totNet,this._m(x.totNet)), col: x => x.totNet>=0?'var(--green)':'var(--red)' },
     ]);
   }
 
@@ -2589,7 +2790,7 @@ class Component extends DCLogic {
       if (td) {
         bg = td.net>0?'var(--green-soft)':td.net<0?'var(--red-soft)':'var(--amber-soft)';
         color = td.net>0?'var(--green)':td.net<0?'var(--red)':'var(--amber)';
-        marker = `<div style="font-size:8px;font-family:'JetBrains Mono',monospace;color:${color};margin-top:1px">${td.net>=0?'+':''}$${Math.round(td.net)}</div><div style="font-size:7.5px;color:${color};opacity:.7">${td.count}L</div>`;
+        marker = `<div style="font-size:8px;font-family:'JetBrains Mono',monospace;color:${color};margin-top:1px">${td.net>=0?'+':''}${this._mS(td.net)}</div><div style="font-size:7.5px;color:${color};opacity:.7">${td.count}L</div>`;
       }
       cells.push(`<div style="background:${bg};border-radius:6px;padding:4px;min-height:44px;border:${isToday?'1.5px solid var(--accent)':'1px solid transparent'}">
         <div style="font-size:10.5px;font-weight:${isToday?'700':'500'};color:${isToday?'var(--accent)':color}">${d}</div>${marker}
@@ -2626,8 +2827,8 @@ class Component extends DCLogic {
         const eff = rgb.map((c,i)=>c*alpha+cardRgb[i]*(1-alpha));
         const lum = (0.2126*eff[0]+0.7152*eff[1]+0.0722*eff[2])/255;
         const col = lum>0.55?'rgba(0,0,0,.82)':'rgba(255,255,255,.92)';
-        return `<div title="${ym}: ${d.count} ${tr.lenh} | ${d.net>=0?'+':''}$${this._fmt(d.net)}" style="background:${bg};border-radius:6px;height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
-          <div style="font-size:8.5px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${col}">${d.net>=0?'+':''}$${Math.round(d.net)}</div>
+        return `<div title="${ym}: ${d.count} ${tr.lenh} | ${d.net>=0?'+':''}${this._m(d.net)}" style="background:${bg};border-radius:6px;height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">
+          <div style="font-size:8.5px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${col}">${d.net>=0?'+':''}${this._mS(d.net)}</div>
           <div style="font-size:7.5px;color:${col};opacity:.7">${d.count} ${tr.lenh}</div>
         </div>`;
       }).join('');
@@ -2707,7 +2908,7 @@ class Component extends DCLogic {
     const grad = ctx.createLinearGradient(0,0,0,H);
     grad.addColorStop(0, c.line+'30'); grad.addColorStop(1, c.line+'00');
     const ptColors = eq.map((v,i)=>i===0?c.line:(v>=eq[i-1]?c.green:c.red));
-    const fmtFn = this._fmt.bind(this);
+    const fmtFn = this._fmt.bind(this), mFn = this._m.bind(this), mS = this._mS.bind(this);
     const maxIdx = eq.indexOf(Math.max(...eq)), minIdx = eq.indexOf(Math.min(...eq));
     const labelPlugin = {
       id:'tjValLbls',
@@ -2722,13 +2923,13 @@ class Component extends DCLogic {
             const v=eq[i], prev=i>0?eq[i-1]:v; if (v==null) return;
             cx.fillStyle = v>=prev?c.green:c.red;
             const baseY = pt.y-13;
-            cx.fillText('$'+fmtFn(v,0), pt.x, baseY<ca.top+10?pt.y+15:baseY);
+            cx.fillText(mS(v), pt.x, baseY<ca.top+10?pt.y+15:baseY);
           });
           cx.restore();
         } catch(_) {}
       }
     };
-    const milestones = TJ_MILES.filter(m=>eq.some(v=>v>=m));
+    const milestones = this._miles().filter(m=>eq.some(v=>v>=m));
     const msPlugin = {
       id:'tjMsLine',
       afterDraw(chart) {
@@ -2742,7 +2943,7 @@ class Component extends DCLogic {
             cx.beginPath(); cx.moveTo(x,ca.top); cx.lineTo(x,ca.bottom); cx.stroke();
             cx.setLineDash([]); cx.fillStyle=c.amber+'cc';
             cx.font='bold 8px "JetBrains Mono",monospace'; cx.textAlign='center';
-            cx.fillText(m>=1000?'$'+(m/1000)+'k':'$'+m, x, ca.top+9); cx.restore();
+            cx.fillText(mS(m), x, ca.top+9); cx.restore();
           });
         } catch(_) {}
       }
@@ -2767,17 +2968,17 @@ class Component extends DCLogic {
             callbacks: { label: x => {
               if (x.datasetIndex===0) {
                 const prev=x.dataIndex>0?eq[x.dataIndex-1]:null, diff=prev!==null?x.parsed.y-prev:null;
-                const parts=[tr.chartAssets+': $'+fmtFn(x.parsed.y,0)];
-                if (diff!==null) parts.push(tr.chartChange+': '+(diff>=0?'+':'')+' $'+fmtFn(diff,0));
+                const parts=[tr.chartAssets+': '+mFn(x.parsed.y,0)];
+                if (diff!==null) parts.push(tr.chartChange+': '+(diff>=0?'+':'')+' '+mFn(diff,0));
                 return parts;
               }
-              return tr.chartTrend+': $'+fmtFn(x.parsed.y,0);
+              return tr.chartTrend+': '+mFn(x.parsed.y,0);
             }}
           }
         },
         scales: {
           x:{ ticks:{color:c.tick,font:{size:9},maxRotation:40,minRotation:20}, grid:{color:c.grid} },
-          y:{ ticks:{color:c.tick,font:{size:9},callback:v=>'$'+fmtFn(v,0)}, grid:{color:c.grid} }
+          y:{ ticks:{color:c.tick,font:{size:9},callback:v=>mS(v)}, grid:{color:c.grid} }
         }
       }
     });
@@ -2820,6 +3021,8 @@ class Component extends DCLogic {
   componentDidMount() {
     this._setupPWA();
     this._applyTheme();
+    this._loadFx();
+    this._preloadScanVN();
     setTimeout(() => { if (this._backupOverdue()) this._toast(this._tr().bkRemind, 'var(--amber)'); }, 1500);
     this._fillSelects();
     this._setupPreviewListeners();
@@ -2946,15 +3149,26 @@ class Component extends DCLogic {
       // Lang
       langBtn: s.lang === 'vi' ? 'EN' : 'VI',
       toggleLang: this.toggleLang,
+      // Tiền tệ — nút trái đổi đơn vị, nút phải sửa tỉ giá
+      toggleCcy: this.toggleCcy, editFx: this.editFx,
+      ccyBtn: s.ccy === 'VND' ? '₫ VND' : '$ USD',
+      ccyStyle: { fontWeight: 700, color: 'var(--accent)' },
+      ccyTitle: s.ccy === 'VND'
+        ? 'Đang hiển thị VND — bấm để xem bằng USD. Lệnh ghi mới sẽ nhập bằng VND.'
+        : 'Đang hiển thị USD — bấm để xem bằng VND. Lệnh ghi mới sẽ nhập bằng USD.',
+      fxBtn: this._fmt(this._fxRate(), 0),
+      fxTitle: `1 USD = ${this._fmt(this._fxRate(), 0)} ₫`
+        + (s.fxSrc === 'tay' ? ' (đặt tay)' : s.fxSrc ? ` (tự động, ${s.fxSrc})` : ' (mặc định — chưa tải được tỉ giá)')
+        + '\nBấm để sửa. Tỉ giá này chỉ dùng cho lệnh ghi MỚI — lệnh cũ giữ tỉ giá lúc ghi nên lịch sử không đổi.',
       // Topbar labels
       lbSubtitle: tr.subtitle,
       lbAssets: tr.assets, lbTotalPL: tr.totalPL, lbWinrate: tr.winrate, lbTotalR: tr.totalR, lbCapital: tr.capital,
       // Topbar values
-      topBal: '$'+this._fmt(st.eq,0),
-      topPL: sgn(st.totNet)+'$'+this._fmt(st.totNet,0), topPLStyle: monoSt(st.totNet>=0?'var(--green)':'var(--red)'),
+      topBal: this._m(st.eq,0),
+      topPL: sgn(st.totNet)+this._m(st.totNet,0), topPLStyle: monoSt(st.totNet>=0?'var(--green)':'var(--red)'),
       topWR: this._fmt(st.wr,1)+'%', topWRStyle: monoSt(st.wr>=50?'var(--green)':'var(--red)'),
       topR: sgn(st.totR)+this._fmt(st.totR,1)+'R', topRStyle: monoSt(st.totR>=0?'var(--green)':'var(--red)'),
-      topCapNow: '$'+this._fmt(st.capNow,0),
+      topCapNow: this._m(st.capNow,0),
       themeIcon: s.theme==='dark'?'☀️':'🌙',
       driveUpTitle: (() => { const last = +localStorage.getItem('tj_gdrive_last_backup') || 0;
         return last ? tr.bkLastAt + new Date(last).toLocaleString(s.lang==='vi'?'vi-VN':'en-US') : tr.bkNever; })(),
@@ -2966,16 +3180,18 @@ class Component extends DCLogic {
       // Position sizing labels
       lbOneR: tr.oneR, lbMaxRiskSub: tr.maxRiskSub, lbDivSL: tr.divSL, lbMaxPos: tr.maxPos, lbMaxPosSub: tr.maxPosSub,
       // Position sizing values
-      onePercent: '$'+this._fmt(st.eq*0.01,2),
-      maxDisburse: '$'+this._fmt(s.slPct>0?(st.eq*0.01/(s.slPct/100)):0,2),
+      onePercent: this._m(st.eq*0.01, this.state.ccy==='VND'?0:2),
+      maxDisburse: this._m(s.slPct>0?(st.eq*0.01/(s.slPct/100)):0, this.state.ccy==='VND'?0:2),
       onSlPct: e => { const v=parseFloat(e.target.value); if(v>0&&v<=100){localStorage.setItem('tj_slpct',v);this.setState({slPct:v});} },
       // Form labels
       lbFormSub: tr.formSub,
       lbFEntryDate: tr.fEntryDate, lbFSymbol: tr.fSymbol, lbFAction: tr.fAction, lbFSetup: tr.fSetup,
       lbFEntry: tr.fEntry, lbFEntryPh: tr.fEntryPh, lbFCloseDate: tr.fCloseDate,
-      lbFPeriod: tr.fPeriod, lbFExit: tr.fExit, lbFEmotion: tr.fEmotion, lbFNetPL: tr.fNetPL, lbFR: tr.fR,
+      lbFPeriod: tr.fPeriod, lbFExit: tr.fExit, lbFEmotion: tr.fEmotion, lbFR: tr.fR,
+      lbFNetPL: tr.fNetPL + ' (' + this._ccySym() + ')',
       lbFAdvanced: tr.fAdvanced,
-      lbFEntryPrice: tr.fEntryPrice, lbFExitPrice: tr.fExitPrice, lbFComm: tr.fComm, lbFDisplayDay: tr.fDisplayDay,
+      lbFEntryPrice: tr.fEntryPrice + ' (' + this._ccySym() + ')', lbFExitPrice: tr.fExitPrice + ' (' + this._ccySym() + ')',
+      lbFComm: tr.fComm + ' (' + this._ccySym() + ')', lbFDisplayDay: tr.fDisplayDay,
       lbFImgEntry: tr.fImgEntry, lbFImgExit: tr.fImgExit, lbFDetail: tr.fDetail, lbFDetailPh: tr.fDetailPh,
       lbFDis: tr.fDis, lbFMae: tr.fMae, lbFMfe: tr.fMfe,
       // Preview bar labels
@@ -2997,7 +3213,7 @@ class Component extends DCLogic {
       lbChartLine: tr.chartLine, lbChartLineSub: tr.chartLineSub, lbChartDonut: tr.chartDonut,
       // Fund/Notes labels
       lbFundTitle: tr.fundTitle, lbFundSub: tr.fundSub,
-      lbDepBook: tr.depBook, lbDepTimes: tr.times, lbDepAmtPh: tr.depAmtPh, lbDepNotePh: tr.depNotePh,
+      lbDepBook: tr.depBook, lbDepTimes: tr.times, lbDepAmtPh: this._ccySym() + ' ' + tr.depAmtPh, lbDepNotePh: tr.depNotePh,
       lbNotesTitle: tr.notesTitle, lbNotesSub: tr.notesSub, lbNotesPh: tr.notesPh,
       // Quote
       lbQuote: tr.quote,

@@ -35,6 +35,11 @@ jobs:
           key: vncache-${{ github.run_id }}
           restore-keys: vncache-
 
+      # Mot request, chay moi lan — journal dung lam ty gia mac dinh khi ghi lenh moi
+      - name: Cap nhat ty gia USD/VND
+        continue-on-error: true
+        run: python automation/fetch_fx.py
+
       - name: Scan VCP Viet Nam + check watchlist (9h sang thu Bay VN)
         if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 2 * * 6'
         env:
@@ -55,7 +60,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scans/latest_vn.json automation/state.json
+          git add scans/latest_vn.json scans/fx.json automation/state.json
           git diff --cached --quiet || { git commit -m "bot: scan VN/state $(date -u '+%Y-%m-%d %H:%M') UTC"; git push; }
 
 # Bo loc My tam gac (mo lai khi phap ly cho phep giao dich lai):

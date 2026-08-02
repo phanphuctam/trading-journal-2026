@@ -66,6 +66,10 @@ def main():
     symbols = sorted({w["symbol"].upper() for w in watchlist})
     quotes = get_quotes(symbols, market="america" if args.market == "us" else "vietnam")
 
+    # Gia co phieu VN la VND, khong phai USD — dat ky hieu dung cho tung thi truong
+    money = ((lambda v: f"${fmt_num(v)}") if args.market == "us"
+             else (lambda v: f"{fmt_num(v)}đ"))
+
     messages = []
     for w in watchlist:
         sym = w["symbol"].upper()
@@ -86,7 +90,7 @@ def main():
                 state[key_break] = price
                 messages.append(
                     f"🚀 <b>{sym} VUOT PIVOT</b>\n"
-                    f"Gia: <b>${fmt_num(price)}</b> ≥ pivot ${fmt_num(pivot)} "
+                    f"Gia: <b>{money(price)}</b> ≥ pivot {money(pivot)} "
                     f"(+{(price / pivot - 1) * 100:.1f}%){vol_txt}\n"
                     f"📝 {note}"
                 )
@@ -94,7 +98,7 @@ def main():
                 state[key_near] = price
                 messages.append(
                     f"👀 <b>{sym} GAN PIVOT</b> (con {(pivot / price - 1) * 100:.1f}%)\n"
-                    f"Gia: ${fmt_num(price)} / pivot ${fmt_num(pivot)}{vol_txt}\n"
+                    f"Gia: {money(price)} / pivot {money(pivot)}{vol_txt}\n"
                     f"📝 {note}"
                 )
 
@@ -105,7 +109,7 @@ def main():
                 state[key_stop] = price
                 messages.append(
                     f"🛑 <b>{sym} CHAM STOP</b>\n"
-                    f"Gia: <b>${fmt_num(price)}</b> ≤ stop ${fmt_num(stop)}\n"
+                    f"Gia: <b>{money(price)}</b> ≤ stop {money(stop)}\n"
                     f"📝 {note}"
                 )
 

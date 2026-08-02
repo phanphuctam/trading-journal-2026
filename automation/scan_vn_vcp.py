@@ -20,6 +20,10 @@ Dinh nghia VCP (giong het backtest da kiem dinh):
   diem mua (pivot): dinh dong cua 60 phien gan nhat
   BREAKOUT: dong cua vuot pivot + khoi luong >= 1.5x TB20
 
+CONG TAC TONG (regime): VN khong cho ban khong, va gan nhu ca san chay theo mot
+nhip -> chon dung thoi diem an dut chon dung co phieu. Chi cho phep vao lenh khi
+VN-Index > MA50 VA MA50 > MA200. Ngoai ra: DUNG NGOAI, scan chi de theo doi.
+
 Cach dung:
     python scan_vn_vcp.py                  # scan HOSE, ghi scans/latest_vn.json
     python scan_vn_vcp.py --hnx            # them san HNX
@@ -50,6 +54,7 @@ BASE_N = 60            # so phien tinh pivot
 VOL_BO = 1.5           # boi so khoi luong khi breakout
 LIQ_MIN = 10.0         # GTGD TB 20 phien toi thieu (ty VND)
 NEAR_PIVOT = 8.0       # coi la "sap toi diem mua" neu cach pivot <= %
+INDEX = "VNINDEX"      # chi so dung lam cong tac tong
 
 
 def fetch_all(symbols, offline=False, sleep=3.2):
@@ -111,6 +116,67 @@ def refresh_tail(symbols, days=90, sleep=3.2):
             print(f"    bo qua {s}: {str(e)[:50]}")
         if i % 20 == 0:
             print(f"    {i}/{len(symbols)}")
+
+
+def fetch_index(offline=False):
+    """Tai VN-Index (cache rieng, luon cap nhat duoi vi chi 1 request)."""
+    f = CACHE / f"{INDEX}.parquet"
+    old = pd.read_parquet(f) if f.exists() else None
+    if offline:
+        return old
+    try:
+        from vnstock import Quote
+        tz = ZoneInfo("Asia/Ho_Chi_Minh")
+        end = datetime.now(tz).strftime("%Y-%m-%d")
+        start = START if old is None or not len(old) else (
+            pd.to_datetime(old["time"]).max() - pd.Timedelta(days=10)).strftime("%Y-%m-%d")
+        new = Quote(symbol=INDEX, source="KBS").history(start=start, end=end, interval="1D")
+        if new is not None and len(new):
+            old = pd.concat([old, new], ignore_index=True) if old is not None else new
+            old = (old.drop_duplicates(subset=["time"], keep="last")
+                      .sort_values("time").reset_index(drop=True))
+            CACHE.mkdir(exist_ok=True)
+            old.to_parquet(f)
+    except Exception as e:
+        print(f"[!] Khong tai duoc {INDEX}: {str(e)[:70]} — dung cache")
+    return old
+
+
+def market_regime(idx, breadth50, breadth200):
+    """Cong tac tong. ON = duoc phep vao lenh, OFF = dung ngoai.
+
+    Quy tac: VN-Index > MA50 VA MA50 > MA200. VN khong co ban khong, nen khi
+    thi truong giam thi lua chon duy nhat la khong lam gi. Do rong (breadth) chi
+    de tham khao — no khong tham gia quyet dinh, tranh them bien so chua kiem dinh.
+    """
+    out = {"index": INDEX, "breadth50": breadth50, "breadth200": breadth200}
+    if idx is None or not len(idx):
+        out.update(state="UNKNOWN", reason="Khong co du lieu VN-Index — coi nhu khong duoc vao lenh")
+        return out
+    d = idx.copy()
+    d["time"] = pd.to_datetime(d["time"])
+    d = d.drop_duplicates(subset=["time"], keep="last").sort_values("time")
+    c = d["close"].astype(float)
+    if len(c) < 200:
+        out.update(state="UNKNOWN", reason=f"Chi co {len(c)} phien VN-Index, can >= 200")
+        return out
+    close = float(c.iloc[-1])
+    ma50, ma200 = float(c.rolling(50).mean().iloc[-1]), float(c.rolling(200).mean().iloc[-1])
+    above50, ma_stack = close > ma50, ma50 > ma200
+    fails = []
+    if not above50:
+        fails.append(f"VN-Index {close:,.0f} duoi MA50 {ma50:,.0f}")
+    if not ma_stack:
+        fails.append(f"MA50 {ma50:,.0f} duoi MA200 {ma200:,.0f}")
+    out.update(
+        date=str(d["time"].iloc[-1].date()), close=round(close, 2),
+        ma50=round(ma50, 2), ma200=round(ma200, 2),
+        above_ma50=above50, ma50_above_ma200=ma_stack,
+        state="ON" if (above50 and ma_stack) else "OFF",
+        reason=(f"VN-Index {close:,.0f} tren MA50 {ma50:,.0f}, MA50 tren MA200 {ma200:,.0f}"
+                if above50 and ma_stack else " · ".join(fails)),
+    )
+    return out
 
 
 def main():
@@ -248,6 +314,15 @@ def main():
                              r["tight"] if r["tier"] != "TREND" else 99,
                              abs(r["to_pivot"]) if r["to_pivot"] is not None else 99))
 
+    # ── Cong tac tong ──
+    nliq = int(liq.sum())
+    b50 = round(float(((c > ma50.iloc[i]) & liq).sum()) / nliq * 100, 1) if nliq else None
+    b200 = round(float(((c > ma200.iloc[i]) & liq).sum()) / nliq * 100, 1) if nliq else None
+    reg = market_regime(fetch_index(offline=args.offline), b50, b200)
+    allow = reg["state"] == "ON"
+    print(f"[i] Thi truong: {reg['state']} — {reg['reason']}"
+          + (f" · do rong tren MA50 {b50}% / MA200 {b200}%" if b50 is not None else ""))
+
     tz = ZoneInfo("Asia/Ho_Chi_Minh")
     payload = {
         "app": "trading-journal-2026",
@@ -255,9 +330,11 @@ def main():
         "scanned_at": datetime.now(tz).strftime("%Y-%m-%d %H:%M"),
         "bar_date": str(d.date()),
         "liq_min": args.liq,
-        "universe": int(liq.sum()),
+        "universe": nliq,
         "total": len(rows),
         "counts": {k: sum(1 for r in rows if r["tier"] == k) for k in order},
+        "regime": reg,
+        "entries_allowed": allow,
         "chart_base": CHART,
         "results": rows,
     }
@@ -274,9 +351,18 @@ def main():
 
     if args.telegram:
         cfg = load_config()
-        lines = [f"🇻🇳 <b>Scan VCP Viet Nam</b> — {payload['scanned_at']}",
-                 f"Vu tru {payload['universe']} ma (GTGD ≥ {args.liq} ty)"]
-        for t, title in (("BREAKOUT", "🎯 <b>BREAKOUT hom nay</b> — vuot pivot + khoi luong"),
+        lines = [f"🇻🇳 <b>Scan VCP Viet Nam</b> — {payload['scanned_at']}"]
+        if allow:
+            lines.append(f"🟢 <b>Duoc phep vao lenh</b> — {reg['reason']}")
+        else:
+            lines.append(f"🔴 <b>DUNG NGOAI — khong vao lenh nao</b>\n{reg['reason']}\n"
+                         f"VN khong cho ban khong: thi truong giam thi giu tien mat.")
+        if b50 is not None:
+            lines.append(f"Do rong: {b50}% tren MA50 · {b200}% tren MA200")
+        lines.append(f"Vu tru {payload['universe']} ma (GTGD ≥ {args.liq} ty)")
+        bo_title = ("🎯 <b>BREAKOUT hom nay</b> — vuot pivot + khoi luong" if allow
+                    else "🚫 <b>Vuot pivot hom nay</b> — CHI GHI NHAN, thi truong dang OFF")
+        for t, title in ((("BREAKOUT", bo_title)),
                          ("VCP3", "🔵 <b>VCP 3 nen</b> — dang nen, cho pha vo"),
                          ("VCP2", "🟡 <b>VCP 2 nen</b> — chua dat kiem dinh, tham khao")):
             sub = [r for r in rows if r["tier"] == t]
