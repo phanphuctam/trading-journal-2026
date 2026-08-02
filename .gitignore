@@ -7,3 +7,5 @@ app-src.orig.html
 automation/config.json
 automation/scans/
 __pycache__/
+# Cache OHLCV Viet Nam (21MB, tu tao lai bang scan_vn_vcp.py)
+automation/.vncache/

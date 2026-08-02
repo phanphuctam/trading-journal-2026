@@ -1011,6 +1011,7 @@ const TJ_TR = {
     wlToastAdd:'Đã thêm vào watchlist',wlToastExport:'Đã xuất watchlist.json',
     wlScanTitle:'📊 Kết quả scan Trend Template',wlScanSub:'Tự cập nhật sau scan 9h sáng · bấm mã để mở chart TradingView',
     wlScanNone:'Chưa tải được dữ liệu scan (scans/latest.json). Site sẽ tự hiển thị sau lần scan + deploy kế tiếp.',
+    wlScanNoneVN:'Chưa có dữ liệu scan VN (scans/latest_vn.json). Chạy: python automation/scan_vn_vcp.py --refresh',
     wlScanAt:'Scan lúc',wlScanPass:'mã đạt chuẩn',wlOffHigh:'cách đỉnh',
     wlScanSeenT:'Đánh dấu đã xem / chưa xem',wlScanNoteT:'Ghi chú cho mã này',wlScanHideT:'Ẩn khỏi danh sách (scan mới sẽ hiện lại)',wlScanUnhideT:'Hiện lại mã này',
     wlScanHidden:'mã đã ẩn',wlScanNotePh:'Ghi chú… (Enter lưu · Esc hủy)',wlScanSeenHint:'bấm mã / ＋ tự đánh dấu ✓ đã xem',
@@ -1110,6 +1111,7 @@ const TJ_TR = {
     wlToastAdd:'Added to watchlist',wlToastExport:'watchlist.json exported',
     wlScanTitle:'📊 Trend Template scan results',wlScanSub:'Auto-updates after the 9AM scan · click a symbol to open its TradingView chart',
     wlScanNone:'Scan data not available yet (scans/latest.json). The site shows it after the next scan + deploy.',
+    wlScanNoneVN:'No VN scan data yet (scans/latest_vn.json). Run: python automation/scan_vn_vcp.py --refresh',
     wlScanAt:'Scanned at',wlScanPass:'stocks passed',wlOffHigh:'off high',
     wlScanSeenT:'Toggle seen / unseen',wlScanNoteT:'Note for this symbol',wlScanHideT:'Hide from list (reappears on next scan)',wlScanUnhideT:'Unhide this symbol',
     wlScanHidden:'hidden',wlScanNotePh:'Note… (Enter save · Esc cancel)',wlScanSeenHint:'clicking symbol / ＋ marks it ✓ seen',
@@ -1806,12 +1808,38 @@ class Component extends DCLogic {
     this._loadScanResults();
   }
 
-  reloadScan = () => { this._scanData = undefined; this._loadScanResults(); }
+  // Thi truong dang xem o bang scan: 'VN' (VCP) hoac 'US' (Trend Template)
+  _scanMkt() {
+    if (!this._scanMarket) this._scanMarket = localStorage.getItem('tj_scan_market') || 'VN';
+    return this._scanMarket;
+  }
+
+  setScanMarket = (m) => {
+    if (this._scanMarket === m) return;
+    this._scanMarket = m;
+    localStorage.setItem('tj_scan_market', m);
+    this._scanNoteEdit = null; this._scanShowHidden = false;
+    this._loadScanResults();
+  }
+
+  reloadScan = () => { this._scanCache = {}; this._scanData = undefined; this._loadScanResults(); }
 
   pickScan = (sym, rs) => {
     const si = document.getElementById('wlSym'), ni = document.getElementById('wlNote'), pi = document.getElementById('wlPivot');
     if (si) { si.value = sym; si.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     if (ni && !ni.value) ni.value = 'RS ' + rs + ' · scan ' + this._today();
+    if (pi) pi.focus();
+    this._scanMark(sym, { s: String(this._scanData?.scanned_at || '') });
+  }
+
+  // Mã VN: pivot đã tính sẵn trong scan → điền thẳng làm điểm mua, stop −10% theo backtest
+  pickScanVN = (sym, pivot) => {
+    const si = document.getElementById('wlSym'), ni = document.getElementById('wlNote'),
+          pi = document.getElementById('wlPivot'), st = document.getElementById('wlStop');
+    if (si) { si.value = sym; si.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    if (pi && pivot > 0) pi.value = pivot;
+    if (st && pivot > 0 && !st.value) st.value = Math.round(pivot * 0.90 * 100) / 100;
+    if (ni && !ni.value) ni.value = 'VCP · scan ' + this._today();
     if (pi) pi.focus();
     this._scanMark(sym, { s: String(this._scanData?.scanned_at || '') });
   }
@@ -2033,24 +2061,100 @@ class Component extends DCLogic {
     this._scanMark(sym, { n: String(val || '').trim(), t: Date.now() });
   }
 
+  // ── Bảng scan VN: nhóm theo mẫu hình VCP (không dùng RS — backtest HOSE cho alpha ≈ 0) ──
+  _scanBodyVN(d, esc) {
+    const tr = this._tr();
+    const base = d.chart_base || 'https://www.tradingview.com/chart/';
+    const marks = this._scanMkGet(), cur = String(d.scanned_at || '');
+    const act = (fn, icon, title, style) => `<span onclick="${fn}" title="${title}" style="cursor:pointer;font-size:11px;line-height:1;padding:2px 4px;border-radius:6px;${style}">${icon}</span>`;
+    const GROUPS = [
+      ['BREAKOUT', '🎯 BREAKOUT HÔM NAY — vượt pivot kèm khối lượng ≥1,5×', 'var(--green)',
+       'Tín hiệu vào lệnh đã qua kiểm định: backtest HOSE 2018-2026 cho CAGR +10,4%, sụt giảm tối đa −15,9%, thắng 38,6% với tỷ lệ lãi/lỗ 3,75:1.'],
+      ['VCP3', '🔵 VCP 3 NÉN — đang nén, chờ phá vỡ', 'var(--accent)',
+       'Ba lần nén biên độ nhỏ dần + khối lượng cạn. Đây là danh sách theo dõi chính: canh phiên vượt pivot.'],
+      ['VCP2', '🟡 VCP 2 NÉN — chưa đạt kiểm định, chỉ tham khảo', 'var(--amber)',
+       'Nới lỏng còn 2 lần nén thì backtest cho CAGR −0,78%. Không phải tín hiệu mua — chỉ để theo dõi xem có nén thêm lần nữa không.'],
+      ['TREND', '📈 XU HƯỚNG TĂNG — chưa có VCP', 'var(--text3)',
+       'Trên MA50 và MA200, trong vòng 25% đỉnh 52 tuần. Là bể chứa để chờ hình thành nền VCP.'],
+    ];
+    let out = '';
+    for (const [tier, title, color, why] of GROUPS) {
+      const all = d.results.filter(r => r.tier === tier);
+      if (!all.length) {
+        if (tier === 'BREAKOUT') out += `<div style="font-size:9.5px;font-weight:700;color:var(--text3);letter-spacing:.04em;margin:6px 0 2px" title="${esc(why)}">🎯 BREAKOUT HÔM NAY: 0 mã — bình thường, trung bình chỉ ~14 lệnh/năm. Không có thì không vào.</div>`;
+        continue;
+      }
+      const rows = all.filter(r => this._scanShowHidden || (marks[r.symbol] || {}).h !== cur);
+      out += `<div style="font-size:9.5px;font-weight:700;color:${color};letter-spacing:.04em;margin:10px 0 2px;padding-top:6px;border-top:1px solid var(--border)" title="${esc(why)}">${title}: ${all.length} mã</div>`;
+      out += rows.map(r => {
+        const sym = esc(r.symbol), mk = marks[r.symbol] || {};
+        const seen = mk.s === cur, hid = mk.h === cur, editing = this._scanNoteEdit === r.symbol;
+        const noteLine = editing
+          ? `<input id="wlScanNoteInp" value="${esc(mk.n)}" placeholder="${tr.wlScanNotePh}" onkeydown="if(event.key==='Enter')this.blur();else if(event.key==='Escape')window._tj.saveScanNote(null)" onblur="window._tj.saveScanNote('${sym}',this.value)" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--accent);border-radius:6px;padding:4px 7px;font-size:11px;color:var(--text)">`
+          : (mk.n ? `<div onclick="window._tj.editScanNote('${sym}')" title="${tr.wlScanNoteT}" style="cursor:pointer;font-size:10.5px;color:var(--amber);margin-top:2px;line-height:1.4">📝 ${esc(mk.n)}</div>` : '');
+        const tp = r.to_pivot;
+        const tpTxt = tp == null ? '' : (tp <= 0 ? ` · trên pivot ${this._fmt(-tp, 1)}%` : ` · còn ${this._fmt(tp, 1)}%`);
+        const tpCol = tp == null ? 'var(--text3)' : (tp <= 0 ? 'var(--green)' : (tp <= 8 ? 'var(--amber)' : 'var(--text3)'));
+        const flags = [
+          r.near ? ['🔔', `Cách điểm mua ${this._fmt(tp, 1)}% — sắp tới vùng vào lệnh`] : null,
+          r.extended ? ['⚠️', `Đã căng: trên MA50 ${this._fmt(r.ext50, 0)}%, trên MA200 ${this._fmt(r.ext200, 0)}% — dễ mua đuổi`] : null,
+          r.off_ath <= -40 ? ['🕳', `Cách đỉnh mọi thời đại ${this._fmt(r.off_ath, 0)}% — cổ phiếu bị lãng quên, Minervini khuyên tránh (Ch.6)`] : null,
+        ].filter(Boolean);
+        const tip = `${esc(r.desc)} — ${esc(r.sector)}\nBiên độ nén 20 phiên gần nhất: ${this._fmt(r.tight, 1)}%\nKhối lượng nén còn ${this._fmt((r.dry || 0) * 100, 0)}% so với đầu nền\nGTGD TB20: ${this._fmt(r.adtv, 0)} tỷ · cách đỉnh 52T ${this._fmt(r.off_high, 1)}% · trên đáy 52T ${this._fmt(r.above_low, 0)}%`;
+        // 2 dòng: dòng 1 mã + giá + nút, dòng 2 số liệu chạy hết bề ngang (mobile 430px không đủ cho 1 dòng)
+        return `<div style="padding:6px 0;border-bottom:1px dashed var(--border)${seen && !editing ? ';opacity:.5' : ''}">
+          <div style="display:flex;align-items:center;gap:8px">
+            <a href="${base}?symbol=${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener" onclick="window._tj.seenScan('${sym}',1)" title="${tip}" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;color:var(--accent);text-decoration:none;flex-shrink:0">${sym} ↗</a>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${this._fmt(r.close, 2)}<span style="color:${r.change >= 0 ? 'var(--green)' : 'var(--red)'};font-size:9.5px"> ${r.change >= 0 ? '+' : ''}${this._fmt(r.change, 1)}%</span>${flags.length ? `<span style="margin-left:5px" title="${esc(flags.map(f => f[0] + ' ' + f[1]).join(' · '))}">${flags.map(f => f[0]).join('')}</span>` : ''}</span>
+            <span style="display:flex;gap:3px;align-items:center;flex-shrink:0">
+              ${act(`window._tj.seenScan('${sym}')`, seen ? '✓' : '◌', tr.wlScanSeenT, `font-weight:700;color:${seen ? 'var(--green)' : 'var(--text3)'}`)}
+              ${act(`window._tj.editScanNote('${sym}')`, '✎', tr.wlScanNoteT, `color:${mk.n ? 'var(--amber)' : 'var(--text3)'}`)}
+              ${act(`window._tj.pickScanVN('${sym}',${+r.pivot || 0})`, '＋', 'Thêm vào watchlist với pivot làm điểm mua', 'color:var(--accent);font-weight:700;border:1px solid var(--accent);padding:1px 6px')}
+              ${act(`window._tj.hideScan('${sym}')`, hid ? '↩' : '✕', hid ? tr.wlScanUnhideT : tr.wlScanHideT, 'color:var(--text3)')}
+            </span>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;line-height:1.5">
+            <span title="Biên độ lần nén cuối — càng chặt càng tốt">nén <b style="color:var(--text2)">${this._fmt(r.tight, 1)}%</b></span>
+            · <span title="Giá trị giao dịch trung bình 20 phiên">${this._fmt(r.adtv, 0)} tỷ</span>
+            · <span title="Điểm mua = đỉnh đóng cửa 60 phiên">pivot <b style="color:var(--text2)">${this._fmt(r.pivot, 2)}</b></span>
+            <b style="color:${tpCol}">${tpTxt}</b>
+          </div>${noteLine}
+        </div>`;
+      }).join('');
+    }
+    const nHid = d.results.filter(r => (marks[r.symbol] || {}).h === cur).length;
+    const hidTog = nHid ? ` · <span onclick="window._tj.showHiddenScan()" style="cursor:pointer;color:var(--accent);font-weight:700">${this._scanShowHidden ? '▾' : '▸'} ${nHid} ${tr.wlScanHidden}</span>` : '';
+    out += `<div style="font-size:9px;color:var(--text3);margin-top:8px;line-height:1.6">🔔 sắp tới điểm mua · ⚠️ đã căng · 🕳 dưới ATH −40%<br>
+      Giá đơn vị nghìn đồng. Không dùng RS Rating: backtest HOSE 2018-2026 cho thấy RS <b>không</b> dự báo được ở VN (siết RS≥90 cho alpha âm). ${tr.wlScanSeenHint}${hidTog}</div>`;
+    return out;
+  }
+
   async _loadScanResults() {
     if (!document.getElementById('wlScanBox')) return;
     const tr = this._tr();
-    if (this._scanData === undefined) {
+    const mkt = this._scanMkt();
+    this._scanCache = this._scanCache || {};
+    if (this._scanCache[mkt] === undefined) {
       try {
-        const r = await fetch('scans/latest.json', { cache: 'no-store' });
-        this._scanData = r.ok ? await r.json() : null;
-      } catch (e) { this._scanData = null; }
+        const r = await fetch(mkt === 'VN' ? 'scans/latest_vn.json' : 'scans/latest.json', { cache: 'no-store' });
+        this._scanCache[mkt] = r.ok ? await r.json() : null;
+      } catch (e) { this._scanCache[mkt] = null; }
     }
     const box = document.getElementById('wlScanBox'); if (!box) return;
-    const d = this._scanData;
+    const d = this._scanData = this._scanCache[mkt];
     const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const ok = d && Array.isArray(d.results) && d.results.length;
     const dropTxt = ok && d.dropped_ath ? ` · <span title="Nhóm “cựu dẫn dắt / bị lãng quên” — cách đỉnh mọi thời đại quá xa, Minervini khuyên tránh hoàn toàn (Ch.6). Chỉ giữ lại nếu đạt SEPA/EARLY + qua kiểm tra turnaround.">đã loại ${d.dropped_ath} mã dưới ATH −40%</span>` : '';
-    const sub = ok ? `${tr.wlScanAt} <b>${esc(d.scanned_at)}</b> · ${d.total} ${tr.wlScanPass} (RS ≥ ${d.rs_min})${dropTxt}` : tr.wlScanSub;
+    const isVN = mkt === 'VN';
+    const sub = !ok ? (isVN ? tr.wlScanNoneVN : tr.wlScanSub)
+      : isVN
+        ? `${tr.wlScanAt} <b>${esc(d.scanned_at)}</b> · phiên <b>${esc(d.bar_date)}</b> · ${d.total}/${d.universe} mã (GTGD ≥ ${d.liq_min} tỷ)`
+        : `${tr.wlScanAt} <b>${esc(d.scanned_at)}</b> · ${d.total} ${tr.wlScanPass} (RS ≥ ${d.rs_min})${dropTxt}`;
     let body;
     if (!ok) {
-      body = `<div style="color:var(--text3);font-size:11.5px;padding:6px 0;line-height:1.5">${tr.wlScanNone}</div>`;
+      body = `<div style="color:var(--text3);font-size:11.5px;padding:6px 0;line-height:1.5">${isVN ? tr.wlScanNoneVN : tr.wlScanNone}</div>`;
+    } else if (isVN) {
+      body = this._scanBodyVN(d, esc);
     } else {
       const base = d.chart_base || 'https://www.tradingview.com/chart/';
       const badges = { SEPA: '🏆', EARLY: '🚀', IPO: '🌱' };
@@ -2102,11 +2206,14 @@ class Component extends DCLogic {
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
       <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px">
         <div style="min-width:0">
-          <div style="font-size:12px;font-weight:700">${tr.wlScanTitle}</div>
+          <div style="font-size:12px;font-weight:700">${isVN ? '🇻🇳 Scan VCP — cổ phiếu Việt Nam' : tr.wlScanTitle}</div>
           <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${sub}</div>
         </div>
-        <div style="display:flex;gap:6px;flex-shrink:0">
-          <button onclick="window._tj.openFA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent)" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn">🔬 Cơ bản</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+          <span style="display:inline-flex;border:1px solid var(--border);border-radius:7px;overflow:hidden">
+            ${['VN','US'].map(m => `<button onclick="window._tj.setScanMarket('${m}')" title="${m === 'VN' ? 'HOSE — mẫu hình VCP (đã backtest 2018-2026)' : 'Mỹ — Trend Template + cơ bản (tạm gác, mở lại khi pháp lý thông)'}" style="background:${mkt === m ? 'var(--accent)' : 'transparent'};color:${mkt === m ? '#fff' : 'var(--text3)'};border:0;padding:5px 9px;font-size:10.5px;font-weight:700;cursor:pointer">${m}</button>`).join('')}
+          </span>
+          ${isVN ? '' : `<button onclick="window._tj.openFA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent)" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn">🔬 Cơ bản</button>`}
           <button onclick="window._tj.reloadScan()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;color:var(--text2)" title="Reload">⟳</button>
         </div>
       </div>
@@ -2761,6 +2868,7 @@ class Component extends DCLogic {
       delNote: (d,i)=>this.delNote(d,i),
       addWatch: ()=>this.addWatch(), delWatch: i=>this.delWatch(i), pushWatchlist: ()=>this.pushWatchlist(), exportWatchlist: ()=>this.exportWatchlist(),
       pickScan: (s,r)=>this.pickScan(s,r), reloadScan: ()=>this.reloadScan(),
+      pickScanVN: (s,p)=>this.pickScanVN(s,p), setScanMarket: m=>this.setScanMarket(m),
       seenScan: (s,f)=>this.seenScan(s,f), hideScan: s=>this.hideScan(s), showHiddenScan: ()=>this.showHiddenScan(),
       editScanNote: s=>this.editScanNote(s), saveScanNote: (s,v)=>this.saveScanNote(s,v),
       openFA: s=>this.openFA(s), closeFA: ()=>this.closeFA(), setFASym: v=>this.setFASym(v),
