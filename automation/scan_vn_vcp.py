@@ -117,7 +117,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--hnx", action="store_true", help="them san HNX")
     ap.add_argument("--offline", action="store_true", help="chi dung cache")
-    ap.add_argument("--refresh", action="store_true", help="cap nhat 90 phien cuoi")
+    ap.add_argument("--refresh", action="store_true", help="cap nhat 90 phien cuoi (toan bo)")
+    ap.add_argument("--refresh-liquid", action="store_true",
+                    help="chi cap nhat ma thanh khoan — du cho scan, nhanh hon nhieu (dung cho CI)")
     ap.add_argument("--liq", type=float, default=LIQ_MIN, help="GTGD TB20 toi thieu (ty)")
     ap.add_argument("--telegram", action="store_true")
     ap.add_argument("--top", type=int, default=40)
@@ -132,7 +134,24 @@ def main():
     syms = sorted(meta.symbol.unique())
     print(f"[i] Vu tru: {len(syms)} ma ({', '.join(exch)})")
 
-    if args.refresh and not args.offline:
+    if args.refresh_liquid and not args.offline:
+        # Chi tai lai nhung ma con co cua vao vu tru (GTGD >= mot nua nguong).
+        # Thanh khoan doi rat cham theo tuan nen bo qua ma "chet" khong lam sai ket qua,
+        # va cat so request tu ~400 xuong ~150 — vua khung 20 request/phut cua vnstock.
+        liq_syms = []
+        for s in syms:
+            f = CACHE / f"{s}.parquet"
+            if not f.exists():
+                liq_syms.append(s); continue
+            try:
+                d = pd.read_parquet(f).tail(20)
+                if len(d) and (d["close"] * 1000 * d["volume"] / 1e9).mean() >= args.liq / 2:
+                    liq_syms.append(s)
+            except Exception:
+                liq_syms.append(s)
+        print(f"[i] Refresh nhanh: {len(liq_syms)}/{len(syms)} ma thanh khoan")
+        refresh_tail(liq_syms)
+    elif args.refresh and not args.offline:
         refresh_tail(syms)
     px = fetch_all(syms, offline=args.offline)
     if px.empty:
@@ -190,22 +209,25 @@ def main():
             tier = "TREND"
         else:
             continue
-        px_now, pv = float(c[s]), float(pivot.iloc[i][s])
-        pxp = float(prev[s]) if pd.notna(prev.get(s)) else px_now
-        h52, l52, hall = float(hi52.iloc[i][s]), float(lo52.iloc[i][s]), float(hi_all.iloc[i][s])
-        m50, m200 = float(ma50.iloc[i][s]), float(ma200.iloc[i][s])
+        # Gia luu bang VND (khong phai nghin dong) de khop voi TradingView —
+        # alert_watcher so pivot voi gia song, lech don vi la bao breakout gia.
+        px_now, pv = float(c[s]) * 1000, float(pivot.iloc[i][s]) * 1000
+        pxp = float(prev[s]) * 1000 if pd.notna(prev.get(s)) else px_now
+        h52, l52, hall = (float(hi52.iloc[i][s]) * 1000, float(lo52.iloc[i][s]) * 1000,
+                          float(hi_all.iloc[i][s]) * 1000)
+        m50, m200 = float(ma50.iloc[i][s]) * 1000, float(ma200.iloc[i][s]) * 1000
         to_pivot = (pv / px_now - 1) * 100 if px_now > 0 else None
         rows.append({
             "symbol": s,
             "ticker": f"{exmap.get(s,'HOSE')}:{s}",
             "desc": names.get(s, s),
             "sector": exmap.get(s, ""),
-            "close": round(px_now, 2),
+            "close": round(px_now),
             "change": round((px_now / pxp - 1) * 100, 2) if pxp else 0.0,
             "tier": tier,
             "tight": round(float(r3[s]) * 100, 1) if pd.notna(r3.get(s)) else None,
             "contractions": (3 if tier in ("BREAKOUT", "VCP3") else (2 if tier == "VCP2" else 0)),
-            "pivot": round(pv, 2) if pd.notna(pv) else None,
+            "pivot": round(pv) if pd.notna(pv) else None,
             "to_pivot": round(to_pivot, 1) if to_pivot is not None else None,
             "adtv": round(float(adtv.iloc[i][s]), 1),
             "vol_x": round(float(v[s] / v3[s]), 1) if v3.get(s) else None,
@@ -245,7 +267,9 @@ def main():
 
     if rows:
         df = pd.DataFrame(rows)
-        print(df.head(args.top)[["symbol", "tier", "close", "tight", "pivot",
+        df["close_k"] = (df["close"] / 1000).round(2)
+        df["pivot_k"] = (df["pivot"] / 1000).round(2)
+        print(df.head(args.top)[["symbol", "tier", "close_k", "tight", "pivot_k",
                                  "to_pivot", "adtv", "off_high", "ext200"]].to_string(index=False))
 
     if args.telegram:
@@ -261,8 +285,8 @@ def main():
                 continue
             lines += ["", f"{title}: {len(sub)} ma"]
             for r in sub[:10]:
-                lines.append(f"  <code>{r['symbol']}</code> {r['close']:.2f} · nen {r['tight']}% · "
-                             f"pivot {r['pivot']:.2f} ({r['to_pivot']:+.1f}%) · {r['adtv']:.0f} ty")
+                lines.append(f"  <code>{r['symbol']}</code> {r['close']/1000:.2f} · nen {r['tight']}% · "
+                             f"pivot {r['pivot']/1000:.2f} ({r['to_pivot']:+.1f}%) · {r['adtv']:.0f} ty")
         lines += ["", "👉 Tab Watch tren journal de xem day du"]
         send_telegram(cfg, "\n".join(lines))
 

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """Theo doi watchlist va gui Telegram khi gia cham pivot / gan pivot / cham stop.
 
-Chay moi 5 phut qua Task Scheduler. Tu bo qua khi thi truong My dong cua.
+Mac dinh theo thi truong Viet Nam (HOSE/HNX/UPCOM). Tu bo qua khi san dong cua.
 
 Cach dung:
-    python alert_watcher.py            # chay binh thuong
-    python alert_watcher.py --force    # chay ke ca khi thi truong dong cua
-    python alert_watcher.py --test     # gui tin nhan test Telegram
+    python alert_watcher.py                 # thi truong VN
+    python alert_watcher.py --market us     # thi truong My
+    python alert_watcher.py --force         # chay ke ca khi san dong cua
+    python alert_watcher.py --test          # gui tin nhan test Telegram
 """
 import argparse
 from datetime import datetime
@@ -15,14 +16,20 @@ from zoneinfo import ZoneInfo
 from tv_common import BASE, load_config, load_json, save_json, send_telegram, get_quotes
 
 ET = ZoneInfo("America/New_York")
+VN = ZoneInfo("Asia/Ho_Chi_Minh")
+TZ = {"us": ET, "vn": VN}
 
 
-def market_is_open(now=None) -> bool:
-    now = now or datetime.now(ET)
+def market_is_open(market="vn", now=None) -> bool:
+    """VN: 09:00-11:30 va 13:00-14:45 (co ATC). My: 09:30-16:00 gio ET."""
+    tz = TZ.get(market, VN)
+    now = now or datetime.now(tz)
     if now.weekday() >= 5:  # T7, CN
         return False
-    minutes = now.hour * 60 + now.minute
-    return 9 * 60 + 30 <= minutes <= 16 * 60
+    m = now.hour * 60 + now.minute
+    if market == "us":
+        return 9 * 60 + 30 <= m <= 16 * 60
+    return (9 * 60 <= m <= 11 * 60 + 30) or (13 * 60 <= m <= 14 * 60 + 45)
 
 
 def fmt_num(x):
@@ -33,6 +40,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true", help="chay ke ca khi market dong")
     ap.add_argument("--test", action="store_true", help="gui tin nhan test roi thoat")
+    ap.add_argument("--market", choices=["vn", "us"], default="vn", help="thi truong theo doi")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -41,8 +49,8 @@ def main():
         send_telegram(cfg, "✅ Trading Journal bot hoat dong! (tin nhan test)")
         return
 
-    if not args.force and not market_is_open():
-        print("Thi truong My dang dong cua — bo qua. (dung --force de chay thu)")
+    if not args.force and not market_is_open(args.market):
+        print(f"Thi truong {args.market.upper()} dang dong cua — bo qua. (dung --force de chay thu)")
         return
 
     watchlist = load_json(BASE / "watchlist.json", [])
@@ -52,11 +60,11 @@ def main():
 
     state_path = BASE / "state.json"
     state = load_json(state_path, {})
-    today = datetime.now(ET).strftime("%Y-%m-%d")
+    today = datetime.now(TZ.get(args.market, VN)).strftime("%Y-%m-%d")
     approach_pct = float(cfg.get("approach_pct", 1.5))
 
     symbols = sorted({w["symbol"].upper() for w in watchlist})
-    quotes = get_quotes(symbols)
+    quotes = get_quotes(symbols, market="america" if args.market == "us" else "vietnam")
 
     messages = []
     for w in watchlist:

@@ -61,9 +61,10 @@ def send_telegram(cfg: dict, text: str) -> bool:
     return True
 
 
-def get_quotes(symbols: list[str]) -> dict:
+def get_quotes(symbols: list[str], market: str = "vietnam") -> dict:
     """Lay gia hien tai cho danh sach ma (1 request duy nhat).
 
+    market: "vietnam" (HOSE/HNX/UPCOM) hoac "america".
     Tra ve dict: symbol -> {close, high, low, volume, change, avg_vol}
     """
     from tradingview_screener import Query, col
@@ -75,7 +76,7 @@ def get_quotes(symbols: list[str]) -> dict:
         .select("name", "close", "high", "low", "volume", "change",
                 "average_volume_30d_calc")
         .where(col("name").isin(symbols))
-        .set_markets("america")
+        .set_markets(market)
         .limit(len(symbols) + 20)
         .get_scanner_data()
     )

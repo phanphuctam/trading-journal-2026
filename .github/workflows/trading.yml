@@ -2,8 +2,8 @@ name: Trading bot
 
 on:
   schedule:
-    - cron: '0 2 * * 6'           # 09:00 sang thu Bay VN (tuan 1 lan, sau khi My dong phien thu Sau) — scan Trend Template + check watchlist EOD
-    - cron: '*/30 13-21 * * 1-5'  # phien My (script tu bo qua khi thi truong dong cua)
+    - cron: '0 2 * * 6'          # 09:00 sang thu Bay VN — scan VCP Viet Nam + check watchlist
+    - cron: '*/30 2-8 * * 1-5'   # phien HOSE (09:00-15:00 VN = 02:00-08:00 UTC); script tu bo qua ngoai gio
   workflow_dispatch: {}
 
 permissions:
@@ -16,7 +16,7 @@ concurrency:
 jobs:
   bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60          # vnstock ban mien phi gioi han 20 request/phut
     steps:
       - uses: actions/checkout@v4
 
@@ -25,29 +25,41 @@ jobs:
           python-version: '3.13'
 
       - name: Cai thu vien
-        run: pip install --quiet tradingview-screener requests pandas
+        run: pip install --quiet tradingview-screener requests pandas vnstock pyarrow
 
-      - name: Scan Trend Template + check watchlist (9h sang thu Bay VN)
+      # Cache OHLCV: lan dau tai ~400 ma (~25 phut), cac lan sau chi cap nhat duoi
+      - name: Cache du lieu gia VN
+        uses: actions/cache@v4
+        with:
+          path: automation/.vncache
+          key: vncache-${{ github.run_id }}
+          restore-keys: vncache-
+
+      - name: Scan VCP Viet Nam + check watchlist (9h sang thu Bay VN)
         if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 2 * * 6'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          CHART_LAYOUT_ID: zg2TshOU
         run: |
-          python automation/scan_trend_template.py --no-push
-          python automation/alert_watcher.py --force
+          python automation/scan_vn_vcp.py --refresh-liquid --telegram
+          python automation/alert_watcher.py --force --market vn
 
-      - name: Check watchlist trong phien My
-        if: github.event.schedule == '*/30 13-21 * * 1-5'
+      - name: Check watchlist trong phien HOSE
+        if: github.event.schedule == '*/30 2-8 * * 1-5'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          CHART_LAYOUT_ID: zg2TshOU
-        run: python automation/alert_watcher.py
+        run: python automation/alert_watcher.py --market vn
 
       - name: Commit ket qua (scan + state)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scans/latest.json automation/state.json
-          git diff --cached --quiet || { git commit -m "bot: scan/state $(date -u '+%Y-%m-%d %H:%M') UTC"; git push; }
+          git add scans/latest_vn.json automation/state.json
+          git diff --cached --quiet || { git commit -m "bot: scan VN/state $(date -u '+%Y-%m-%d %H:%M') UTC"; git push; }
+
+# Bo loc My tam gac (mo lai khi phap ly cho phep giao dich lai):
+#   - cron thu Bay: chay lai scan_trend_template.py --no-push, dat CHART_LAYOUT_ID: zg2TshOU
+#   - them lai cron phien My '*/30 13-21 * * 1-5' voi alert_watcher --market us
+#   - commit them scans/latest.json
+#   - trong app-src.html: doi SCAN_MARKETS ve ['VN','US'] de hien lai nut chuyen thi truong
