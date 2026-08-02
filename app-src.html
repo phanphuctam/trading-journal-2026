@@ -2014,7 +2014,126 @@ class Component extends DCLogic {
   // Mọi ngưỡng dưới đây đều trích từ sách, có ghi nguồn chương/trang trong `src`.
   // Mục nào KHÔNG có trong Minervini/O'Neil thì đánh dấu rõ ở `f` để khỏi nhầm.
   _TV = (t, page, q) => `https://www.tradingview.com/symbols/${t}/financials-${page}/${q ? '?statements-period=FQ' : ''}`
-  _FA = [
+
+  // ══ NGUỒN CƠ BẢN VIỆT NAM ══
+  // CafeF là nguồn DUY NHẤT đã kiểm chứng render sẵn HTML (Vietstock/Simplize/TradingView
+  // là ứng dụng JS — chạy được trên trình duyệt nhưng không kiểm chứng được từ script).
+  // Dạng URL đã thử: /incsta/ và /bsheet/ đều trả số thật, có nút chuyển 4 quý ↔ 4 năm.
+  _quy() {                       // quý gần nhất ĐÃ công bố (BCTC ra chậm ~30-45 ngày)
+    const d = new Date(), m = d.getMonth();       // 0-11
+    const q = Math.floor(m / 3) + 1;              // quý hiện tại
+    const back = new Date(d.getFullYear(), m - 2, 1);  // lùi ~1 quý cho kịp công bố
+    return { y: back.getFullYear(), q: Math.max(1, Math.floor(back.getMonth() / 3) + 1) };
+  }
+  _CF = (t, kind, slug) => {
+    const { y, q } = this._quy();
+    return `https://cafef.vn/du-lieu/bao-cao-tai-chinh/${String(t).toLowerCase()}/${kind}/${y}/${q}/0/0/${slug}.chn`;
+  }
+  _VS = (t, page) => `https://finance.vietstock.vn/${t}/${page}.htm`
+  _SZ = (t, page) => `https://simplize.vn/co-phieu/${t}${page ? '/' + page : ''}`
+  // Thị trường nào thì dùng bảng tiêu chí của thị trường đó — tiêu chí Mỹ áp
+  // nguyên xi vào cổ phiếu VN sẽ vừa bỏ sót rủi ro thật, vừa đòi dữ liệu không tồn tại.
+  _faList() { return this._scanMkt() === 'VN' ? this._FA_VN : this._FA_US; }
+
+  // ══ BẢNG CƠ BẢN — CỔ PHIẾU VIỆT NAM ══
+  // Không bê nguyên bảng Mỹ sang. Bốn khác biệt buộc phải sửa:
+  //  1. VN không có 13F → thay bằng khối ngoại + tự doanh (công bố hằng ngày).
+  //  2. VN không có Zacks → không có nguồn điều chỉnh dự phóng đáng tin. Bỏ hẳn,
+  //     thay bằng đọc báo cáo CTCK và ghi rõ đây là nguồn yếu hơn.
+  //  3. Chất lượng công bố thông tin ở VN là RỦI RO THẬT (kiểm toán ngoại trừ, hồi tố
+  //     lợi nhuận, giao dịch bên liên quan). Minervini không có mục này vì SEC ép chặt.
+  //     Ở VN nó phải là kill switch ĐẦU TIÊN.
+  //  4. Pha loãng ở VN nặng hơn Mỹ nhiều (phát hành riêng lẻ, cổ tức cổ phiếu, ESOP)
+  //     → nâng lên thành tiêu chí bắt buộc thay vì ghi chú phụ.
+  // Ngân hàng & chứng khoán chiếm phần lớn thanh khoản HOSE nhưng không có "doanh thu"
+  // hay "biên lợi nhuận gộp" theo nghĩa thông thường → có bước riêng.
+  _FA_VN = [
+    { k: 'vndisc', g: '0 · Chất lượng công bố thông tin (đặc thù VN)', must: 1, s: 'CafeF · Tin doanh nghiệp',
+      src: '⚠️ Không có trong Minervini/O\'Neil — bắt buộc bổ sung cho thị trường VN',
+      u: t => `https://cafef.vn/tim-kiem.chn?keywords=${t}`,
+      w: 'Lướt tin 12 tháng gần nhất, tìm: <b>ý kiến kiểm toán ngoại trừ / lưu ý</b>, <b>hồi tố hoặc điều chỉnh lợi nhuận sau kiểm toán</b>, chậm nộp BCTC, bị nhắc nhở/cảnh báo/kiểm soát, <b>giao dịch với bên liên quan</b> giá trị lớn',
+      p: 'Không có dấu hiệu nào ở trên · BCTC nộp đúng hạn · chênh lệch trước/sau kiểm toán không đáng kể',
+      f: '<b>Lợi nhuận sau kiểm toán lệch mạnh so với tự lập → loại thẳng, không cần đọc tiếp.</b> Đây là bước diệt nhiều mã nhất ở VN và không tồn tại trong sách vì SEC ép công bố chặt hơn nhiều.<br>Cổ phiếu diện cảnh báo/kiểm soát: loại, bất kể đồ thị đẹp cỡ nào' },
+
+    { k: 'vnq', g: '1 · Lợi nhuận quý (chữ C của CAN SLIM)', must: 1, s: 'CafeF · Kết quả kinh doanh (quý)',
+      src: "O'Neil Ch.1 tr.24–36 · Minervini Ch.7 tr.145–172",
+      u: t => this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh'),
+      w: 'Trang mặc định hiện <b>4 quý gần nhất</b>. Đọc <b>Doanh thu thuần</b> và <b>Lợi nhuận sau thuế</b>.<br>⚠️ Phải so với <b>CÙNG QUÝ NĂM TRƯỚC</b>, không phải quý liền trước — mùa vụ ở VN rất mạnh (bán lẻ quý 4, thép/xây dựng quý 2-3, ngân hàng quý 4). Đổi năm trên URL để lấy quý đối chiếu',
+      p: 'LNST cùng quý năm trước tăng <b>≥ 25%</b> và <b>đang tăng tốc</b> · doanh thu tăng <b>≥ 20%</b><br><span style="opacity:.75">Ngưỡng gốc của O\'Neil là EPS ≥ 20-25%. Giữ nguyên — không có lý do hạ chuẩn cho VN.</span>',
+      f: '<b>Doanh thu đứng yên mà lợi nhuận tăng vọt = bẫy.</b> Ở VN nguồn phổ biến nhất là <b>hoàn nhập dự phòng</b>, <b>lãi từ thanh lý tài sản / công ty con</b>, hoặc <b>đánh giá lại tài sản</b>. Xem bước 2<br>Lợi nhuận âm quý gần nhất → loại' },
+
+    { k: 'vnone', s: 'CafeF · dòng thu nhập khác & hoàn nhập dự phòng',
+      src: "O'Neil Ch.1 (bẫy #3) · Minervini Ch.8",
+      u: t => this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh'),
+      w: 'Trên cùng bảng, soi <b>Thu nhập khác</b>, <b>Lợi nhuận khác</b>, <b>Doanh thu hoạt động tài chính</b>. Trừ chúng ra rồi tính lại tăng trưởng',
+      p: 'Tăng trưởng đến từ <b>lợi nhuận thuần từ hoạt động kinh doanh</b>, không phải khoản một lần',
+      f: 'Ví dụ trong sách: EPS báo cáo $3,01 vs $2,40 (+25%) — trừ khoản bất thường $0,84 thì EPS thật là $2,17, tức <b>GIẢM 7%</b>.<br>Ở VN thêm một biến thể riêng: <b>lãi do đánh giá lại tài sản góp vốn</b> — tiền chưa bao giờ về túi doanh nghiệp' },
+
+    { k: 'vnnam', g: '2 · Lợi nhuận năm (chữ A)', must: 1, s: 'CafeF · Kết quả kinh doanh (năm)',
+      src: "O'Neil Ch.2 tr.37–49",
+      u: t => this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh'),
+      w: 'Bấm nút <b>"4 năm gần nhất"</b> trên chính trang đó — đọc LNST 4 năm',
+      p: 'LNST tăng <b>≥ 20%/năm trong 3 năm liên tiếp</b> · ROE ≥ 15%<br><span style="opacity:.75">Ngưỡng gốc là 25%/năm và ROE 17%. Hạ nhẹ vì vũ trụ HOSE chỉ ~150 mã đủ thanh khoản — siết 25% thì gần như không còn mã nào. <b>Đây là nới có chủ đích, không phải chuẩn của sách.</b></span>',
+      f: 'Bẫy <b>"phục hồi giả"</b>: 4 → 5 → 6 → <b>2</b> → 2,5. Năm cuối +25% nghe hay nhưng chỉ vì năm trước quá tệ và còn xa đỉnh 6.<br>Ở VN cực phổ biến với thép, BĐS, chứng khoán — nhóm có chu kỳ lãi/lỗ rất sâu' },
+
+    { k: 'vnsec', g: '3 · Nhóm đặc thù (nếu là ngân hàng / chứng khoán / BĐS)', s: 'CafeF · Bảng cân đối kế toán',
+      src: '⚠️ Không có trong Minervini/O\'Neil — hai ông chủ yếu phân tích doanh nghiệp sản xuất & bán lẻ',
+      u: t => this._CF(t, 'bsheet', 'bang-can-doi-ke-toan'),
+      w: '<b>Ngân hàng</b> (MSB, STB, SSB, LPB…): NIM, tỷ lệ nợ xấu <b>NPL</b>, <b>tỷ lệ bao phủ nợ xấu LLR</b>, CIR, tăng trưởng tín dụng<br><b>Chứng khoán</b> (HCM, ORS, PSI…): dư nợ cho vay margin, lãi/lỗ tự doanh, thị phần môi giới<br><b>Bất động sản</b>: hàng tồn kho, người mua trả tiền trước, dòng tiền kinh doanh',
+      p: '<b>NH:</b> NPL &lt; 2% và không tăng · LLR &gt; 80% · NIM ổn định hoặc mở rộng<br><b>CK:</b> lợi nhuận không phụ thuộc hoàn toàn vào tự doanh (biến động theo chỉ số)<br><b>BĐS:</b> "người mua trả tiền trước" tăng = bán được hàng thật',
+      f: '<b>NH:</b> NPL tăng nhanh mà LLR giảm = đang giấu nợ xấu → loại<br><b>CK:</b> lãi chủ yếu từ tự doanh nghĩa là bạn đang mua một quỹ đầu tư có đòn bẩy, không phải doanh nghiệp — và nó sập cùng lúc với chính chỉ số bạn đang giao dịch<br><b>BĐS:</b> tồn kho phình mà tiền trả trước đứng yên = hàng ế<br><span style="opacity:.7">Nếu là doanh nghiệp sản xuất/bán lẻ thông thường thì bấm ✓ bỏ qua bước này</span>' },
+
+    { k: 'vnbs', g: '4 · Chất lượng lợi nhuận', must: 1, s: 'CafeF · Bảng cân đối kế toán (quý)',
+      src: 'Minervini Ch.8 tr.173–195',
+      u: t => this._CF(t, 'bsheet', 'bang-can-doi-ke-toan'),
+      w: '<b>Các khoản phải thu ngắn hạn</b> và <b>Hàng tồn kho</b> — so tốc độ tăng với doanh thu ở bước 1',
+      p: 'Cả hai tăng chậm hơn doanh thu',
+      f: 'Cả hai cùng tăng <b>≥ 2× tốc độ doanh thu</b> mà không giải thích được → loại.<br><b>Phải thu phình to là bệnh phổ biến nhất của doanh nghiệp VN</b> — ghi nhận doanh thu nhưng tiền chưa về, có khi không bao giờ về.<br>Đọc kỹ tồn kho: <b>nguyên vật liệu</b> tăng có thể là tín hiệu TỐT (gom hàng giá rẻ trước chu kỳ). Chỉ khi <b>thành phẩm</b> tăng nhanh hơn nguyên liệu mới là hàng ế' },
+
+    { k: 'vncf', must: 1, s: 'CafeF · Lưu chuyển tiền tệ',
+      src: '⚠️ Không có trong sách — nhưng ở VN đây gần như bắt buộc',
+      u: t => this._CF(t, 'cashflow', 'luu-chuyen-tien-te-gian-tiep'),
+      w: '<b>Lưu chuyển tiền thuần từ hoạt động kinh doanh (OCF)</b> so với <b>Lợi nhuận sau thuế</b>',
+      p: 'OCF <b>dương</b> và cùng chiều với lợi nhuận, lý tưởng OCF ≥ LNST',
+      f: '<b>Lãi nhiều năm liền mà OCF âm liên tục = lãi trên giấy.</b> Kết hợp với bước 4 (phải thu phình) thì đây là bộ đôi phát hiện gần như mọi vụ thổi phồng lợi nhuận ở VN.<br><span style="opacity:.7">Với bảng Mỹ tôi để mục này là "tham khảo". Ở VN tôi nâng lên bắt buộc — vì chế tài công bố thông tin lỏng hơn nên rủi ro cao hơn hẳn</span>' },
+
+    { k: 'vndil', g: '5 · Pha loãng (rủi ro lớn ở VN)', must: 1, s: 'Vietstock · Hồ sơ doanh nghiệp',
+      src: "O'Neil Ch.4 (nguồn cung cổ phiếu) — mức độ nghiêm trọng là đặc thù VN",
+      u: t => this._VS(t, 'ho-so-doanh-nghiep'),
+      w: '<b>Khối lượng cổ phiếu lưu hành</b> qua các năm · nghị quyết ĐHCĐ về <b>phát hành riêng lẻ, cổ tức bằng cổ phiếu, ESOP, phát hành cho cổ đông hiện hữu</b>',
+      p: 'Số lượng lưu hành <b>ổn định hoặc giảm</b>. Có mua lại cổ phiếu quỹ = điểm cộng lớn',
+      f: '<b>Doanh nghiệp VN pha loãng liên tục</b> — nhiều mã tăng 30-50% số cổ phiếu mỗi năm. Lợi nhuận tăng 25% mà số cổ phiếu tăng 30% thì <b>EPS giảm</b>, và giá cổ phiếu đi theo EPS chứ không theo tổng lợi nhuận.<br>Có kế hoạch phát hành lớn <b>chưa thực hiện</b> = quả bom hẹn giờ trên đầu, dù báo cáo hiện tại đẹp.<br>O\'Neil: ưu tiên doanh nghiệp có lượng cổ phiếu lưu hành nhỏ và không phình' },
+
+    { k: 'vnfo', g: '6 · Bảo trợ của dòng tiền lớn', s: 'CafeF · Giao dịch khối ngoại & tự doanh',
+      src: "O'Neil Ch.6 tr.79–87 — VN không có 13F nên phải thay bằng nguồn khác",
+      u: () => 'https://cafef.vn/du-lieu/thong-ke-giao-dich-khoi-ngoai.chn',
+      w: '<b>Khối ngoại mua/bán ròng</b> mã này trong 1-3 tháng · <b>tự doanh CTCK</b> · danh mục các quỹ lớn (VEIL, Pyn Elite, VinaCapital, Dragon Capital) công bố hằng tháng',
+      p: 'Khối ngoại <b>mua ròng đều đặn</b> nhiều tuần liên tiếp · có mặt trong danh mục ít nhất một quỹ lớn',
+      f: '⚠️ <b>Đây là hàng thay thế, không tương đương 13F.</b> VN không bắt quỹ công bố danh mục theo quý, nên bạn chỉ thấy được phần nổi.<br>Khối ngoại bán ròng kéo dài là cảnh báo mạnh ở VN — họ chiếm tỷ trọng nhỏ nhưng dẫn dắt tâm lý.<br>O\'Neil cảnh báo mặt ngược lại: <b>quá nhiều tổ chức sở hữu</b> thì cơ hội tốt nhất đã qua' },
+
+    { k: 'vnins', s: 'Vietstock · Giao dịch cổ đông nội bộ',
+      src: '⚠️ Không có trong sách — dữ liệu này ở VN đặc biệt hữu ích',
+      u: t => this._VS(t, 'giao-dich-noi-bo'),
+      w: 'Giao dịch của <b>cổ đông nội bộ và người liên quan</b> 6 tháng gần nhất',
+      p: 'Không có bán ra lớn · nội bộ mua vào là điểm cộng',
+      f: '<b>Ban lãnh đạo đăng ký bán khối lượng lớn ngay sau khi giá chạy = tín hiệu xấu bậc nhất ở VN.</b> Họ biết những gì bạn không biết.<br>Cẩn thận cả kiểu "đăng ký mua nhưng không mua hết" — thao túng kỳ vọng' },
+
+    { k: 'vnind', g: '7 · Nhóm ngành', s: 'CafeF · Dữ liệu ngành',
+      src: "O'Neil Ch.15 · Minervini Ch.6 tr.119–143",
+      u: () => 'https://cafef.vn/du-lieu.chn',
+      w: 'Nhóm ngành của mã này đang mạnh hay yếu · có mã nào khác cùng ngành cũng đang tạo nền / phá vỡ không',
+      p: 'Nhóm ngành đang mạnh <b>VÀ có ít nhất một mã cùng ngành xác nhận</b><br><span style="opacity:.75">Nhóm ngành quyết định ~49% biến động giá một cổ phiếu. Hơn 60% siêu cổ phiếu tăng theo nhóm.</span>',
+      f: '⚠️ <b>Ở VN cả sàn chạy theo một nhịp mạnh hơn Mỹ nhiều</b>, và chỉ có ~5 nhóm ngành thật sự tách biệt: ngân hàng, bất động sản, chứng khoán, thép, bán lẻ.<br>Hệ quả: tiêu chí "dẫn dắt ngành" ở VN yếu hơn nhiều so với trong sách — dùng để xác nhận, đừng dùng để chọn' },
+
+    { k: 'vnbr', s: 'Simplize · Báo cáo phân tích CTCK',
+      src: '⚠️ Thay cho Zacks Estimate Revisions — nguồn YẾU HƠN HẲN',
+      u: t => this._SZ(t, 'bao-cao'),
+      w: 'Các báo cáo phân tích gần nhất của công ty chứng khoán: dự phóng lợi nhuận có được <b>nâng lên</b> so với báo cáo trước không',
+      p: 'Dự phóng được nâng qua 2-3 báo cáo liên tiếp',
+      f: '⚠️ <b>Đọc với thái độ hoài nghi.</b> VN không có tổ chức tổng hợp đồng thuận độc lập như Zacks. Báo cáo CTCK thường có xung đột lợi ích (chính họ đang tự doanh hoặc bảo lãnh phát hành mã đó) và gần như không bao giờ khuyến nghị BÁN.<br><b>Đây là tiêu chí yếu nhất trong bảng — đừng để nó quyết định gì</b>' },
+  ]
+
+  _FA_US = [
     { k: 'eps', g: '1 · Động lượng lợi nhuận (quý)', must: 1, s: 'TradingView · Income statement (quý)',
       src: "O'Neil Ch.1 tr.24–36 · Minervini Ch.7 tr.145–172",
       u: t => this._TV(t, 'income-statement', 1),
@@ -2116,15 +2235,15 @@ class Component extends DCLogic {
   openAllFA = () => {
     const t = this._faSym; if (!t) return;
     // Buoc 5 va 11 cung trang Earnings, buoc 1 va 1b cung Income statement -> bo trung
-    [...new Set(this._FA.map(s => s.u(t)))].forEach((url, i) =>
+    [...new Set(this._faList().map(s => s.u(t)))].forEach((url, i) =>
       setTimeout(() => window.open(url, '_blank', 'noopener'), i * 260));
   }
   faToNote = () => {
     const sym = this._faSym; if (!sym) return;
     const st = (this._faGet()[sym]) || {};
-    const ok = this._FA.filter(s => st[s.k] === 1).length;
-    const bad = this._FA.filter(s => st[s.k] === -1).map(s => s.k);
-    const txt = `CB ${ok}/${this._FA.length} đạt${bad.length ? ' · hỏng: ' + bad.join(',') : ''}`;
+    const ok = this._faList().filter(s => st[s.k] === 1).length;
+    const bad = this._faList().filter(s => st[s.k] === -1).map(s => s.k);
+    const txt = `CB ${ok}/${this._faList().length} đạt${bad.length ? ' · hỏng: ' + bad.join(',') : ''}`;
     this._scanMark(sym, { n: txt, t: Date.now() });
     this._toast('Đã ghi vào ghi chú scan ' + sym);
   }
@@ -2134,17 +2253,17 @@ class Component extends DCLogic {
     if (!this._faSym && this._faSym !== '') { host.innerHTML = ''; return; }
     const t = this._faSym, st = (this._faGet()[t]) || {};
     const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const nOk = this._FA.filter(s => st[s.k] === 1).length;
-    const killed = this._FA.some(s => s.must && st[s.k] === -1);
+    const nOk = this._faList().filter(s => st[s.k] === 1).length;
+    const killed = this._faList().some(s => s.must && st[s.k] === -1);
     let verdict, vcol;
     if (!t) { verdict = 'Nhập mã cổ phiếu để bắt đầu'; vcol = 'var(--text3)'; }
     else if (killed) { verdict = '❌ LOẠI — hỏng tiêu chí bắt buộc'; vcol = 'var(--red)'; }
-    else if (nOk >= this._FA.length - 2) { verdict = `🏆 Hạng A — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--green)'; }
-    else if (nOk >= Math.ceil(this._FA.length * 0.62)) { verdict = `✅ Hạng B — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--green)'; }
-    else { verdict = `Đang đọc — ${nOk}/${this._FA.length} đạt`; vcol = 'var(--text2)'; }
+    else if (nOk >= this._faList().length - 2) { verdict = `🏆 Hạng A — ${nOk}/${this._faList().length} đạt`; vcol = 'var(--green)'; }
+    else if (nOk >= Math.ceil(this._faList().length * 0.62)) { verdict = `✅ Hạng B — ${nOk}/${this._faList().length} đạt`; vcol = 'var(--green)'; }
+    else { verdict = `Đang đọc — ${nOk}/${this._faList().length} đạt`; vcol = 'var(--text2)'; }
 
     const txt = x => typeof x === 'function' ? x(t) : x;   // w/p/f có thể là hàm nhận mã
-    const rows = this._FA.map(s => {
+    const rows = this._faList().map(s => {
       const v = st[s.k] || 0, dis = !t;
       const btn = (val, icon, col) => `<span onclick="${dis ? '' : `window._tj.markFA('${s.k}',${val})`}" title="${val === 1 ? 'Đạt' : 'Không đạt'}" style="cursor:${dis ? 'default' : 'pointer'};font-size:12px;font-weight:700;line-height:1;padding:3px 7px;border-radius:6px;border:1px solid ${v === val ? col : 'var(--border)'};background:${v === val ? col : 'transparent'};color:${v === val ? 'var(--btn-fg)' : 'var(--text3)'}">${icon}</span>`;
       return `
@@ -2167,7 +2286,7 @@ class Component extends DCLogic {
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:640px;margin:auto">
         <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center">
           <div style="flex:1;min-width:0">
-            <div style="font-size:12.5px;font-weight:700">🔬 Đọc yếu tố cơ bản — SEPA</div>
+            <div style="font-size:12.5px;font-weight:700">🔬 Đọc yếu tố cơ bản — SEPA ${this._scanMkt() === 'VN' ? '🇻🇳 nguồn Việt Nam' : '🇺🇸'}</div>
             <div style="font-size:9.5px;color:${vcol};margin-top:2px;font-weight:700">${verdict}</div>
           </div>
           <span onclick="window._tj.closeFA()" style="cursor:pointer;font-size:16px;color:var(--text3);padding:2px 6px;flex-shrink:0">✕</span>
@@ -2306,6 +2425,8 @@ class Component extends DCLogic {
         const tpTxt = tp == null ? '' : (tp <= 0 ? ` · trên pivot ${this._fmt(-tp, 1)}%` : ` · còn ${this._fmt(tp, 1)}%`);
         const tpCol = tp == null ? 'var(--text3)' : (tp <= 0 ? 'var(--green)' : (tp <= 8 ? 'var(--amber)' : 'var(--text3)'));
         const flags = [
+          r.lead ? ['💪', `Khỏe hơn thị trường: VN-Index đang dưới MA50 mà mã này vẫn bám sát đỉnh 52T (cách ${this._fmt(r.off_high, 0)}%) — ứng viên dẫn dắt chu kỳ tăng sau. Minervini: leader lộ diện ngay trong pha điều chỉnh`] : null,
+          r.lowliq ? ['💧', `GTGD ${this._fmt(r.adtv, 1)} tỷ — đủ để quan sát, CHƯA đủ chuẩn vào lệnh 10 tỷ. Sổ lệnh mỏng, trượt giá lớn`] : null,
           r.near ? ['🔔', `Cách điểm mua ${this._fmt(tp, 1)}% — sắp tới vùng vào lệnh`] : null,
           r.extended ? ['⚠️', `Đã căng: trên MA50 ${this._fmt(r.ext50, 0)}%, trên MA200 ${this._fmt(r.ext200, 0)}% — dễ mua đuổi`] : null,
           r.off_ath <= -40 ? ['🕳', `Cách đỉnh mọi thời đại ${this._fmt(r.off_ath, 0)}% — cổ phiếu bị lãng quên, Minervini khuyên tránh (Ch.6)`] : null,
@@ -2318,6 +2439,7 @@ class Component extends DCLogic {
             <span style="font-family:'JetBrains Mono',monospace;font-size:11px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${this._fmt(r.close / 1000, 2)}<span style="color:${r.change >= 0 ? 'var(--green)' : 'var(--red)'};font-size:9.5px"> ${r.change >= 0 ? '+' : ''}${this._fmt(r.change, 1)}%</span>${flags.length ? `<span style="margin-left:5px" title="${esc(flags.map(f => f[0] + ' ' + f[1]).join(' · '))}">${flags.map(f => f[0]).join('')}</span>` : ''}</span>
             <span style="display:flex;gap:3px;align-items:center;flex-shrink:0">
               ${act(`window._tj.seenScan('${sym}')`, seen ? '✓' : '◌', tr.wlScanSeenT, `font-weight:700;color:${seen ? 'var(--green)' : 'var(--text3)'}`)}
+              ${act(`window._tj.openFA('${sym}')`, '🔬', 'Đọc yếu tố cơ bản (nguồn VN)', 'color:var(--text3)')}
               ${act(`window._tj.editScanNote('${sym}')`, '✎', tr.wlScanNoteT, `color:${mk.n ? 'var(--amber)' : 'var(--text3)'}`)}
               ${act(`window._tj.pickScanVN('${sym}',${+r.pivot || 0})`, '＋', 'Thêm vào watchlist với pivot làm điểm mua', 'color:var(--accent);font-weight:700;border:1px solid var(--accent);padding:1px 6px')}
               ${act(`window._tj.hideScan('${sym}')`, hid ? '↩' : '✕', hid ? tr.wlScanUnhideT : tr.wlScanHideT, 'color:var(--text3)')}
@@ -2334,7 +2456,7 @@ class Component extends DCLogic {
     }
     const nHid = d.results.filter(r => (marks[r.symbol] || {}).h === cur).length;
     const hidTog = nHid ? ` · <span onclick="window._tj.showHiddenScan()" style="cursor:pointer;color:var(--accent);font-weight:700">${this._scanShowHidden ? '▾' : '▸'} ${nHid} ${tr.wlScanHidden}</span>` : '';
-    out += `<div style="font-size:9px;color:var(--text3);margin-top:8px;line-height:1.6">🔔 sắp tới điểm mua · ⚠️ đã căng · 🕳 dưới ATH −40%<br>
+    out += `<div style="font-size:9px;color:var(--text3);margin-top:8px;line-height:1.6">💪 khỏe hơn thị trường (dẫn dắt?) · 💧 thanh khoản 5–10 tỷ, chỉ quan sát · 🔔 sắp tới điểm mua · ⚠️ đã căng · 🕳 dưới ATH −40%<br>
       Giá đơn vị nghìn đồng. Không dùng RS Rating: backtest HOSE 2018-2026 cho thấy RS <b>không</b> dự báo được ở VN (siết RS≥90 cho alpha âm). ${tr.wlScanSeenHint}${hidTog}</div>`;
     return out;
   }
@@ -2358,7 +2480,7 @@ class Component extends DCLogic {
     const isVN = mkt === 'VN';
     const sub = !ok ? (isVN ? tr.wlScanNoneVN : tr.wlScanSub)
       : isVN
-        ? `${tr.wlScanAt} <b>${esc(d.scanned_at)}</b> · phiên <b>${esc(d.bar_date)}</b> · ${d.total}/${d.universe} mã (GTGD ≥ ${d.liq_min} tỷ)`
+        ? `${tr.wlScanAt} <b>${esc(d.scanned_at)}</b> · phiên <b>${esc(d.bar_date)}</b> · ${d.total}/${d.universe} mã quan sát (≥ ${d.obs_liq || d.liq_min} tỷ)${d.obs_liq && d.obs_liq < d.liq_min ? ` · vào lệnh cần ≥ ${d.liq_min} tỷ` : ''}`
         : `${tr.wlScanAt} <b>${esc(d.scanned_at)}</b> · ${d.total} ${tr.wlScanPass} (RS ≥ ${d.rs_min})${dropTxt}`;
     let body;
     if (!ok) {
@@ -2423,7 +2545,7 @@ class Component extends DCLogic {
           ${this.SCAN_MARKETS.length < 2 ? '' : `<span style="display:inline-flex;border:1px solid var(--border);border-radius:7px;overflow:hidden">
             ${this.SCAN_MARKETS.map(m => `<button onclick="window._tj.setScanMarket('${m}')" title="${m === 'VN' ? 'HOSE — mẫu hình VCP (đã backtest 2018-2026)' : 'Mỹ — Trend Template + cơ bản'}" style="background:${mkt === m ? 'var(--accent)' : 'transparent'};color:${mkt === m ? '#fff' : 'var(--text3)'};border:0;padding:5px 9px;font-size:10.5px;font-weight:700;cursor:pointer">${m}</button>`).join('')}
           </span>`}
-          ${isVN ? '' : `<button onclick="window._tj.openFA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent)" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn">🔬 Cơ bản</button>`}
+          <button onclick="window._tj.openFA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent)" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn">🔬 Cơ bản</button>
           <button onclick="window._tj.reloadScan()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;color:var(--text2)" title="Reload">⟳</button>
         </div>
       </div>

@@ -52,9 +52,18 @@ TIGHT3 = 0.10          # bien do toi da cua lan nen cuoi (VCP 3 nen)
 TIGHT2 = 0.12          # bien do toi da (VCP 2 nen — chi tham khao)
 BASE_N = 60            # so phien tinh pivot
 VOL_BO = 1.5           # boi so khoi luong khi breakout
-LIQ_MIN = 10.0         # GTGD TB 20 phien toi thieu (ty VND)
+LIQ_MIN = 10.0         # GTGD TB 20 phien toi thieu de VAO LENH (chuan backtest)
+OBS_LIQ = 5.0          # nguong QUAN SAT — noi phieu, khong noi tin hieu
 NEAR_PIVOT = 8.0       # coi la "sap toi diem mua" neu cach pivot <= %
 INDEX = "VNINDEX"      # chi so dung lam cong tac tong
+
+# Noi phieu quan sat nhung GIU NGUYEN cong vao lenh:
+#   - BREAKOUT van doi: 3 nen + r3<10% + vol kho can + GTGD >= 10 ty + regime ON.
+#     (backtest: noi con 2 nen -> CAGR -0.78%; do chat la loi the, khong dong vao)
+#   - Quan sat mo rong: GTGD >= 5 ty (co 💧), TREND trong vong 30% dinh 52T
+#     (thay vi 25%) de thay nen dang hinh thanh som hon.
+#   - Co 💪 "dan dat": khi thi truong OFF ma van bam sat dinh 52T — Minervini:
+#     leader cua song tang sau lo dien ngay trong pha dieu chinh.
 
 
 def fetch_all(symbols, offline=False, sleep=3.2):
@@ -186,7 +195,8 @@ def main():
     ap.add_argument("--refresh", action="store_true", help="cap nhat 90 phien cuoi (toan bo)")
     ap.add_argument("--refresh-liquid", action="store_true",
                     help="chi cap nhat ma thanh khoan — du cho scan, nhanh hon nhieu (dung cho CI)")
-    ap.add_argument("--liq", type=float, default=LIQ_MIN, help="GTGD TB20 toi thieu (ty)")
+    ap.add_argument("--liq", type=float, default=LIQ_MIN, help="GTGD TB20 toi thieu de vao lenh (ty)")
+    ap.add_argument("--obs-liq", type=float, default=OBS_LIQ, help="GTGD TB20 toi thieu de quan sat (ty)")
     ap.add_argument("--telegram", action="store_true")
     ap.add_argument("--top", type=int, default=40)
     args = ap.parse_args()
@@ -211,7 +221,7 @@ def main():
                 liq_syms.append(s); continue
             try:
                 d = pd.read_parquet(f).tail(20)
-                if len(d) and (d["close"] * 1000 * d["volume"] / 1e9).mean() >= args.liq / 2:
+                if len(d) and (d["close"] * 1000 * d["volume"] / 1e9).mean() >= args.obs_liq / 2:
                     liq_syms.append(s)
             except Exception:
                 liq_syms.append(s)
@@ -252,18 +262,30 @@ def main():
     up_prev = ((c_prev > ma50.iloc[i - 1]) & (c_prev > ma200.iloc[i - 1])
                & (c_prev >= hi52.iloc[i - 1] * 0.75))
 
-    liq = adtv.iloc[i] >= args.liq
+    liq_sig = adtv.iloc[i] >= args.liq       # chuan VAO LENH — dung nhu backtest
+    liq_obs = adtv.iloc[i] >= args.obs_liq   # chuan QUAN SAT — noi phieu
     up = (c > ma50.iloc[i]) & (c > ma200.iloc[i]) & (c >= hi52.iloc[i] * 0.75)
-    vcp3 = (r1 > r2) & (r2 > r3) & (r3 < TIGHT3) & (v3 < v1) & up & liq
-    vcp2 = (r2 > r3) & (r3 < TIGHT2) & (v3 < v1) & up & liq
-    # breakout: hom qua dang o trang thai VCP, hom nay vuot pivot voi khoi luong
+    up_obs = (c > ma50.iloc[i]) & (c > ma200.iloc[i]) & (c >= hi52.iloc[i] * 0.70)
+    vcp3 = (r1 > r2) & (r2 > r3) & (r3 < TIGHT3) & (v3 < v1) & up & liq_obs
+    vcp2 = (r2 > r3) & (r3 < TIGHT2) & (v3 < v1) & up & liq_obs
+    # breakout: hom qua dang o trang thai VCP, hom nay vuot pivot voi khoi luong.
+    # Tin hieu vao lenh nen doi thanh khoan CHUAN (>= --liq), khong an theo nguong quan sat
     vcp3_prev = ((rng.iloc[i - 1 - 2 * W] > r2p) & (r2p > r3p) & (r3p < TIGHT3)
                  & (v3p < v1p) & up_prev)
-    bo = vcp3_prev & (c > pivot.iloc[i]) & (v > VOL_BO * v3)
+    bo = vcp3_prev & (c > pivot.iloc[i]) & (v > VOL_BO * v3) & liq_sig
+
+    # ── Cong tac tong (tinh truoc de gan co "dan dat" cho tung ma) ──
+    nsig = int(liq_sig.sum())
+    b50 = round(float(((c > ma50.iloc[i]) & liq_sig).sum()) / nsig * 100, 1) if nsig else None
+    b200 = round(float(((c > ma200.iloc[i]) & liq_sig).sum()) / nsig * 100, 1) if nsig else None
+    reg = market_regime(fetch_index(offline=args.offline), b50, b200)
+    allow = reg["state"] == "ON"
+    print(f"[i] Thi truong: {reg['state']} — {reg['reason']}"
+          + (f" · do rong tren MA50 {b50}% / MA200 {b200}%" if b50 is not None else ""))
 
     rows = []
     for s in close.columns:
-        if not bool(liq.get(s, False)) or pd.isna(c.get(s)):
+        if not bool(liq_obs.get(s, False)) or pd.isna(c.get(s)):
             continue
         if bool(bo.get(s, False)):
             tier = "BREAKOUT"
@@ -271,7 +293,7 @@ def main():
             tier = "VCP3"
         elif bool(vcp2.get(s, False)):
             tier = "VCP2"
-        elif bool(up.get(s, False)):
+        elif bool(up_obs.get(s, False)):
             tier = "TREND"
         else:
             continue
@@ -283,6 +305,8 @@ def main():
                           float(hi_all.iloc[i][s]) * 1000)
         m50, m200 = float(ma50.iloc[i][s]) * 1000, float(ma200.iloc[i][s]) * 1000
         to_pivot = (pv / px_now - 1) * 100 if px_now > 0 else None
+        off_hi = (px_now / h52 - 1) * 100
+        adtv_s = float(adtv.iloc[i][s])
         rows.append({
             "symbol": s,
             "ticker": f"{exmap.get(s,'HOSE')}:{s}",
@@ -295,33 +319,30 @@ def main():
             "contractions": (3 if tier in ("BREAKOUT", "VCP3") else (2 if tier == "VCP2" else 0)),
             "pivot": round(pv) if pd.notna(pv) else None,
             "to_pivot": round(to_pivot, 1) if to_pivot is not None else None,
-            "adtv": round(float(adtv.iloc[i][s]), 1),
+            "adtv": round(adtv_s, 1),
             "vol_x": round(float(v[s] / v3[s]), 1) if v3.get(s) else None,
             "dry": round(float(v3[s] / v1[s]), 2) if v1.get(s) else None,
-            "off_high": round((px_now / h52 - 1) * 100, 1),
+            "off_high": round(off_hi, 1),
             "above_low": round((px_now / l52 - 1) * 100, 1),
             "off_ath": round((px_now / hall - 1) * 100, 1),
             "ext50": round((px_now / m50 - 1) * 100, 1),
             "ext200": round((px_now / m200 - 1) * 100, 1),
             "extended": bool((px_now / m50 - 1) * 100 > 15 or (px_now / m200 - 1) * 100 > 50),
             "near": bool(to_pivot is not None and 0 < to_pivot <= NEAR_PIVOT),
+            # 💧 du de quan sat nhung chua du chuan vao lenh 10 ty
+            "lowliq": bool(adtv_s < args.liq),
+            # 💪 Index dang OFF ma ma nay van trong vong 5% dinh 52T. Nguong phai chat:
+            # ca danh sach von da loc "tren MA50+MA200", noi ra -15% thi 19/21 ma dinh co.
+            "lead": bool((not allow) and off_hi >= -5),
         })
 
     order = {"BREAKOUT": 0, "VCP3": 1, "VCP2": 2, "TREND": 3}
-    # trong cung tier: nen chat nhat truoc (Minervini — cang chat cang tot),
-    # rieng TREND thi xep theo khoang cach toi diem mua
+    # trong cung tier: ma "dan dat" truoc, roi nen chat nhat (Minervini — cang chat
+    # cang tot), rieng TREND thi xep theo khoang cach toi diem mua
     rows.sort(key=lambda r: (order[r["tier"]],
+                             0 if r.get("lead") else 1,
                              r["tight"] if r["tier"] != "TREND" else 99,
                              abs(r["to_pivot"]) if r["to_pivot"] is not None else 99))
-
-    # ── Cong tac tong ──
-    nliq = int(liq.sum())
-    b50 = round(float(((c > ma50.iloc[i]) & liq).sum()) / nliq * 100, 1) if nliq else None
-    b200 = round(float(((c > ma200.iloc[i]) & liq).sum()) / nliq * 100, 1) if nliq else None
-    reg = market_regime(fetch_index(offline=args.offline), b50, b200)
-    allow = reg["state"] == "ON"
-    print(f"[i] Thi truong: {reg['state']} — {reg['reason']}"
-          + (f" · do rong tren MA50 {b50}% / MA200 {b200}%" if b50 is not None else ""))
 
     tz = ZoneInfo("Asia/Ho_Chi_Minh")
     payload = {
@@ -330,7 +351,9 @@ def main():
         "scanned_at": datetime.now(tz).strftime("%Y-%m-%d %H:%M"),
         "bar_date": str(d.date()),
         "liq_min": args.liq,
-        "universe": nliq,
+        "obs_liq": args.obs_liq,
+        "universe": int(liq_obs.sum()),
+        "universe_sig": nsig,
         "total": len(rows),
         "counts": {k: sum(1 for r in rows if r["tier"] == k) for k in order},
         "regime": reg,
@@ -359,7 +382,8 @@ def main():
                          f"VN khong cho ban khong: thi truong giam thi giu tien mat.")
         if b50 is not None:
             lines.append(f"Do rong: {b50}% tren MA50 · {b200}% tren MA200")
-        lines.append(f"Vu tru {payload['universe']} ma (GTGD ≥ {args.liq} ty)")
+        lines.append(f"Vu tru {payload['universe']} ma quan sat (≥ {args.obs_liq:g} ty) · "
+                     f"{nsig} ma du chuan vao lenh (≥ {args.liq:g} ty)")
         bo_title = ("🎯 <b>BREAKOUT hom nay</b> — vuot pivot + khoi luong" if allow
                     else "🚫 <b>Vuot pivot hom nay</b> — CHI GHI NHAN, thi truong dang OFF")
         for t, title in ((("BREAKOUT", bo_title)),

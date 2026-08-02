@@ -46,7 +46,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          python automation/scan_vn_vcp.py --refresh-liquid --telegram
+          python automation/scan_vn_vcp.py --hnx --refresh-liquid --telegram
           python automation/alert_watcher.py --force --market vn
 
       - name: Check watchlist trong phien HOSE
