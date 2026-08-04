@@ -1967,6 +1967,10 @@ class Component extends DCLogic {
 
   // Thị trường hiển thị ở bảng scan. Bộ lọc Mỹ tạm gác (pháp lý chưa cho chuyển tiền
   // ra nước ngoài) — code vẫn còn nguyên, mở lại bằng cách đổi thành ['VN','US'].
+  // Công tắc thị trường — đổi MỘT dòng này là bật lại toàn bộ phần Mỹ:
+  //   ['US','VN'] = giữ cả hai, hiện nút chuyển · ['US'] = chỉ Mỹ
+  // Nó tự kéo theo: nút chuyển thị trường, _faList() chọn _FA_US, watchlist
+  // đóng dấu cc:'USD'. Chi tiết + việc còn thiếu: automation/US-DORMANT.md
   SCAN_MARKETS = ['VN'];
 
   _scanMkt() {
@@ -2133,6 +2137,10 @@ class Component extends DCLogic {
       f: '⚠️ <b>Đọc với thái độ hoài nghi.</b> VN không có tổ chức tổng hợp đồng thuận độc lập như Zacks. Báo cáo CTCK thường có xung đột lợi ích (chính họ đang tự doanh hoặc bảo lãnh phát hành mã đó) và gần như không bao giờ khuyến nghị BÁN.<br><b>Đây là tiêu chí yếu nhất trong bảng — đừng để nó quyết định gì</b>' },
   ]
 
+  // ══ BẢNG CƠ BẢN — CỔ PHIẾU MỸ · ĐANG NGỦ từ 03/08/2026 ══
+  // Không hiển thị vì SCAN_MARKETS = ['VN'] → _faList() luôn trả _FA_VN.
+  // Giữ nguyên, không xoá: đổi SCAN_MARKETS là bảng này sống lại ngay.
+  // Lý do gác + cách bật lại: automation/US-DORMANT.md
   _FA_US = [
     { k: 'eps', g: '1 · Động lượng lợi nhuận (quý)', must: 1, s: 'TradingView · Income statement (quý)',
       src: "O'Neil Ch.1 tr.24–36 · Minervini Ch.7 tr.145–172",

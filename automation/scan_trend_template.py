@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 """Scan SEPA (Mark Minervini) — Trend Template + loc co ban + boi canh dai han.
 
+┌──────────────────────────────────────────────────────────────────────────┐
+│ DANG NGU tu 03/08/2026 — khong chay trong workflow, khong hien tren web. │
+│ Ly do (khong nap duoc tien tu VN vao IBKR), cach bat lai, va cai bay     │
+│ cong tac tong QQQ: xem automation/US-DORMANT.md                          │
+│ File nay VAN CHAY DUOC, khong sua gi. Dung xoa.                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
 Quy trinh SEPA goc (Trade Like a Stock Market Wizard, Ch.3): buoc 1 Trend Template,
 buoc 2 loc co ban (93% ma dat buoc 1 bi loai o day), buoc 3 Ho So Co Phieu Dan Dat,
 buoc 4 danh gia thu cong. Script nay lam buoc 1-2 va mot phan buoc 3.
