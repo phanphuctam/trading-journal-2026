@@ -2484,6 +2484,8 @@ class Component extends DCLogic {
         const tpCol = tp == null ? 'var(--text3)' : (tp <= 0 ? 'var(--green)' : (tp <= 8 ? 'var(--amber)' : 'var(--text3)'));
         const flags = [
           r.lead ? ['💪', `Khỏe hơn thị trường: VN-Index đang dưới MA50 mà mã này vẫn bám sát đỉnh 52T (cách ${this._fmt(r.off_high, 0)}%) — ứng viên dẫn dắt chu kỳ tăng sau. Minervini: leader lộ diện ngay trong pha điều chỉnh`] : null,
+          r.young ? ['✨', `Niêm yết ${r.age} năm — nằm trong vùng 2-8 năm. Đây là phát hiện mạnh nhất của backtest HOSE+HNX 2018-2026: lọc riêng vùng này cho tỉ lệ thắng 57,4% và sụt giảm tối đa chỉ −8,3%, so với mã trên 8 năm chỉ thắng 32,1% và sụt giảm −27,2%. Đúng tiêu chí "công ty non trẻ" của Minervini (Ch.6).\n⚠️ Chỉ 47 lệnh trong 8 năm — mẫu nhỏ, và 2021 chiếm 15 lệnh. Là điểm cộng mạnh, chưa phải luật`] : null,
+          r.tooyoung ? ['⏳', `Mới niêm yết ${r.age} năm — CHƯA ĐỦ 2 NĂM. Backtest cho nhóm này thắng chỉ 16,7% và CAGR âm: chưa đủ lịch sử giá để tạo nền tử tế, và cổ phiếu mới lên sàn ở VN hay bị làm giá. Chờ thêm`] : null,
           r.ceil ? ['🔒', `Hôm nay ĐÓNG CỬA GIÁ TRẦN — trắng bên bán, gần như không khớp được lệnh. Phiên sau thường gap-up và điểm vào đã lệch xa pivot: đó là mua đuổi, không phải breakout`] : null,
           r.manip ? ['⚑', `${r.ceil_base} phiên trần trong nền 60 phiên. Nền VCP đẹp kèm nhiều phiên trần là vân tay quen thuộc của đội lái (giao dịch tự chéo qua tài khoản vệ tinh để vẽ đồ thị). Soi kỹ trước khi tin`] : null,
           r.lowliq ? ['💧', `GTGD ${this._fmt(r.adtv, 1)} tỷ${r.vol20 != null ? ` · KL TB20 ${this._fmt(r.vol20 / 1000, 0)}k cp` : ''} — đủ để quan sát, CHƯA đủ chuẩn vào lệnh (10 tỷ và 100k cp). Sổ lệnh mỏng, trượt giá lớn`] : null,
@@ -2517,7 +2519,7 @@ class Component extends DCLogic {
     }
     const nHid = d.results.filter(r => (marks[r.symbol] || {}).h === cur).length;
     const hidTog = nHid ? ` · <span onclick="window._tj.showHiddenScan()" style="cursor:pointer;color:var(--accent);font-weight:700">${this._scanShowHidden ? '▾' : '▸'} ${nHid} ${tr.wlScanHidden}</span>` : '';
-    out += `<div style="font-size:9px;color:var(--text3);margin-top:8px;line-height:1.6">💪 khỏe hơn thị trường (dẫn dắt?) · 🔒 đóng cửa giá trần, không khớp được · ⚑ nhiều phiên trần trong nền, nghi đội lái · 💧 chưa đủ chuẩn thanh khoản, chỉ quan sát · 🔔 sắp tới điểm mua · ⚠️ đã căng · 🕳 dưới ATH −40%<br>
+    out += `<div style="font-size:9px;color:var(--text3);margin-top:8px;line-height:1.6">💪 khỏe hơn thị trường (dẫn dắt?) · ✨ niêm yết 2-8 năm (vùng tốt nhất) · ⏳ chưa đủ 2 năm · 🔒 đóng cửa giá trần, không khớp được · ⚑ nhiều phiên trần trong nền, nghi đội lái · 💧 chưa đủ chuẩn thanh khoản, chỉ quan sát · 🔔 sắp tới điểm mua · ⚠️ đã căng · 🕳 dưới ATH −40%<br>
       Giá đơn vị nghìn đồng. Không dùng RS Rating: backtest HOSE 2018-2026 cho thấy RS <b>không</b> dự báo được ở VN (siết RS≥90 cho alpha âm). ${tr.wlScanSeenHint}${hidTog}</div>`;
     return out;
   }

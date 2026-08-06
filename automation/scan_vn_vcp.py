@@ -61,7 +61,9 @@ INDEX = "VNINDEX"      # chi so dung lam cong tac tong
 # Tat ca deu la LOP PHONG THU: chung khong noi cua vao lenh (3 nen + r3<10% +
 # vol kho can + GTGD>=10 ty + regime ON van nguyen), chi chan bot cach thua tien
 # ma backtest goc khong nhin thay vi no chi do gia dong cua.
-CEIL = {"HOSE": 6.8, "HNX": 14.5, "UPCOM": 14.0}  # % coi nhu dong cua GIA TRAN
+# Bien do dao dong theo san: HOSE +-7%, HNX +-10%, UPCOM +-15%.
+# (Bao cao SEPA-Viet-hoa ghi HNX +-15% — SAI, do la bien do cua UPCOM.)
+CEIL = {"HOSE": 6.8, "HNX": 9.5, "UPCOM": 14.5}   # % coi nhu dong cua GIA TRAN
 CEIL_DEFAULT = 6.8
 CEIL_BASE_N = 60       # dem phien tran trong bao nhieu phien gan nhat
 CEIL_MANIP = 4         # >= bao nhieu phien tran trong nen thi nghi "doi lai"
@@ -285,6 +287,8 @@ def market_regime(idx, breadth50, breadth200):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--hnx", action="store_true", help="them san HNX")
+    ap.add_argument("--upcom", action="store_true", help="them san UPCOM (821 ma, nhieu ma rac)")
+    ap.add_argument("--all", action="store_true", help="ca ba san: HOSE + HNX + UPCOM")
     ap.add_argument("--offline", action="store_true", help="chi dung cache")
     ap.add_argument("--refresh", action="store_true", help="cap nhat 90 phien cuoi (toan bo)")
     ap.add_argument("--refresh-liquid", action="store_true",
@@ -299,12 +303,17 @@ def main():
 
     from vnstock import Listing
     lst = Listing().symbols_by_exchange()
-    exch = ["HOSE"] + (["HNX"] if args.hnx else [])
+    exch = ["HOSE"] + (["HNX"] if (args.hnx or args.all) else []) \
+                    + (["UPCOM"] if (args.upcom or args.all) else [])
     meta = lst[(lst.exchange.isin(exch)) & (lst.type == "stock")]
     names = dict(zip(meta.symbol, meta.organ_name))
     exmap = dict(zip(meta.symbol, meta.exchange))
     syms = sorted(meta.symbol.unique())
     print(f"[i] Vu tru: {len(syms)} ma ({', '.join(exch)})")
+    # Ghi lai bang san de backtest_vn_params.py dung duoc ma khong can goi API
+    CACHE.mkdir(exist_ok=True)
+    (CACHE / "_meta.json").write_text(
+        json.dumps({"exchange": exmap, "name": names}, ensure_ascii=False), encoding="utf-8")
 
     if args.refresh_liquid and not args.offline:
         # Chi tai lai nhung ma con co cua vao vu tru (GTGD >= mot nua nguong).
@@ -352,13 +361,42 @@ def main():
     #     va diem vao lech xa pivot. Gia dong cua khong noi len dieu do.
     #  2. Nhieu phien tran trong nen la van tay quen thuoc cua doi lai: ho ve duoc
     #     do thi dep bang cach keo tran vai phien voi khoi luong tu doi ung.
+    # TUOI NIEM YET. Minervini Ch.6: phan lon sieu co phieu tro thanh dai chung trong
+    # 8-10 nam TRUOC khi bung no — cong ty non tre la "thanh phan quan trong nhat".
+    # Tuoi lay tu NGAY NIEM YET THAT (fetch_listing_dates.py -> .vncache/_listing.json).
+    # Khong suy tu du lieu gia duoc: nguon KBS chi tra ve ~8 nam nen VNM/FPT/HPG deu co
+    # phien dau la 2018-08 du chung len san tu rat lau.
+    # ⚠️ Do la ngay len SAN HIEN TAI, khong phai ngay IPO goc — ma chuyen san se tre hon
+    # thuc te (AAA hien 25/11/2016 vi chuyen HNX -> HOSE nam do).
+    today = pd.Timestamp(datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date())
+    lf = CACHE / "_listing.json"
+    listing = {}
+    if lf.exists():
+        listing = {k: pd.to_datetime(v, format="%d/%m/%Y", errors="coerce")
+                   for k, v in json.loads(lf.read_text(encoding="utf-8")).items() if v}
+    else:
+        print("[!] Chua co .vncache/_listing.json — chay fetch_listing_dates.py de co tuoi niem yet")
+    age_y = pd.Series({s: (today - d).days / 365.25
+                       for s, d in listing.items() if pd.notna(d)})
+
     chg_all = close.pct_change(fill_method=None) * 100
     ceil_thr = pd.Series({s: CEIL.get(exmap.get(s, "HOSE"), CEIL_DEFAULT) for s in close.columns})
     ceil_mask = chg_all.ge(ceil_thr, axis=1)
     ceil_base = ceil_mask.rolling(CEIL_BASE_N).sum()
 
-    i = -1
+    # ── Chon PHIEN GAN NHAT CO DU LIEU DAY DU, khong mac dinh lay dong cuoi ──
+    # Cache duoc tai lam nhieu dot nen cac ma khong cung mot ngay cuoi. Neu chi mot
+    # nhom nho vua tai xong (vd 800 ma UPCOM moi) thi dong cuoi cua bang chi co nhom
+    # do co gia, toan bo HOSE/HNX la NaN -> scan im lang tra ve vai ma va trong nhu
+    # mot ngay khong co co hoi. Da xay ra that: scan --all lan dau chi ra 4 ma UPCOM.
+    cover = close.notna().sum(axis=1)
+    ok = cover >= cover.max() * 0.6
+    i = int(np.nonzero(ok.to_numpy())[0][-1]) - len(close)   # chi so am tu cuoi
     d = close.index[i]
+    if i != -1:
+        print(f"[!] Bo qua {-i - 1} phien cuoi thieu du lieu — dung phien {d.date()} "
+              f"({int(cover.iloc[i])}/{int(cover.max())} ma co gia). "
+              f"Chay --refresh-liquid de cap nhat duoi cache.")
     prev = close.iloc[i - 1]
     c, v = close.iloc[i], vol.iloc[i]
     r3, r2, r1 = rng.iloc[i], rng.iloc[i - W], rng.iloc[i - 2 * W]
@@ -467,6 +505,13 @@ def main():
             "max_pos": int(adtv_s * 1e9 * MAX_POS_PCT / 100),
             # % gia dang o tren pivot — > 5% la mua duoi theo Minervini
             "over_pivot": round(-to_pivot, 1) if (to_pivot is not None and to_pivot < 0) else None,
+            # Tuoi niem yet (nam), None = chua lay duoc ngay niem yet cho ma nay.
+            # Backtest HOSE+HNX 2018-2026: vung 2-8 nam thang 57,4% va sut giam toi da
+            # -8,3%, so voi ma tren 8 nam chi thang 32,1% va sut giam -27,2%. Duoi 2 nam
+            # thi te han ca hai (thang 16,7%, CAGR am) — non qua chua co nen gia tu te.
+            "age": round(float(age_y[s]), 1) if s in age_y.index else None,
+            "young": bool(s in age_y.index and 2 <= float(age_y[s]) <= 8),
+            "tooyoung": bool(s in age_y.index and float(age_y[s]) < 2),
             # 💪 Index dang OFF ma ma nay van trong vong 5% dinh 52T. Nguong phai chat:
             # ca danh sach von da loc "tren MA50+MA200", noi ra -15% thi 19/21 ma dinh co.
             "lead": bool((not allow) and off_hi >= -5),

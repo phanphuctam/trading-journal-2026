@@ -1,7 +1,7 @@
 {
  "app": "trading-journal-2026",
  "market": "VN",
- "scanned_at": "2026-08-06 13:53",
+ "scanned_at": "2026-08-06 16:43",
  "bar_date": "2026-07-31",
  "liq_min": 10.0,
  "obs_liq": 5.0,
@@ -9,33 +9,37 @@
  "max_pos_pct": 2.0,
  "chase": 5.0,
  "ceil_manip": 4,
- "universe": 137,
- "universe_sig": 112,
- "total": 18,
+ "universe": 151,
+ "universe_sig": 123,
+ "total": 21,
  "counts": {
   "BREAKOUT": 0,
   "BO_FAR": 0,
   "VCP3": 2,
   "VCP2": 3,
-  "TREND": 13
+  "TREND": 16
  },
  "regime": {
   "index": "VNINDEX",
-  "breadth50": 20.5,
-  "breadth200": 18.8,
-  "date": "2026-07-31",
-  "close": 1735.78,
-  "ma50": 1809.74,
-  "ma200": 1772.75,
+  "breadth50": 20.3,
+  "breadth200": 18.7,
+  "date": "2026-08-06",
+  "close": 1764.78,
+  "ma50": 1801.2,
+  "ma200": 1772.9,
   "above_ma50": false,
   "ma50_above_ma200": true,
   "state": "OFF",
-  "reason": "VN-Index 1,736 duoi MA50 1,810",
-  "dist_days": 10,
+  "reason": "VN-Index 1,765 duoi MA50 1,801",
+  "dist_days": 8,
   "dist_lookback": 25,
   "dist_danger": 5,
   "dist_warn": true,
   "dist_list": [
+   {
+    "date": "2026-07-10",
+    "chg": -0.67
+   },
    {
     "date": "2026-07-13",
     "chg": -1.52
@@ -55,17 +59,13 @@
    {
     "date": "2026-07-27",
     "chg": -1.01
-   },
-   {
-    "date": "2026-07-31",
-    "chg": -0.51
    }
   ],
   "ftd": {
    "date": "2026-07-30",
    "day": 6,
    "chg": 2.35,
-   "ago": 1
+   "ago": 5
   }
  },
  "entries_allowed": false,
@@ -100,6 +100,9 @@
    "manip": false,
    "max_pos": 2266195694,
    "over_pivot": null,
+   "age": 5.6,
+   "young": true,
+   "tooyoung": false,
    "lead": true
   },
   {
@@ -131,6 +134,9 @@
    "manip": false,
    "max_pos": 5851985240,
    "over_pivot": null,
+   "age": 20.1,
+   "young": false,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -162,6 +168,9 @@
    "manip": false,
    "max_pos": 297511905,
    "over_pivot": null,
+   "age": 18.9,
+   "young": false,
+   "tooyoung": false,
    "lead": true
   },
   {
@@ -193,6 +202,9 @@
    "manip": false,
    "max_pos": 701882854,
    "over_pivot": null,
+   "age": 5.4,
+   "young": true,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -224,7 +236,44 @@
    "manip": false,
    "max_pos": 15232247120,
    "over_pivot": null,
+   "age": 18.9,
+   "young": false,
+   "tooyoung": false,
    "lead": false
+  },
+  {
+   "symbol": "MST",
+   "ticker": "HNX:MST",
+   "desc": "CTCP Đầu tư MST",
+   "sector": "HNX",
+   "close": 10300,
+   "change": -0.96,
+   "tier": "TREND",
+   "tight": 14.4,
+   "contractions": 0,
+   "pivot": 10400,
+   "to_pivot": 1.0,
+   "adtv": 26.2,
+   "vol_x": 1.1,
+   "dry": 1.1,
+   "off_high": -1.0,
+   "above_low": 90.7,
+   "off_ath": -35.9,
+   "ext50": 12.8,
+   "ext200": 38.4,
+   "extended": false,
+   "near": true,
+   "lowliq": false,
+   "vol20": 2657190,
+   "ceil": false,
+   "ceil_base": 0,
+   "manip": false,
+   "max_pos": 524513870,
+   "over_pivot": null,
+   "age": 10.2,
+   "young": false,
+   "tooyoung": false,
+   "lead": true
   },
   {
    "symbol": "HHP",
@@ -255,6 +304,9 @@
    "manip": false,
    "max_pos": 304292560,
    "over_pivot": null,
+   "age": 5.4,
+   "young": true,
+   "tooyoung": false,
    "lead": true
   },
   {
@@ -286,6 +338,43 @@
    "manip": false,
    "max_pos": 1516759950,
    "over_pivot": null,
+   "age": 8.1,
+   "young": false,
+   "tooyoung": false,
+   "lead": true
+  },
+  {
+   "symbol": "VTZ",
+   "ticker": "HNX:VTZ",
+   "desc": "CTCP Sản xuất và Thương mại Nhựa Việt Thành",
+   "sector": "HNX",
+   "close": 20400,
+   "change": 0.0,
+   "tier": "TREND",
+   "tight": 2.0,
+   "contractions": 0,
+   "pivot": 20900,
+   "to_pivot": 2.5,
+   "adtv": 20.8,
+   "vol_x": 1.0,
+   "dry": 1.0,
+   "off_high": -2.4,
+   "above_low": 13.3,
+   "off_ath": -2.4,
+   "ext50": 0.1,
+   "ext200": 3.4,
+   "extended": false,
+   "near": true,
+   "lowliq": false,
+   "vol20": 1025665,
+   "ceil": false,
+   "ceil_base": 0,
+   "manip": false,
+   "max_pos": 416533350,
+   "over_pivot": null,
+   "age": 4.7,
+   "young": true,
+   "tooyoung": false,
    "lead": true
   },
   {
@@ -317,6 +406,9 @@
    "manip": false,
    "max_pos": 2914908025,
    "over_pivot": null,
+   "age": 17.2,
+   "young": false,
+   "tooyoung": false,
    "lead": true
   },
   {
@@ -348,6 +440,9 @@
    "manip": false,
    "max_pos": 5366749840,
    "over_pivot": null,
+   "age": 20.5,
+   "young": false,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -379,6 +474,9 @@
    "manip": false,
    "max_pos": 472547720,
    "over_pivot": null,
+   "age": 20.1,
+   "young": false,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -410,6 +508,9 @@
    "manip": false,
    "max_pos": 705578380,
    "over_pivot": null,
+   "age": 4.7,
+   "young": true,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -441,6 +542,9 @@
    "manip": false,
    "max_pos": 153905560,
    "over_pivot": null,
+   "age": 17.0,
+   "young": false,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -472,6 +576,9 @@
    "manip": false,
    "max_pos": 201604057,
    "over_pivot": null,
+   "age": 9.4,
+   "young": false,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -503,6 +610,9 @@
    "manip": false,
    "max_pos": 2384089510,
    "over_pivot": null,
+   "age": 24.3,
+   "young": false,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -534,6 +644,9 @@
    "manip": false,
    "max_pos": 187903115,
    "over_pivot": null,
+   "age": 17.0,
+   "young": false,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -565,6 +678,9 @@
    "manip": false,
    "max_pos": 1776008820,
    "over_pivot": null,
+   "age": 4.8,
+   "young": true,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -596,6 +712,9 @@
    "manip": false,
    "max_pos": 12210823430,
    "over_pivot": null,
+   "age": 8.2,
+   "young": false,
+   "tooyoung": false,
    "lead": false
   },
   {
@@ -627,6 +746,43 @@
    "manip": false,
    "max_pos": 3283511010,
    "over_pivot": null,
+   "age": 5.7,
+   "young": true,
+   "tooyoung": false,
+   "lead": false
+  },
+  {
+   "symbol": "PSI",
+   "ticker": "HNX:PSI",
+   "desc": "CTCP Chứng khoán Dầu khí",
+   "sector": "HNX",
+   "close": 9900,
+   "change": 1.02,
+   "tier": "TREND",
+   "tight": 19.1,
+   "contractions": 0,
+   "pivot": 11500,
+   "to_pivot": 16.2,
+   "adtv": 5.7,
+   "vol_x": 1.4,
+   "dry": 1.93,
+   "off_high": -13.9,
+   "above_low": 35.6,
+   "off_ath": -56.0,
+   "ext50": 3.4,
+   "ext200": 17.5,
+   "extended": false,
+   "near": false,
+   "lowliq": true,
+   "vol20": 548995,
+   "ceil": false,
+   "ceil_base": 0,
+   "manip": false,
+   "max_pos": 113351940,
+   "over_pivot": null,
+   "age": 16.0,
+   "young": false,
+   "tooyoung": false,
    "lead": false
   }
  ]

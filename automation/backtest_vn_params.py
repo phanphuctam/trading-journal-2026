@@ -56,16 +56,31 @@ START = "2018-01-01"
 CAP0 = 1_000_000         # = 1 ty VND. Chi de quy ra %, khong anh huong ket qua
 SLOTS = 6                # so vi the toi da cung luc (bao cao de xuat 4-8)
 FEE = 0.0035             # phi mua+ban+thue ~0,35% mot vong o VN
+MARGIN_RATE = 0.13       # lai vay margin CTCK ~13%/nam — bo ra thi ket qua la ao
 
 # Ket qua backtest goc, dung lam moc doi chieu cho ban dung lai
 GOC = {"cagr": 10.36, "maxdd": -15.9, "win": 38.6, "avg_win": 25.9, "avg_loss": -6.9}
 
 
-def load_panels():
-    """Doc toan bo cache parquet thanh cac bang date x symbol."""
+def load_meta():
+    """Bang symbol -> san, do scan_vn_vcp.py ghi ra. Khong co thi coi het la HOSE."""
+    f = CACHE / "_meta.json"
+    if not f.exists():
+        return {}
+    return json.loads(f.read_text(encoding="utf-8")).get("exchange", {})
+
+
+def load_panels(exch=None):
+    """Doc toan bo cache parquet thanh cac bang date x symbol.
+
+    exch  Danh sach san can giu, vd ["HOSE","HNX"]. None = lay tat ca dang co cache.
+    """
+    ex = load_meta()
     frames = []
     for f in sorted(CACHE.glob("*.parquet")):
         if f.stem == INDEX:
+            continue
+        if exch and ex.get(f.stem, "HOSE") not in exch:
             continue
         try:
             d = pd.read_parquet(f)
@@ -93,6 +108,8 @@ def load_panels():
         idx = (idx.drop_duplicates(subset=["time"], keep="last")
                   .sort_values("time").set_index("time")["close"].astype(float))
         idx = idx.reindex(p["close"].index).ffill()
+    # Phien dau tien co gia = ngay len san (chan cut o START voi ma niem yet truoc do)
+    p["first"] = p["close"].notna().idxmax()
     return p, idx
 
 
@@ -106,13 +123,14 @@ def build_signals(p, liq=LIQ_MIN):
     vm = vol.rolling(W).mean()
     pivot = close.rolling(BASE_N).max().shift(1)
 
+    ma20, ma100 = close.rolling(20).mean(), close.rolling(100).mean()
     up = (close > ma50) & (close > ma200) & (close >= hi52 * 0.75)
     vcp3 = ((rng.shift(2 * W) > rng.shift(W)) & (rng.shift(W) > rng)
             & (rng < TIGHT3) & (vm < vm.shift(2 * W)) & up)
     entry = (vcp3.shift(1).astype("boolean").fillna(False).astype(bool)
              & (close > pivot) & (vol > VOL_BO * vm) & (adtv >= liq))
-    return {"entry": entry.fillna(False), "ma50": ma50, "rng": rng, "adtv": adtv,
-            "pivot": pivot}
+    return {"entry": entry.fillna(False), "ma50": ma50, "ma20": ma20, "ma100": ma100,
+            "rng": rng, "adtv": adtv, "pivot": pivot}
 
 
 def regime_on(idx):
@@ -123,36 +141,76 @@ def regime_on(idx):
     return ((idx > ma50) & (ma50 > ma200)).fillna(False)
 
 
-def to_numpy(p, sig, on):
+def to_numpy(p, sig, on, dates=None):
     """Doi sang mang numpy mot lan. Vong lap qua 700 ma x 2000 phien bang pandas
     mat hang chuc phut; bang numpy con vai giay."""
     cols = list(p["close"].columns)
+    dates = p["close"].index if dates is None else dates
     a = {k: p[k].to_numpy(dtype=float) for k in ("open", "high", "low", "close")}
-    a["ma50"] = sig["ma50"].to_numpy(dtype=float)
+    for m in ("ma20", "ma50", "ma100"):
+        a[m] = sig[m].to_numpy(dtype=float)
     a["rng"] = np.nan_to_num(sig["rng"].to_numpy(dtype=float), nan=9.0)
     a["entry"] = sig["entry"].to_numpy(dtype=bool)
     a["on"] = (on.to_numpy(dtype=bool) if on is not None
                else np.ones(len(p["close"]), dtype=bool))
+    # Vi tri phien dau tien co gia -> tuoi niem yet tai phien k = (k - first_k)/252.
+    # ⚠️ Ma da niem yet TRUOC khi cache bat dau co first_k = 0, va luc do cong thuc
+    # tren cho ra tuoi SAI (ma len san 2010 se thanh "1,5 tuoi" vao nam 2019).
+    # Danh dau chung bang -1 de coi la "gia / khong ro tuoi", khong bao gio lot vao
+    # nhom non tre. Chi ma len san sau START moi co tuoi that.
+    # TUOI NIEM YET lay tu NGAY NIEM YET THAT (fetch_listing_dates.py), khong suy tu
+    # du lieu gia: nguon KBS chi tra ve ~8 nam nen VNM/FPT/HPG deu co phien dau la
+    # 2018-08 du chung len san tu rat lau — suy tu gia se cho ket qua vo nghia.
+    # ⚠️ listing_date la ngay len SAN HIEN TAI, khong phai ngay IPO goc: ma chuyen san
+    # se tre hon thuc te (AAA hien 25/11/2016 vi chuyen HNX -> HOSE nam do).
+    ld = {}
+    f = CACHE / "_listing.json"
+    if f.exists():
+        raw = json.loads(f.read_text(encoding="utf-8"))
+        ld = {k: pd.Timestamp(pd.to_datetime(v, format="%d/%m/%Y", errors="coerce"))
+              for k, v in raw.items() if v}
+    a["list_day"] = np.array(
+        [ld[s].value / 86_400e9 if ld.get(s) is not None and pd.notna(ld.get(s)) else np.nan
+         for s in cols])
+    a["date_day"] = dates.astype("int64").to_numpy() / 86_400e9
+    a["n_known_age"] = int(np.sum(~np.isnan(a["list_day"])))
     return cols, a
 
 
+def _age(a, j, k):
+    """Tuoi niem yet (nam) tai phien k. 99 = chua lay duoc ngay niem yet cho ma nay
+    -> coi nhu co phieu gia, khong bao gio lot vao nhom non tre."""
+    d = a["list_day"][j]
+    return 99.0 if np.isnan(d) else (a["date_day"][k] - d) / 365.25
+
+
 def run(cols, a, dates, stop_pct, tp_pct=None, tp_frac=0.5, trail_ma50=True,
-        slots=SLOTS, t2=True, lock=True, hold_max=None):
+        slots=SLOTS, t2=True, lock=True, hold_max=None, lev=1.0, trail_ma="ma50",
+        min_age=None, max_age=None):
     """Chay mot cau hinh thoat lenh. Tra ve dict chi so + danh sach lenh.
 
     Thu tu kiem tra trong mot phien la XAU NHAT truoc (stop truoc chot loi) — khong
     biet dien bien trong phien nen phai gia dinh bat loi, tranh backtest dep gia.
+
+    lev       Don bay (margin). lev=2 nghia la mua toi 2 lan von. Tien vay TINH LAI
+              theo MARGIN_RATE — bo lai vay ra thi ket qua la ao.
+    trail_ma  Duong trung binh dung lam luat thoat: ma20 (chat) / ma50 / ma100 (rong).
+              Rong hon = de cho lenh thang chay xa hon, doi lai tra lai nhieu hon.
     """
-    C, O, H, L, MA50 = a["close"], a["open"], a["high"], a["low"], a["ma50"]
+    C, O, H, L = a["close"], a["open"], a["high"], a["low"]
+    MA = a[trail_ma] if trail_ma else None
     RNG, ENT, ON = a["rng"], a["entry"], a["on"]
     nd = len(dates)
     cash, pos, trades = float(CAP0), {}, []
     eq = np.empty(nd)
+    daily_rate = MARGIN_RATE / 252
 
     for k in range(nd):
         if k < 260:
             eq[k] = cash
             continue
+        if cash < 0:                       # lai vay margin, tinh theo ngay
+            cash += cash * daily_rate
         Ck = C[k]
 
         # ── 1. Thoat lenh ──
@@ -184,8 +242,8 @@ def run(cols, a, dates, stop_pct, tp_pct=None, tp_frac=0.5, trail_ma50=True,
                 q["stop"] = max(q["stop"], q["px"])       # phan con lai ve hoa von
                 if q["n"] <= 0:
                     px_out, why = tgt, "tp"
-            if px_out is None and trail_ma50 and not np.isnan(MA50[k, j]) and cl < MA50[k, j]:
-                px_out, why = cl, "ma50"
+            if px_out is None and trail_ma50 and MA is not None and not np.isnan(MA[k, j]) and cl < MA[k, j]:
+                px_out, why = cl, trail_ma
             if px_out is None and hold_max and k - q["k"] >= hold_max:
                 px_out, why = cl, "hold"
 
@@ -196,7 +254,8 @@ def run(cols, a, dates, stop_pct, tp_pct=None, tp_frac=0.5, trail_ma50=True,
                     ret = q["part"] * tp_frac + ret * (1 - tp_frac)
                 trades.append({"sym": cols[j], "in": str(dates[q["k"]].date()),
                                "out": str(dates[k].date()), "days": k - q["k"],
-                               "ret": round(ret - FEE * 100, 2), "why": why})
+                               "age": q["age"], "ret": round(ret - FEE * 100, 2),
+                               "why": why})
                 del pos[j]
 
         mv = sum(pos[x]["n"] * (Ck[x] if not np.isnan(Ck[x]) else pos[x]["px"]) for x in pos)
@@ -205,17 +264,26 @@ def run(cols, a, dates, stop_pct, tp_pct=None, tp_frac=0.5, trail_ma50=True,
         free = slots - len(pos)
         if free > 0 and ON[k]:
             cand = [j for j in np.nonzero(ENT[k])[0] if j not in pos]
+            if min_age is not None or max_age is not None:
+                lo = -np.inf if min_age is None else min_age
+                hi = np.inf if max_age is None else max_age
+                cand = [j for j in cand if lo <= _age(a, j, k) <= hi]
             cand.sort(key=lambda j: RNG[k, j])             # nen chat nhat truoc
             for j in cand[:free]:
                 px_in = Ck[j]
                 if np.isnan(px_in) or px_in <= 0:
                     continue
-                budget = min((cash + mv) / slots, cash)
+                equity = cash + mv
+                if equity <= 0:                       # chay het von, khong mua nua
+                    break
+                # Suc mua con lai = von x don bay - gia tri dang nam giu.
+                # Voi lev=1 thi rut gon dung ve `cash`, tuc khong duoc am tien.
+                budget = min(equity * lev / slots, equity * lev - mv)
                 n = int(budget / px_in)
                 if n <= 0:
                     continue
                 cash -= n * px_in * (1 + FEE / 2)
-                pos[j] = {"n": n, "px": px_in, "k": k,
+                pos[j] = {"n": n, "px": px_in, "k": k, "age": round(_age(a, j, k), 1),
                           "stop": px_in * (1 - stop_pct / 100), "tp": False, "part": None}
                 mv += n * px_in
 
@@ -268,7 +336,13 @@ def show(rows, title, note=""):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sweep", choices=["stop", "tp", "t2", "slots"], help="quet mot tham so")
+    ap.add_argument("--sweep", choices=["stop", "tp", "t2", "slots", "liq", "age", "exch", "lev"],
+                    help="quet mot tham so")
+    ap.add_argument("--exch", default=None,
+                    help="san can dung, vd HOSE hoac HOSE,HNX,UPCOM (mac dinh: tat ca dang co cache)")
+    ap.add_argument("--liq", type=float, default=LIQ_MIN, help="nguong GTGD TB20 (ty)")
+    ap.add_argument("--lev", type=float, default=1.0, help="don bay (2 = vay bang von)")
+    ap.add_argument("--trail", default="ma50", choices=["ma20", "ma50", "ma100"])
     ap.add_argument("--grid", action="store_true", help="quet stop x chot loi")
     ap.add_argument("--baseline", action="store_true", help="do ban dung lai voi ket qua goc")
     ap.add_argument("--stop", type=float, default=8.0)
@@ -281,18 +355,23 @@ def main():
     args = ap.parse_args()
 
     print("[i] Doc cache…")
-    p, idx = load_panels()
+    exch = [e.strip().upper() for e in args.exch.split(",")] if args.exch else None
+    p, idx = load_panels(exch)
     print(f"[i] {p['close'].shape[1]} ma · {p['close'].shape[0]} phien "
-          f"({p['close'].index[0].date()} → {p['close'].index[-1].date()})")
-    sig = build_signals(p)
+          f"({p['close'].index[0].date()} → {p['close'].index[-1].date()})"
+          + (f" · san: {', '.join(exch)}" if exch else " · tat ca san dang co cache"))
     on = regime_on(idx)
     dates = p["close"].index
-    cols, arr = to_numpy(p, sig, on)
     if on is None:
         print("[!] Khong co VNINDEX trong cache — chay khong co cong tac tong")
 
+    def prep(liq):
+        """Dung lai tin hieu voi mot nguong thanh khoan khac."""
+        return to_numpy(p, build_signals(p, liq=liq), on)
+
+    cols, arr = prep(args.liq)
     base = dict(slots=args.slots, t2=not args.no_t2, lock=not args.no_lock,
-                trail_ma50=not args.no_trail)
+                trail_ma50=not args.no_trail, lev=args.lev, trail_ma=args.trail)
     rows, out = [], {}
 
     if args.baseline:
@@ -339,6 +418,57 @@ def main():
                                  **{**base, **kw})))
         show(rows, "── T+2,5 VA BIEN DO SAN TON BAO NHIEU TIEN ──",
              f"stop {args.stop:g}%. Chenh lech giua dong dau va dong cuoi la cai gia cua cau truc thi truong VN.")
+
+    elif args.sweep == "liq":
+        # Ha nguong = mo cua cho von hoa nho, noi cac cu chay lon thuong nam.
+        # Doi lai: so lenh phinh ra ma chat luong co the loang, va truot gia that
+        # (backtest khong do duoc truot gia) se an vao phan lai them.
+        for q in (1, 2, 3, 5, 10, 20):
+            c2, a2 = prep(q)
+            rows.append((f"GTGD >= {q} ty", run(c2, a2, dates, stop_pct=args.stop,
+                                                tp_pct=args.tp, tp_frac=args.tp_frac, **base)))
+        show(rows, "── QUET NGUONG THANH KHOAN ──",
+             "⚠️ Backtest KHONG mo phong truot gia. Ma 1-3 ty thuc te se te hon bang nay.")
+
+    elif args.sweep == "age":
+        # Minervini Ch.6: cong ty non tre la "thanh phan quan trong nhat".
+        # Tuoi chi biet duoc voi ma len san SAU khi cache bat dau (2018).
+        for nm, kw in [("tat ca", {}),
+                       ("chi <= 2 nam tuoi", dict(max_age=2)),
+                       ("chi <= 3 nam tuoi", dict(max_age=3)),
+                       ("chi <= 5 nam tuoi", dict(max_age=5)),
+                       ("chi ma cu (>= 8 nam)", dict(min_age=8))]:
+            rows.append((nm, run(cols, arr, dates, stop_pct=args.stop, tp_pct=args.tp,
+                                 tp_frac=args.tp_frac, **{**base, **kw})))
+        show(rows, "── TUOI NIEM YET ──",
+             "Ma len san truoc 2018 khong biet tuoi that -> luon roi vao nhom 'cu'.")
+        m = run(cols, arr, dates, stop_pct=args.stop, **base)
+        yg = [t for t in m["_trades"] if t["age"] < 90]
+        if yg:
+            print(f"\n  Trong {len(m['_trades'])} lenh co {len(yg)} lenh o ma len san sau 2018 "
+                  f"(loi TB {np.mean([t['ret'] for t in yg]):+.1f}% so voi "
+                  f"{np.mean([t['ret'] for t in m['_trades'] if t['age'] >= 90]):+.1f}% cua ma cu)")
+
+    elif args.sweep == "exch":
+        for e in (["HOSE"], ["HOSE", "HNX"], ["HOSE", "HNX", "UPCOM"], ["HNX"], ["UPCOM"]):
+            try:
+                p2, i2 = load_panels(e)
+            except SystemExit:
+                print(f"  (bo qua {'+'.join(e)} — chua co ma nao trong cache)")
+                continue
+            if p2["close"].shape[1] < 5:
+                continue
+            c2, a2 = to_numpy(p2, build_signals(p2, liq=args.liq), regime_on(i2))
+            rows.append(("+".join(e), run(c2, a2, p2["close"].index, stop_pct=args.stop,
+                                          tp_pct=args.tp, tp_frac=args.tp_frac, **base)))
+        show(rows, "── MO RONG SAN ──", f"nguong thanh khoan {args.liq:g} ty")
+
+    elif args.sweep == "lev":
+        for L in (1, 1.5, 2, 3):
+            rows.append((f"don bay {L:g}x", run(cols, arr, dates, stop_pct=args.stop,
+                                                tp_pct=args.tp, tp_frac=args.tp_frac,
+                                                **{**base, "lev": L})))
+        show(rows, "── DON BAY ──", f"da tru lai vay margin {MARGIN_RATE:.0%}/nam")
 
     elif args.sweep == "slots":
         for n in (4, 6, 8, 12):

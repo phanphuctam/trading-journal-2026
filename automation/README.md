@@ -10,6 +10,7 @@
 | `config.json` | Token Telegram + cài đặt (KHÔNG commit lên git) |
 | `scan_vn_vcp.py` | Scan **VCP** cổ phiếu Việt (HOSE/HNX) + công tắc tổng VN-Index → `scans/latest_vn.json` |
 | `backtest_vn_params.py` | Backtest **tham số thoát lệnh** cho chiến lược VCP Việt trên cache giá |
+| `fetch_listing_dates.py` | Lấy **ngày niêm yết thật** → `.vncache/_listing.json` (cần cho bộ lọc tuổi) |
 | `rebuild_index.py` | Nhúng lại `app-src.html` vào `index.html` sau khi sửa giao diện journal |
 | `scans/` | Kết quả scan hằng ngày (CSV + JSON, tự tạo) |
 
@@ -80,7 +81,7 @@ Cấu hình khớp nhất với 5 con số đã công bố là *stop 10% · 8 v�
 14 lệnh/năm · 10,4% · 38,6% · 25,9% · −6,9%). Đọc **chênh lệch giữa các cấu hình**,
 đừng đọc số tuyệt đối.
 
-### Kết quả (HOSE 2018-2026, 702 mã, 8 vị thế, thoát khi thủng MA50)
+### Kết quả (HOSE+HNX 2018-2026, 702 mã, 8 vị thế, thoát khi thủng MA50)
 
 | Câu hỏi từ báo cáo "SEPA Việt hoá" | Kết luận từ dữ liệu |
 |---|---|
@@ -92,6 +93,58 @@ Cấu hình khớp nhất với 5 con số đã công bố là *stop 10% · 8 v�
 Mô phỏng đã bật sẵn ba ràng buộc thật của thị trường VN: **T+2** (mua T+0, sớm nhất T+2
 mới bán được), **phiên giảm sàn khoá thanh khoản** (không thoát được, đợi phiên sau), và
 **chạm stop thì khớp ở `min(giá mở cửa, stop)`** — không giả định khớp đẹp.
+
+### Mở rộng vũ trụ: HNX có, UPCOM không
+
+8 vị thế · stop 6% · GTGD ≥ 3 tỷ:
+
+| Vũ trụ | CAGR | MaxDD | Lệnh/năm | Lãi TB | Sharpe |
+|---|---|---|---|---|---|
+| HOSE riêng | 8,04% | −14,6% | 15,9 | +24,9% | 0,80 |
+| **HOSE+HNX** (bot đang chạy) | **10,08%** | −18,4% | 16,3 | +31,6% | **0,87** |
+| HOSE+HNX+UPCOM | 7,89% | −20,6% | 17,5 | +27,0% | 0,71 |
+| HNX riêng | 7,33% | −19,7% | 3,5 | **+60,7%** | 0,78 |
+| UPCOM riêng | 0,77% | −12,7% | 3,6 | +20,8% | 0,18 |
+
+Thêm UPCOM **kéo CAGR xuống** 10,08% → 7,89%: slot có hạn, mã UPCOM nén chặt (vì thanh
+khoản mỏng nên giá ít nhúc nhích) chiếm chỗ của setup tốt hơn. Giữ `--hnx`, đừng `--upcom`.
+
+Hạ ngưỡng thanh khoản **không giúp**. HOSE+HNX: 3 tỷ → 10,08%, 10 tỷ → 10,09%, 30 tỷ →
+9,88%. CAGR phẳng nhưng tỉ lệ thắng tăng đều 32,1% → 43,7% khi nâng ngưỡng, và backtest
+chưa tính trượt giá. Giữ 10 tỷ.
+
+### TUỔI NIÊM YẾT — phát hiện mạnh nhất
+
+Cần chạy `fetch_listing_dates.py` trước (tuổi **không** suy được từ dữ liệu giá: nguồn KBS
+chỉ trả ~8 năm nên VNM/FPT/HPG đều hiện "phiên đầu 2018-08"). HOSE+HNX · 10 tỷ · 8 vị thế:
+
+| Lọc tuổi | CAGR | MaxDD | Lệnh/năm | Thắng | Kỳ vọng | Sharpe |
+|---|---|---|---|---|---|---|
+| tất cả | 10,09% | −19,1% | 13,9 | 37,0% | 6,54 | 0,88 |
+| 0-2 năm | −0,52% | −7,6% | 2,1 | **16,7%** | −1,94 | −0,23 |
+| **2-8 năm** | 8,44% | **−8,3%** | 5,5 | **57,4%** | **12,95** | **1,13** |
+| > 8 năm | 4,97% | −27,2% | 9,8 | 32,1% | 4,61 | 0,52 |
+
+Đây là tiêu chí "công ty non trẻ" của Minervini (Ch.6) được xác nhận trên dữ liệu VN, kèm
+một tinh chỉnh quan trọng: **dưới 2 năm thì tệ hơn tất cả** (thắng 16,7%, CAGR âm) — chưa
+đủ lịch sử giá để tạo nền tử tế.
+
+Đã kiểm định độ bền: kết quả **ổn định qua mọi mức stop** (5/6/8/10% đều cho Sharpe
+1,11-1,15) và **vẫn đúng khi bỏ HNX ra** (HOSE riêng: thắng 58,7%, MaxDD −8,3%, Sharpe
+1,16). Không phải hiện tượng vắt tham số.
+
+Vì sụt giảm chỉ −8,3%, bộ lọc tuổi chịu được đòn bẩy tốt hơn hẳn:
+
+| Cấu hình | CAGR | MaxDD | Sharpe |
+|---|---|---|---|
+| 3 vị thế · 3x · **không** lọc tuổi | 28,64% | −46,1% | 0,82 |
+| **6 vị thế · 3x · lọc 2-8 năm** | **29,33%** | **−24,2%** | **1,27** |
+
+Cùng lợi nhuận, **một nửa sụt giảm**.
+
+⚠️ Cảnh báo mẫu: chỉ 47 lệnh trong 8,5 năm (5,5 lệnh/năm), riêng 2021 chiếm 15 lệnh. Tỉ lệ
+thắng 57,4% có sai số khoảng ±14 điểm. Và `listing_date` là ngày lên **sàn hiện tại**,
+không phải ngày IPO gốc — mã chuyển sàn sẽ hiện trẻ hơn thực tế.
 
 ## MCP TradingView trong Claude Code
 
