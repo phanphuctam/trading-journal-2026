@@ -8,6 +8,8 @@
 | `scan_trend_template.py` | Scan **Trend Template Minervini + RS Rating** toàn thị trường Mỹ, gửi top qua Telegram |
 | `watchlist.json` | Danh sách mã theo dõi (xuất từ tab **Watch** trong journal) |
 | `config.json` | Token Telegram + cài đặt (KHÔNG commit lên git) |
+| `scan_vn_vcp.py` | Scan **VCP** cổ phiếu Việt (HOSE/HNX) + công tắc tổng VN-Index → `scans/latest_vn.json` |
+| `backtest_vn_params.py` | Backtest **tham số thoát lệnh** cho chiến lược VCP Việt trên cache giá |
 | `rebuild_index.py` | Nhúng lại `app-src.html` vào `index.html` sau khi sửa giao diện journal |
 | `scans/` | Kết quả scan hằng ngày (CSV + JSON, tự tạo) |
 
@@ -58,6 +60,38 @@ python "automation\scan_trend_template.py" --no-telegram        # scan, chi in m
 python "automation\scan_trend_template.py" --rs 80 --top 30     # nguong RS 80, top 30
 python "automation\alert_watcher.py" --force                    # check gia ngay ca khi market dong
 ```
+
+## Backtest tham số thoát lệnh (cổ phiếu Việt)
+
+`backtest_vn_params.py` chạy trên cache giá `.vncache` (không cần mạng, ~10 giây/cấu hình).
+**Cửa vào lệnh không đụng vào** — chỉ quét phần sau khi đã vào lệnh.
+
+```powershell
+python "automation\backtest_vn_params.py" --baseline          # do ban dung lai voi ket qua goc
+python "automation\backtest_vn_params.py" --sweep stop --slots 8
+python "automation\backtest_vn_params.py" --sweep tp --slots 8 --stop 6
+python "automation\backtest_vn_params.py" --sweep t2 --slots 8 --stop 5
+python "automation\backtest_vn_params.py" --grid --slots 8
+```
+
+⚠️ Đây là **bản dựng lại**, không phải script backtest gốc (script gốc không còn trong repo).
+Cấu hình khớp nhất với 5 con số đã công bố là *stop 10% · 8 vị thế · thoát khi thủng MA50*
+(13,5 lệnh/năm · CAGR 9,4% · thắng 40,5% · lãi TB 25,1% · lỗ TB −6,1%, so với gốc
+14 lệnh/năm · 10,4% · 38,6% · 25,9% · −6,9%). Đọc **chênh lệch giữa các cấu hình**,
+đừng đọc số tuyệt đối.
+
+### Kết quả (HOSE 2018-2026, 702 mã, 8 vị thế, thoát khi thủng MA50)
+
+| Câu hỏi từ báo cáo "SEPA Việt hoá" | Kết luận từ dữ liệu |
+|---|---|
+| Siết stop từ 8-10% xuống **4-6%**? | **Đúng một nửa.** Stop 6% tốt nhất: CAGR 10,1% / MaxDD −19,1%, hơn stop 8% (9,4% / −20,3%) và stop 10% (9,4% / −20,4%). Nhưng **4% thì hỏng** (CAGR 6,0%) — cắt đúng lúc nền còn rung. → đã đổi mặc định trong journal thành −6% |
+| Chốt lời cơ học **1/2 vị thế ở +20-25%**? | **Không phải bữa trưa miễn phí.** Chốt 1/2 ở +20% kéo CAGR 10,1% → 7,7%, đổi lại MaxDD −19,1% → −13,3%. Đây là **đánh đổi lợi nhuận lấy êm ái**, không phải cải thiện. Nếu vẫn muốn: chốt ở **+30%** giữ được nhiều nhất (CAGR 9,1%, MaxDD −14,2%, Sharpe 0,99 — cao nhất bảng) |
+| **T+2,5 phá huỷ chiến lược breakout**? | **Sai.** Chỉ **2/121 lệnh** bị chặn bởi T+2, và cả hai vẫn thoát ở đúng mức stop chỉ chậm 1-2 phiên → CAGR, MaxDD, tỉ lệ thắng **giống hệt** tới 2 chữ số thập phân. Cổ phiếu vừa phá vỡ nền VCP kèm khối lượng, trong lúc thị trường ON, rất hiếm khi sập ngay phiên sau. Lập luận trung tâm của báo cáo — bỏ breakout, chuyển sang mua sớm pocket pivot để "tạo đệm T+2,5" — **không có cơ sở trong dữ liệu này** |
+| Chỉ giữ **4-8 mã** cùng lúc? | Là **núm vặn khẩu vị rủi ro, không phải lợi thế**. 4 vị thế: CAGR 13,2% nhưng MaxDD −25,5%. 12 vị thế: 8,7% và −14,2%. Sharpe gần như không đổi (0,88-0,92) ở mọi mức |
+
+Mô phỏng đã bật sẵn ba ràng buộc thật của thị trường VN: **T+2** (mua T+0, sớm nhất T+2
+mới bán được), **phiên giảm sàn khoá thanh khoản** (không thoát được, đợi phiên sau), và
+**chạm stop thì khớp ở `min(giá mở cửa, stop)`** — không giả định khớp đẹp.
 
 ## MCP TradingView trong Claude Code
 

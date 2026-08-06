@@ -2000,13 +2000,17 @@ class Component extends DCLogic {
     this._scanMark(sym, { s: String(this._scanData?.scanned_at || '') });
   }
 
-  // Mã VN: pivot đã tính sẵn trong scan → điền thẳng làm điểm mua, stop −10% theo backtest
+  // Mã VN: pivot đã tính sẵn trong scan → điền thẳng làm điểm mua, stop −6%.
+  // −6% thay cho −10% trước đây, theo backtest_vn_params.py (HOSE 2018-2026, 8 vị thế,
+  // thoát khi thủng MA50): stop 6% cho CAGR 10,1% / sụt giảm tối đa −19,1%, so với
+  // stop 10% chỉ 9,4% / −20,4%. Siết tiếp xuống 4% thì hỏng hẳn (CAGR 6,0%) — cắt
+  // đúng lúc nền còn rung. Chạy lại script đó nếu muốn kiểm chứng con số này.
   pickScanVN = (sym, pivot) => {
     const si = document.getElementById('wlSym'), ni = document.getElementById('wlNote'),
           pi = document.getElementById('wlPivot'), st = document.getElementById('wlStop');
     if (si) { si.value = sym; si.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     if (pi && pivot > 0) pi.value = pivot;
-    if (st && pivot > 0 && !st.value) st.value = Math.round(pivot * 0.90);
+    if (st && pivot > 0 && !st.value) st.value = Math.round(pivot * 0.94);
     if (ni && !ni.value) ni.value = 'VCP · scan ' + this._today();
     if (pi) pi.focus();
     this._scanMark(sym, { s: String(this._scanData?.scanned_at || '') });
@@ -2051,6 +2055,13 @@ class Component extends DCLogic {
   //     → nâng lên thành tiêu chí bắt buộc thay vì ghi chú phụ.
   // Ngân hàng & chứng khoán chiếm phần lớn thanh khoản HOSE nhưng không có "doanh thu"
   // hay "biên lợi nhuận gộp" theo nghĩa thông thường → có bước riêng.
+  // Bổ sung 2026-08-06 (đối chiếu báo cáo SEPA-Việt-hoá):
+  //  5. Bảng này TRƯỚC ĐÂY THIẾU HẲN chữ N (chất xúc tác) — lỗi nặng, vì VN chạy theo
+  //     câu chuyện mạnh hơn Mỹ. Thêm bước 8, đánh dấu bắt buộc.
+  //  6. Room ngoại (FOL): mã kín room thì tiêu chí "khối ngoại mua ròng" ở bước 6 MẤT
+  //     HIỆU LỰC — quỹ ngoại phải mua thoả thuận ngoài sàn, không hiện lên khớp lệnh.
+  //     Không ghi rõ thì bảng sẽ chấm trượt đúng những mã tốt nhất sàn.
+  //  7. Giải chấp chéo: cổ phiếu tốt bị bán để bù mã xấu cùng tài khoản → ghi ở bước 3.
   _FA_VN = [
     { k: 'vndisc', g: '0 · Chất lượng công bố thông tin (đặc thù VN)', must: 1, s: 'CafeF · Tin doanh nghiệp',
       src: '⚠️ Không có trong Minervini/O\'Neil — bắt buộc bổ sung cho thị trường VN',
@@ -2085,7 +2096,7 @@ class Component extends DCLogic {
       u: t => this._CF(t, 'bsheet', 'bang-can-doi-ke-toan'),
       w: '<b>Ngân hàng</b> (MSB, STB, SSB, LPB…): NIM, tỷ lệ nợ xấu <b>NPL</b>, <b>tỷ lệ bao phủ nợ xấu LLR</b>, CIR, tăng trưởng tín dụng<br><b>Chứng khoán</b> (HCM, ORS, PSI…): dư nợ cho vay margin, lãi/lỗ tự doanh, thị phần môi giới<br><b>Bất động sản</b>: hàng tồn kho, người mua trả tiền trước, dòng tiền kinh doanh',
       p: '<b>NH:</b> NPL &lt; 2% và không tăng · LLR &gt; 80% · NIM ổn định hoặc mở rộng<br><b>CK:</b> lợi nhuận không phụ thuộc hoàn toàn vào tự doanh (biến động theo chỉ số)<br><b>BĐS:</b> "người mua trả tiền trước" tăng = bán được hàng thật',
-      f: '<b>NH:</b> NPL tăng nhanh mà LLR giảm = đang giấu nợ xấu → loại<br><b>CK:</b> lãi chủ yếu từ tự doanh nghĩa là bạn đang mua một quỹ đầu tư có đòn bẩy, không phải doanh nghiệp — và nó sập cùng lúc với chính chỉ số bạn đang giao dịch<br><b>BĐS:</b> tồn kho phình mà tiền trả trước đứng yên = hàng ế<br><span style="opacity:.7">Nếu là doanh nghiệp sản xuất/bán lẻ thông thường thì bấm ✓ bỏ qua bước này</span>' },
+      f: '<b>NH:</b> NPL tăng nhanh mà LLR giảm = đang giấu nợ xấu → loại<br><b>CK:</b> lãi chủ yếu từ tự doanh nghĩa là bạn đang mua một quỹ đầu tư có đòn bẩy, không phải doanh nghiệp — và nó sập cùng lúc với chính chỉ số bạn đang giao dịch<br><b>BĐS:</b> tồn kho phình mà tiền trả trước đứng yên = hàng ế<br><br><b>⚠️ Giải chấp chéo (cross-margin) — rủi ro hệ thống của cả sàn:</b> khi thị trường sập, CTCK bán <b>cổ phiếu tốt</b> trong tài khoản để bù thâm hụt cho <b>cổ phiếu xấu</b> cùng tài khoản đó. Nghĩa là một mã đạt sạch mọi tiêu chí trong bảng này <b>vẫn</b> bị bán tháo vì lý do không liên quan gì đến nó. Đây chính là lý do công tắc tổng VN-Index quan trọng hơn việc chọn mã: chọn đúng thời điểm ăn đứt chọn đúng cổ phiếu<br><span style="opacity:.7">Nếu là doanh nghiệp sản xuất/bán lẻ thông thường thì bấm ✓ bỏ qua phần đặc thù ngành, nhưng đọc đoạn giải chấp chéo</span>' },
 
     { k: 'vnbs', g: '4 · Chất lượng lợi nhuận', must: 1, s: 'CafeF · Bảng cân đối kế toán (quý)',
       src: 'Minervini Ch.8 tr.173–195',
@@ -2111,9 +2122,9 @@ class Component extends DCLogic {
     { k: 'vnfo', g: '6 · Bảo trợ của dòng tiền lớn', s: 'CafeF · Giao dịch khối ngoại & tự doanh',
       src: "O'Neil Ch.6 tr.79–87 — VN không có 13F nên phải thay bằng nguồn khác",
       u: () => 'https://cafef.vn/du-lieu/thong-ke-giao-dich-khoi-ngoai.chn',
-      w: '<b>Khối ngoại mua/bán ròng</b> mã này trong 1-3 tháng · <b>tự doanh CTCK</b> · danh mục các quỹ lớn (VEIL, Pyn Elite, VinaCapital, Dragon Capital) công bố hằng tháng',
-      p: 'Khối ngoại <b>mua ròng đều đặn</b> nhiều tuần liên tiếp · có mặt trong danh mục ít nhất một quỹ lớn',
-      f: '⚠️ <b>Đây là hàng thay thế, không tương đương 13F.</b> VN không bắt quỹ công bố danh mục theo quý, nên bạn chỉ thấy được phần nổi.<br>Khối ngoại bán ròng kéo dài là cảnh báo mạnh ở VN — họ chiếm tỷ trọng nhỏ nhưng dẫn dắt tâm lý.<br>O\'Neil cảnh báo mặt ngược lại: <b>quá nhiều tổ chức sở hữu</b> thì cơ hội tốt nhất đã qua' },
+      w: '<b>Khối ngoại mua/bán ròng</b> mã này trong 1-3 tháng · <b>tự doanh CTCK</b> · danh mục các quỹ lớn (VEIL, Pyn Elite, VinaCapital, Dragon Capital) công bố hằng tháng<br>⚠️ <b>Xem TỶ LỆ SỞ HỮU NƯỚC NGOÀI CÒN LẠI trước tiên</b> — nếu mã này <b>kín room</b> thì đọc tiếp phần dưới',
+      p: 'Khối ngoại <b>mua ròng đều đặn</b> nhiều tuần liên tiếp · có mặt trong danh mục ít nhất một quỹ lớn<br>Nếu <b>kín room</b>: bỏ qua tiêu chí này, đừng tính là điểm trừ',
+      f: '⚠️ <b>Đây là hàng thay thế, không tương đương 13F.</b> VN không bắt quỹ công bố danh mục theo quý, nên bạn chỉ thấy được phần nổi.<br>Khối ngoại bán ròng kéo dài là cảnh báo mạnh ở VN — họ chiếm tỷ trọng nhỏ nhưng dẫn dắt tâm lý.<br>O\'Neil cảnh báo mặt ngược lại: <b>quá nhiều tổ chức sở hữu</b> thì cơ hội tốt nhất đã qua<br><br><b>🔑 Bẫy room ngoại (FOL) — chỉ có ở VN:</b> mã kín room (FPT, MWG, PNJ… thường xuyên) thì quỹ ngoại muốn mua <b>bắt buộc phải thoả thuận ngoài sàn với giá premium</b>. Lực mua đó <b>không hiện lên khớp lệnh</b>. Hệ quả: mã cơ bản tốt nhất sàn lại đi ngang uể oải trên đồ thị, và bảng này chấm nó "khối ngoại không mua" — <b>sai hoàn toàn</b>. Kín room = tiêu chí này mất hiệu lực, không phải mã xấu' },
 
     { k: 'vnins', s: 'Vietstock · Giao dịch cổ đông nội bộ',
       src: '⚠️ Không có trong sách — dữ liệu này ở VN đặc biệt hữu ích',
@@ -2128,6 +2139,13 @@ class Component extends DCLogic {
       w: 'Nhóm ngành của mã này đang mạnh hay yếu · có mã nào khác cùng ngành cũng đang tạo nền / phá vỡ không',
       p: 'Nhóm ngành đang mạnh <b>VÀ có ít nhất một mã cùng ngành xác nhận</b><br><span style="opacity:.75">Nhóm ngành quyết định ~49% biến động giá một cổ phiếu. Hơn 60% siêu cổ phiếu tăng theo nhóm.</span>',
       f: '⚠️ <b>Ở VN cả sàn chạy theo một nhịp mạnh hơn Mỹ nhiều</b>, và chỉ có ~5 nhóm ngành thật sự tách biệt: ngân hàng, bất động sản, chứng khoán, thép, bán lẻ.<br>Hệ quả: tiêu chí "dẫn dắt ngành" ở VN yếu hơn nhiều so với trong sách — dùng để xác nhận, đừng dùng để chọn' },
+
+    { k: 'vncat', g: '8 · Chất xúc tác (chữ N của CAN SLIM)', must: 1, s: 'CafeF · Tin doanh nghiệp',
+      src: "O'Neil Ch.3 (New) · Minervini Ch.7 — bảng VN trước đây THIẾU hẳn bước này",
+      u: t => `https://cafef.vn/tim-kiem.chn?keywords=${t}`,
+      w: 'Trả lời đúng một câu: <b>vì sao là BÂY GIỜ?</b> Tìm sự kiện mới trong 6-12 tháng: <b>sản phẩm/nhà máy/công suất mới</b>, <b>đổi ban lãnh đạo</b>, <b>chu kỳ ngành đảo chiều</b> (giá thép, giá heo, cước vận tải, lãi suất), <b>chính sách vĩ mô</b> (đầu tư công, nâng hạng thị trường, sửa luật đất đai), <b>M&A / thoái vốn nhà nước</b>',
+      p: 'Chỉ ra được <b>một sự kiện cụ thể, gọi được tên</b>, giải thích vì sao lợi nhuận tăng tốc từ đây<br><span style="opacity:.75">O\'Neil: 95% siêu cổ phiếu đều có một "cái mới" tại thời điểm bắt đầu chạy. Không có chất xúc tác thì nền giá đẹp cũng chỉ là đồ thị đẹp.</span>',
+      f: '<b>Không gọi tên được chất xúc tác = chưa hiểu vì sao mình mua.</b> Lúc giá giảm 5% bạn sẽ không biết nên cắt hay giữ.<br>⚠️ <b>Ở VN bước này quan trọng hơn ở Mỹ, không phải kém hơn.</b> Nghiên cứu ABSA + XGBoost trên rổ VN30 (2019-2024): kết hợp đọc tin tức với tín hiệu kỹ thuật cho lợi nhuận <b>16,7%</b> so với <b>7,1%</b> khi chỉ dùng kỹ thuật. VN là thị trường chạy theo câu chuyện mạnh hơn Mỹ nhiều.<br>Nhưng phân biệt cho kỹ: <b>tin đồn "sắp có tin" không phải chất xúc tác</b> — nó là bẫy. Chất xúc tác phải là sự kiện <b>đã xảy ra hoặc đã công bố chính thức</b> và đo được vào doanh thu' },
 
     { k: 'vnbr', s: 'Simplize · Báo cáo phân tích CTCK',
       src: '⚠️ Thay cho Zacks Estimate Revisions — nguồn YẾU HƠN HẲN',
@@ -2378,15 +2396,45 @@ class Component extends DCLogic {
     const breadth = r.breadth50 == null ? '' :
       `<div style="font-size:9.5px;color:var(--text3);margin-top:3px">Độ rộng: <b style="color:var(--text2)">${this._fmt(r.breadth50, 0)}%</b> số mã trên MA50 · <b style="color:var(--text2)">${this._fmt(r.breadth200, 0)}%</b> trên MA200 <span title="Chỉ để tham khảo — độ rộng không tham gia quyết định, tránh thêm biến số chưa kiểm định">ⓘ</span></div>`;
     const tail = on
-      ? 'Vẫn chỉ vào lệnh ở nhóm BREAKOUT, đúng pivot, stop 5-8%.'
+      ? 'Vẫn chỉ vào lệnh ở nhóm BREAKOUT, đúng pivot, stop −6% (backtest: tốt hơn cả −8% lẫn −10%).'
       : 'Giữ tiền mặt. Danh sách dưới đây chỉ để theo dõi nền giá — không phải tín hiệu mua.';
     return `<div style="background:${bg};border:1px solid ${col};border-radius:9px;padding:8px 11px;margin-bottom:8px;line-height:1.5"
         title="Quy tắc: VN-Index &gt; MA50 VÀ MA50 &gt; MA200. Không đạt cả hai thì đứng ngoài.">
       <div style="font-size:11px;font-weight:700;color:${col}">${head}</div>
       <div style="font-size:10px;color:var(--text2);margin-top:2px">${esc(r.reason || '')}</div>
       ${breadth}
+      ${this._regimeEarly(r, esc)}
       <div style="font-size:9.5px;color:var(--text3);margin-top:4px">${tail}</div>
     </div>`;
+  }
+
+  // Trần vị thế viết gọn: 227tr / 2,3 tỷ — số VND đầy đủ dài quá cho một dòng mobile
+  _posCap(v) {
+    return v >= 1e9 ? this._fmt(v / 1e9, 1) + ' tỷ' : this._fmt(v / 1e6, 0) + 'tr';
+  }
+
+  // ── Cảnh báo SỚM của O'Neil: ngày phân phối và ngày bùng nổ theo đà (FTD) ──
+  // Công tắc tổng MA50/MA200 là chỉ báo TRỄ — nó bật đỏ sau khi chỉ số đã mất 8-10%,
+  // và bật xanh lại rất lâu sau đáy. Hai chỉ báo dưới đây thấy trước điều đó:
+  //   · Ngày phân phối = chỉ số giảm ≥0,2% mà khối lượng CAO HƠN phiên trước, tức tổ
+  //     chức xả hàng trong lúc đồ thị còn đẹp. Từ 5 ngày trong 25 phiên là nguy hiểm.
+  //   · FTD = phiên thứ 4 trở đi của nhịp hồi, tăng ≥1,5% kèm khối lượng — dòng tiền
+  //     lớn quay lại.
+  // CẢ HAI CHỈ LÀ THÔNG TIN, không lật được công tắc tổng: chúng chưa qua backtest
+  // HOSE. Đưa vào để mắt thấy, không để tay bấm.
+  _regimeEarly(r, esc) {
+    if (r.dist_days == null && !r.ftd) return '';
+    const bits = [];
+    if (r.dist_days != null) {
+      const warn = r.dist_warn;
+      bits.push(`<span title="Ngày chỉ số giảm ≥0,2% mà khối lượng cao hơn phiên trước = tổ chức xả hàng. O'Neil: từ ${r.dist_danger || 5} ngày trong ${r.dist_lookback || 25} phiên là dấu hiệu thị trường sắp quay đầu.${(r.dist_list || []).length ? '\n\nGần nhất: ' + r.dist_list.map(x => `${x.date} (${x.chg}%)`).join(', ') : ''}">Ngày phân phối: <b style="color:${warn ? 'var(--red)' : 'var(--text2)'}">${r.dist_days}</b>/${r.dist_lookback || 25} phiên${warn ? ' ⚠️' : ''}</span>`);
+    }
+    if (r.ftd) {
+      bits.push(`<span title="Ngày bùng nổ theo đà: phiên thứ ${r.ftd.day} của nhịp nỗ lực hồi phục, tăng ${r.ftd.chg}% kèm khối lượng cao hơn phiên trước — dấu hiệu dòng tiền tổ chức quay lại.&#10;&#10;Chưa được backtest trên HOSE nên KHÔNG dùng làm tín hiệu vào lệnh, chỉ để biết nhịp hồi đang có xác nhận.">FTD: <b style="color:var(--text2)">${esc(r.ftd.date)}</b> (+${r.ftd.chg}%, ${r.ftd.ago} phiên trước)</span>`);
+    } else {
+      bits.push(`<span title="Chưa có phiên nào thoả điều kiện FTD trong 60 phiên gần nhất.">FTD: <b style="color:var(--text3)">chưa có</b></span>`);
+    }
+    return `<div style="font-size:9.5px;color:var(--text3);margin-top:3px">${bits.join(' · ')}</div>`;
   }
 
   // ── Bảng scan VN: nhóm theo mẫu hình VCP (không dùng RS — backtest HOSE cho alpha ≈ 0) ──
@@ -2404,6 +2452,8 @@ class Component extends DCLogic {
        gateOn ? 'var(--green)' : 'var(--text3)',
        gateOn ? 'Tín hiệu vào lệnh đã qua kiểm định: backtest HOSE 2018-2026 cho CAGR +10,4%, sụt giảm tối đa −15,9%, thắng 38,6% với tỷ lệ lãi/lỗ 3,75:1.'
               : 'Breakout khi chỉ số dưới MA50 có kỳ vọng âm — cả sàn chạy theo một nhịp. Ghi nhận để theo dõi, không vào lệnh.'],
+      ['BO_FAR', `⛔ VƯỢT PIVOT NHƯNG ĐÃ XA > ${this._fmt(d.chase || 5, 0)}% — mua đuổi`, 'var(--red)',
+       `Đủ mọi điều kiện breakout nhưng giá đã đi quá ${this._fmt(d.chase || 5, 0)}% trên điểm mua. Minervini cấm mua ở đây: stop buộc phải kéo rộng ra, tỷ lệ lãi/lỗ hỏng ngay từ lúc vào. Ở VN chuyện này rất hay xảy ra vì biên độ trần ±7% đẩy giá qua pivot chỉ trong một phiên. Bỏ qua, chờ nền sau.`],
       ['VCP3', '🔵 VCP 3 NÉN — đang nén, chờ phá vỡ', 'var(--accent)',
        'Ba lần nén biên độ nhỏ dần + khối lượng cạn. Đây là danh sách theo dõi chính: canh phiên vượt pivot.'],
       ['VCP2', '🟡 VCP 2 NÉN — chưa đạt kiểm định, chỉ tham khảo', 'var(--amber)',
@@ -2434,7 +2484,9 @@ class Component extends DCLogic {
         const tpCol = tp == null ? 'var(--text3)' : (tp <= 0 ? 'var(--green)' : (tp <= 8 ? 'var(--amber)' : 'var(--text3)'));
         const flags = [
           r.lead ? ['💪', `Khỏe hơn thị trường: VN-Index đang dưới MA50 mà mã này vẫn bám sát đỉnh 52T (cách ${this._fmt(r.off_high, 0)}%) — ứng viên dẫn dắt chu kỳ tăng sau. Minervini: leader lộ diện ngay trong pha điều chỉnh`] : null,
-          r.lowliq ? ['💧', `GTGD ${this._fmt(r.adtv, 1)} tỷ — đủ để quan sát, CHƯA đủ chuẩn vào lệnh 10 tỷ. Sổ lệnh mỏng, trượt giá lớn`] : null,
+          r.ceil ? ['🔒', `Hôm nay ĐÓNG CỬA GIÁ TRẦN — trắng bên bán, gần như không khớp được lệnh. Phiên sau thường gap-up và điểm vào đã lệch xa pivot: đó là mua đuổi, không phải breakout`] : null,
+          r.manip ? ['⚑', `${r.ceil_base} phiên trần trong nền 60 phiên. Nền VCP đẹp kèm nhiều phiên trần là vân tay quen thuộc của đội lái (giao dịch tự chéo qua tài khoản vệ tinh để vẽ đồ thị). Soi kỹ trước khi tin`] : null,
+          r.lowliq ? ['💧', `GTGD ${this._fmt(r.adtv, 1)} tỷ${r.vol20 != null ? ` · KL TB20 ${this._fmt(r.vol20 / 1000, 0)}k cp` : ''} — đủ để quan sát, CHƯA đủ chuẩn vào lệnh (10 tỷ và 100k cp). Sổ lệnh mỏng, trượt giá lớn`] : null,
           r.near ? ['🔔', `Cách điểm mua ${this._fmt(tp, 1)}% — sắp tới vùng vào lệnh`] : null,
           r.extended ? ['⚠️', `Đã căng: trên MA50 ${this._fmt(r.ext50, 0)}%, trên MA200 ${this._fmt(r.ext200, 0)}% — dễ mua đuổi`] : null,
           r.off_ath <= -40 ? ['🕳', `Cách đỉnh mọi thời đại ${this._fmt(r.off_ath, 0)}% — cổ phiếu bị lãng quên, Minervini khuyên tránh (Ch.6)`] : null,
@@ -2455,7 +2507,8 @@ class Component extends DCLogic {
           </div>
           <div style="font-size:10px;color:var(--text3);margin-top:2px;line-height:1.5">
             <span title="Biên độ lần nén cuối — càng chặt càng tốt">nén <b style="color:var(--text2)">${this._fmt(r.tight, 1)}%</b></span>
-            · <span title="Giá trị giao dịch trung bình 20 phiên">${this._fmt(r.adtv, 0)} tỷ</span>
+            · <span title="Giá trị giao dịch trung bình 20 phiên${r.vol20 != null ? ` · khối lượng TB20: ${this._fmt(r.vol20, 0)} cp/phiên` : ''}">${this._fmt(r.adtv, 0)} tỷ</span>
+            ${r.max_pos && (tier === 'BREAKOUT' || tier === 'VCP3') ? `· <span title="Trần vị thế = ${this._fmt(d.max_pos_pct || 2, 0)}% giá trị giao dịch TB20. Mua nhiều hơn thế thì chính bạn là người đẩy giá lên lúc vào, và là người đạp giá xuống lúc cắt lỗ — ở HOSE sổ lệnh mỏng nên đây là rủi ro thật, không phải lý thuyết.">tối đa <b style="color:var(--text2)">${this._posCap(r.max_pos)}</b></span>` : ''}
             · <span title="Điểm mua = đỉnh đóng cửa 60 phiên = ${this._fmt(r.pivot, 0)} đ">pivot <b style="color:var(--text2)">${this._fmt(r.pivot / 1000, 2)}</b></span>
             <b style="color:${tpCol}">${tpTxt}</b>
           </div>${noteLine}
@@ -2464,7 +2517,7 @@ class Component extends DCLogic {
     }
     const nHid = d.results.filter(r => (marks[r.symbol] || {}).h === cur).length;
     const hidTog = nHid ? ` · <span onclick="window._tj.showHiddenScan()" style="cursor:pointer;color:var(--accent);font-weight:700">${this._scanShowHidden ? '▾' : '▸'} ${nHid} ${tr.wlScanHidden}</span>` : '';
-    out += `<div style="font-size:9px;color:var(--text3);margin-top:8px;line-height:1.6">💪 khỏe hơn thị trường (dẫn dắt?) · 💧 thanh khoản 5–10 tỷ, chỉ quan sát · 🔔 sắp tới điểm mua · ⚠️ đã căng · 🕳 dưới ATH −40%<br>
+    out += `<div style="font-size:9px;color:var(--text3);margin-top:8px;line-height:1.6">💪 khỏe hơn thị trường (dẫn dắt?) · 🔒 đóng cửa giá trần, không khớp được · ⚑ nhiều phiên trần trong nền, nghi đội lái · 💧 chưa đủ chuẩn thanh khoản, chỉ quan sát · 🔔 sắp tới điểm mua · ⚠️ đã căng · 🕳 dưới ATH −40%<br>
       Giá đơn vị nghìn đồng. Không dùng RS Rating: backtest HOSE 2018-2026 cho thấy RS <b>không</b> dự báo được ở VN (siết RS≥90 cho alpha âm). ${tr.wlScanSeenHint}${hidTog}</div>`;
     return out;
   }

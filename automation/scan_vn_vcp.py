@@ -57,6 +57,22 @@ OBS_LIQ = 5.0          # nguong QUAN SAT — noi phieu, khong noi tin hieu
 NEAR_PIVOT = 8.0       # coi la "sap toi diem mua" neu cach pivot <= %
 INDEX = "VNINDEX"      # chi so dung lam cong tac tong
 
+# ── Bo sung tu bao cao SEPA-Viet-hoa (2026-08-06) ──
+# Tat ca deu la LOP PHONG THU: chung khong noi cua vao lenh (3 nen + r3<10% +
+# vol kho can + GTGD>=10 ty + regime ON van nguyen), chi chan bot cach thua tien
+# ma backtest goc khong nhin thay vi no chi do gia dong cua.
+CEIL = {"HOSE": 6.8, "HNX": 14.5, "UPCOM": 14.0}  # % coi nhu dong cua GIA TRAN
+CEIL_DEFAULT = 6.8
+CEIL_BASE_N = 60       # dem phien tran trong bao nhieu phien gan nhat
+CEIL_MANIP = 4         # >= bao nhieu phien tran trong nen thi nghi "doi lai"
+VOL_MIN = 100_000      # KL toi thieu (cp/phien, TB20) — chan ma gia cao it co phieu
+MAX_POS_PCT = 2.0      # tran vi the = % GTGD TB20 (bao cao de xuat 1-2%)
+CHASE = 5.0            # Minervini: khong mua qua 5% tren pivot
+DD_LOOKBACK = 25       # cua so dem NGAY PHAN PHOI
+DD_DANGER = 5          # >= bao nhieu ngay phan phoi thi coi la thi truong dang xa
+FTD_GAIN = 1.5         # % tang toi thieu cua mot NGAY BUNG NO THEO DA
+FTD_MIN_DAY = 4        # FTD hop le tu ngay thu 4 cua nhip no luc hoi phuc
+
 # Noi phieu quan sat nhung GIU NGUYEN cong vao lenh:
 #   - BREAKOUT van doi: 3 nen + r3<10% + vol kho can + GTGD >= 10 ty + regime ON.
 #     (backtest: noi con 2 nen -> CAGR -0.78%; do chat la loi the, khong dong vao)
@@ -64,6 +80,20 @@ INDEX = "VNINDEX"      # chi so dung lam cong tac tong
 #     (thay vi 25%) de thay nen dang hinh thanh som hon.
 #   - Co 💪 "dan dat": khi thi truong OFF ma van bam sat dinh 52T — Minervini:
 #     leader cua song tang sau lo dien ngay trong pha dieu chinh.
+#
+# LOP PHONG THU BO SUNG (2026-08-06, tu bao cao SEPA-Viet-hoa):
+#   Khong lam CUA VAO LENH rong ra — chi chan bot cach thua tien ma backtest goc
+#   khong nhin thay, vi no chi kiem tra gia dong cua:
+#   - Quy tac 5%: vuot pivot roi nhung gia da di qua 5% -> tier BO_FAR, khong phai
+#     tin hieu mua (Minervini: qua 5% thi stop rong den muc hong ty le lai/lo).
+#   - 🔒 dong cua GIA TRAN: bien do +-7% lam breakout "trang ben ban" — ban khong
+#     khop duoc, hom sau gap-up. Gia dong cua khong noi len dieu do.
+#   - ⚑ nhieu phien tran trong nen 60 phien = van tay doi lai (wash trading).
+#   - KL TB20 >= 100k co phieu, ben canh GTGD >= 10 ty.
+#   - Tran vi the 2% GTGD TB20: mua hon the la tu day gia len, va luc cat lo thi
+#     tu dap gia xuong.
+#   - Ngay phan phoi + FTD tren VN-Index: canh bao SOM hon MA50 (chi bao tre),
+#     nhung CHI la thong tin — chua backtest nen khong duoc lat cong tac tong.
 
 
 def fetch_all(symbols, offline=False, sleep=3.2):
@@ -151,12 +181,71 @@ def fetch_index(offline=False):
     return old
 
 
+def _dist_days(d, lookback=DD_LOOKBACK):
+    """NGAY PHAN PHOI (O'Neil): chi so giam >= 0,2% ma khoi luong CAO HON phien truoc
+    = to chuc dang xa hang trong khi gia con dep. Dem trong `lookback` phien gan nhat;
+    >= 5 la canh bao thi truong sap quay dau.
+
+    Vi sao can: cong tac tong MA50/MA200 la chi bao TRE — no bao 'dung ngoai' sau khi
+    chi so da mat 8-10%. Ngay phan phoi la canh bao SOM, thay duoc truoc khi gay MA.
+    """
+    c = d["close"].astype(float).values
+    v = d["volume"].astype(float).values if "volume" in d.columns else None
+    t = pd.to_datetime(d["time"]).dt.date.values
+    n, days = len(c), []
+    for k in range(max(1, n - lookback), n):
+        chg = (c[k] / c[k - 1] - 1) * 100
+        if chg <= -0.2 and (v is None or v[k] > v[k - 1]):
+            days.append({"date": str(t[k]), "chg": round(chg, 2)})
+    return days
+
+
+def _ftd(d, win=60):
+    """NGAY BUNG NO THEO DA (Follow-Through Day).
+
+    Dinh nghia O'Neil, tham so da Viet hoa theo bao cao (>= 1,5% thay vi 1,7%):
+      - Nhip no luc hoi phuc bat dau o ngay dau tien dong cua TANG sau mot day.
+      - Tu ngay thu 4 tro di, mot phien tang >= 1,5% kem khoi luong cao hon phien
+        truoc = FTD, tuc dong tien to chuc da quay lai.
+      - Thung day cu -> nhip hoi that bai, dem lai tu dau.
+
+    CHI DE THAM KHAO — khong tham gia quyet dinh ON/OFF. Bao cao de xuat dung FTD
+    de vao som hon MA50, nhung do la thay doi CUA VAO LENH nen phai backtest truoc.
+    """
+    c = d["close"].astype(float).values
+    v = d["volume"].astype(float).values if "volume" in d.columns else None
+    t = pd.to_datetime(d["time"]).dt.date.values
+    n = len(c)
+    if n < 10:
+        return None
+    s = max(1, n - win)
+    low, day, res = c[s - 1], 0, None
+    for k in range(s, n):
+        if c[k] < low:                      # thung day -> nhip hoi gay, dem lai
+            low, day = c[k], 0
+            continue
+        if day == 0:
+            if c[k] > c[k - 1]:             # ngay 1 cua nhip no luc hoi phuc
+                day = 1
+            continue
+        day += 1
+        chg = (c[k] / c[k - 1] - 1) * 100
+        if day >= FTD_MIN_DAY and chg >= FTD_GAIN and (v is None or v[k] > v[k - 1]):
+            res = {"date": str(t[k]), "day": day, "chg": round(chg, 2),
+                   "ago": n - 1 - k}
+            day = 0                          # da xac nhan, cho nhip moi
+    return res
+
+
 def market_regime(idx, breadth50, breadth200):
     """Cong tac tong. ON = duoc phep vao lenh, OFF = dung ngoai.
 
     Quy tac: VN-Index > MA50 VA MA50 > MA200. VN khong co ban khong, nen khi
     thi truong giam thi lua chon duy nhat la khong lam gi. Do rong (breadth) chi
     de tham khao — no khong tham gia quyet dinh, tranh them bien so chua kiem dinh.
+
+    Ngay phan phoi va FTD cung chi la THONG TIN kem theo: chung canh bao som hon
+    MA50 nhung chua duoc backtest tren HOSE, nen khong duoc phep lat trang thai.
     """
     out = {"index": INDEX, "breadth50": breadth50, "breadth200": breadth200}
     if idx is None or not len(idx):
@@ -177,6 +266,8 @@ def market_regime(idx, breadth50, breadth200):
         fails.append(f"VN-Index {close:,.0f} duoi MA50 {ma50:,.0f}")
     if not ma_stack:
         fails.append(f"MA50 {ma50:,.0f} duoi MA200 {ma200:,.0f}")
+    dd = _dist_days(d)
+    ftd = _ftd(d)
     out.update(
         date=str(d["time"].iloc[-1].date()), close=round(close, 2),
         ma50=round(ma50, 2), ma200=round(ma200, 2),
@@ -184,6 +275,9 @@ def market_regime(idx, breadth50, breadth200):
         state="ON" if (above50 and ma_stack) else "OFF",
         reason=(f"VN-Index {close:,.0f} tren MA50 {ma50:,.0f}, MA50 tren MA200 {ma200:,.0f}"
                 if above50 and ma_stack else " · ".join(fails)),
+        dist_days=len(dd), dist_lookback=DD_LOOKBACK, dist_danger=DD_DANGER,
+        dist_warn=len(dd) >= DD_DANGER, dist_list=dd[-6:],
+        ftd=ftd,
     )
     return out
 
@@ -197,6 +291,8 @@ def main():
                     help="chi cap nhat ma thanh khoan — du cho scan, nhanh hon nhieu (dung cho CI)")
     ap.add_argument("--liq", type=float, default=LIQ_MIN, help="GTGD TB20 toi thieu de vao lenh (ty)")
     ap.add_argument("--obs-liq", type=float, default=OBS_LIQ, help="GTGD TB20 toi thieu de quan sat (ty)")
+    ap.add_argument("--vol-min", type=float, default=VOL_MIN,
+                    help="KL TB20 toi thieu (cp/phien) de vao lenh — chan ma gia cao it co phieu")
     ap.add_argument("--telegram", action="store_true")
     ap.add_argument("--top", type=int, default=40)
     args = ap.parse_args()
@@ -241,6 +337,7 @@ def main():
         print(f"[!] Chi co {len(close)} phien, can >= 260"); return
 
     adtv = ((close * 1000 * vol) / 1e9).rolling(20).mean()
+    vsh20 = vol.rolling(20).mean()          # KL TB20 tinh bang co phieu
     ma50 = close.rolling(50).mean()
     ma200 = close.rolling(200).mean()
     hi52 = close.rolling(252).max()
@@ -249,6 +346,16 @@ def main():
     rng = (close.rolling(W).max() - close.rolling(W).min()) / close.rolling(W).max()
     vm = vol.rolling(W).mean()
     pivot = close.rolling(BASE_N).max().shift(1)
+
+    # Phien dong cua GIA TRAN. Bien do +-7% (HOSE) la dac thu VN va no pha hai thu:
+    #  1. Breakout dong tran = trang ben ban -> ban KHONG khop duoc, hom sau gap-up
+    #     va diem vao lech xa pivot. Gia dong cua khong noi len dieu do.
+    #  2. Nhieu phien tran trong nen la van tay quen thuoc cua doi lai: ho ve duoc
+    #     do thi dep bang cach keo tran vai phien voi khoi luong tu doi ung.
+    chg_all = close.pct_change(fill_method=None) * 100
+    ceil_thr = pd.Series({s: CEIL.get(exmap.get(s, "HOSE"), CEIL_DEFAULT) for s in close.columns})
+    ceil_mask = chg_all.ge(ceil_thr, axis=1)
+    ceil_base = ceil_mask.rolling(CEIL_BASE_N).sum()
 
     i = -1
     d = close.index[i]
@@ -262,7 +369,10 @@ def main():
     up_prev = ((c_prev > ma50.iloc[i - 1]) & (c_prev > ma200.iloc[i - 1])
                & (c_prev >= hi52.iloc[i - 1] * 0.75))
 
-    liq_sig = adtv.iloc[i] >= args.liq       # chuan VAO LENH — dung nhu backtest
+    # Chuan VAO LENH: GTGD >= --liq (nhu backtest) VA KL >= --vol-min co phieu.
+    # Rang buoc KL bo sung bat truong hop GTGD dat nho gia cao nhung so co phieu
+    # khop moi phien qua it — so lenh mong, cat lo la tu dap gia minh.
+    liq_sig = (adtv.iloc[i] >= args.liq) & (vsh20.iloc[i] >= args.vol_min)
     liq_obs = adtv.iloc[i] >= args.obs_liq   # chuan QUAN SAT — noi phieu
     up = (c > ma50.iloc[i]) & (c > ma200.iloc[i]) & (c >= hi52.iloc[i] * 0.75)
     up_obs = (c > ma50.iloc[i]) & (c > ma200.iloc[i]) & (c >= hi52.iloc[i] * 0.70)
@@ -272,7 +382,13 @@ def main():
     # Tin hieu vao lenh nen doi thanh khoan CHUAN (>= --liq), khong an theo nguong quan sat
     vcp3_prev = ((rng.iloc[i - 1 - 2 * W] > r2p) & (r2p > r3p) & (r3p < TIGHT3)
                  & (v3p < v1p) & up_prev)
-    bo = vcp3_prev & (c > pivot.iloc[i]) & (v > VOL_BO * v3) & liq_sig
+    bo_all = vcp3_prev & (c > pivot.iloc[i]) & (v > VOL_BO * v3) & liq_sig
+    # Quy tac 5% cua Minervini: vuot pivot roi nhung gia da di qua 5% thi khong con
+    # la diem mua — stop bi keo qua rong, ty le lai/lo hong. Truoc day scan gop chung
+    # vao BREAKOUT; gio tach rieng de khong bao "vao lenh" cho mot lenh mua duoi.
+    chase_ok = c <= pivot.iloc[i] * (1 + CHASE / 100)
+    bo = bo_all & chase_ok
+    bo_far = bo_all & ~chase_ok
 
     # ── Cong tac tong (tinh truoc de gan co "dan dat" cho tung ma) ──
     nsig = int(liq_sig.sum())
@@ -282,6 +398,12 @@ def main():
     allow = reg["state"] == "ON"
     print(f"[i] Thi truong: {reg['state']} — {reg['reason']}"
           + (f" · do rong tren MA50 {b50}% / MA200 {b200}%" if b50 is not None else ""))
+    if reg.get("dist_days") is not None:
+        print(f"[i] Ngay phan phoi: {reg['dist_days']}/{DD_LOOKBACK} phien"
+              + ("  ⚠️ TU {} TRO LEN LA DAU HIEU TO CHUC DANG XA".format(DD_DANGER)
+                 if reg.get("dist_warn") else "")
+              + (f" · FTD gan nhat {reg['ftd']['date']} (+{reg['ftd']['chg']}%, "
+                 f"{reg['ftd']['ago']} phien truoc)" if reg.get("ftd") else " · chua co FTD"))
 
     rows = []
     for s in close.columns:
@@ -289,6 +411,8 @@ def main():
             continue
         if bool(bo.get(s, False)):
             tier = "BREAKOUT"
+        elif bool(bo_far.get(s, False)):
+            tier = "BO_FAR"
         elif bool(vcp3.get(s, False)):
             tier = "VCP3"
         elif bool(vcp2.get(s, False)):
@@ -316,7 +440,7 @@ def main():
             "change": round((px_now / pxp - 1) * 100, 2) if pxp else 0.0,
             "tier": tier,
             "tight": round(float(r3[s]) * 100, 1) if pd.notna(r3.get(s)) else None,
-            "contractions": (3 if tier in ("BREAKOUT", "VCP3") else (2 if tier == "VCP2" else 0)),
+            "contractions": (3 if tier in ("BREAKOUT", "BO_FAR", "VCP3") else (2 if tier == "VCP2" else 0)),
             "pivot": round(pv) if pd.notna(pv) else None,
             "to_pivot": round(to_pivot, 1) if to_pivot is not None else None,
             "adtv": round(adtv_s, 1),
@@ -330,13 +454,25 @@ def main():
             "extended": bool((px_now / m50 - 1) * 100 > 15 or (px_now / m200 - 1) * 100 > 50),
             "near": bool(to_pivot is not None and 0 < to_pivot <= NEAR_PIVOT),
             # 💧 du de quan sat nhung chua du chuan vao lenh 10 ty
-            "lowliq": bool(adtv_s < args.liq),
+            "lowliq": bool(adtv_s < args.liq or float(vsh20.iloc[i][s] or 0) < args.vol_min),
+            "vol20": int(vsh20.iloc[i][s]) if pd.notna(vsh20.iloc[i].get(s)) else None,
+            # 🔒 hom nay dong cua gia tran -> trang ben ban, gan nhu khong khop duoc
+            "ceil": bool(ceil_mask.iloc[i].get(s, False)),
+            # ⚑ so phien tran trong nen 60 phien — nhieu qua thi nghi ngo doi lai
+            "ceil_base": int(ceil_base.iloc[i][s]) if pd.notna(ceil_base.iloc[i].get(s)) else None,
+            "manip": bool(pd.notna(ceil_base.iloc[i].get(s))
+                          and ceil_base.iloc[i][s] >= CEIL_MANIP),
+            # Tran vi the: mua qua 2% GTGD TB20 thi chinh minh la nguoi day gia len,
+            # va luc cat lo cung chinh minh dap gia xuong. Con so nay tinh bang VND.
+            "max_pos": int(adtv_s * 1e9 * MAX_POS_PCT / 100),
+            # % gia dang o tren pivot — > 5% la mua duoi theo Minervini
+            "over_pivot": round(-to_pivot, 1) if (to_pivot is not None and to_pivot < 0) else None,
             # 💪 Index dang OFF ma ma nay van trong vong 5% dinh 52T. Nguong phai chat:
             # ca danh sach von da loc "tren MA50+MA200", noi ra -15% thi 19/21 ma dinh co.
             "lead": bool((not allow) and off_hi >= -5),
         })
 
-    order = {"BREAKOUT": 0, "VCP3": 1, "VCP2": 2, "TREND": 3}
+    order = {"BREAKOUT": 0, "BO_FAR": 1, "VCP3": 2, "VCP2": 3, "TREND": 4}
     # trong cung tier: ma "dan dat" truoc, roi nen chat nhat (Minervini — cang chat
     # cang tot), rieng TREND thi xep theo khoang cach toi diem mua
     rows.sort(key=lambda r: (order[r["tier"]],
@@ -352,6 +488,10 @@ def main():
         "bar_date": str(d.date()),
         "liq_min": args.liq,
         "obs_liq": args.obs_liq,
+        "vol_min": args.vol_min,
+        "max_pos_pct": MAX_POS_PCT,
+        "chase": CHASE,
+        "ceil_manip": CEIL_MANIP,
         "universe": int(liq_obs.sum()),
         "universe_sig": nsig,
         "total": len(rows),
@@ -380,13 +520,17 @@ def main():
         else:
             lines.append(f"🔴 <b>DUNG NGOAI — khong vao lenh nao</b>\n{reg['reason']}\n"
                          f"VN khong cho ban khong: thi truong giam thi giu tien mat.")
+        if reg.get("dist_warn"):
+            lines.append(f"⚠️ <b>{reg['dist_days']} ngay phan phoi</b> trong {DD_LOOKBACK} phien — "
+                         f"to chuc dang xa hang, siet chat quan tri rui ro")
         if b50 is not None:
             lines.append(f"Do rong: {b50}% tren MA50 · {b200}% tren MA200")
         lines.append(f"Vu tru {payload['universe']} ma quan sat (≥ {args.obs_liq:g} ty) · "
-                     f"{nsig} ma du chuan vao lenh (≥ {args.liq:g} ty)")
+                     f"{nsig} ma du chuan vao lenh (≥ {args.liq:g} ty, ≥ {args.vol_min:,.0f} cp)")
         bo_title = ("🎯 <b>BREAKOUT hom nay</b> — vuot pivot + khoi luong" if allow
                     else "🚫 <b>Vuot pivot hom nay</b> — CHI GHI NHAN, thi truong dang OFF")
         for t, title in ((("BREAKOUT", bo_title)),
+                         ("BO_FAR", f"⛔ <b>Vuot pivot nhung da xa &gt; {CHASE:g}%</b> — mua duoi, bo qua"),
                          ("VCP3", "🔵 <b>VCP 3 nen</b> — dang nen, cho pha vo"),
                          ("VCP2", "🟡 <b>VCP 2 nen</b> — chua dat kiem dinh, tham khao")):
             sub = [r for r in rows if r["tier"] == t]
@@ -395,8 +539,14 @@ def main():
                 continue
             lines += ["", f"{title}: {len(sub)} ma"]
             for r in sub[:10]:
-                lines.append(f"  <code>{r['symbol']}</code> {r['close']/1000:.2f} · nen {r['tight']}% · "
-                             f"pivot {r['pivot']/1000:.2f} ({r['to_pivot']:+.1f}%) · {r['adtv']:.0f} ty")
+                fl = ("🔒" if r.get("ceil") else "") + ("⚑" if r.get("manip") else "")
+                lines.append(f"  <code>{r['symbol']}</code>{fl} {r['close']/1000:.2f} · nen {r['tight']}% · "
+                             f"pivot {r['pivot']/1000:.2f} ({r['to_pivot']:+.1f}%) · {r['adtv']:.0f} ty"
+                             + (f" · tran vi the {r['max_pos']/1e6:.0f}tr" if t in ("BREAKOUT", "VCP3") else ""))
+        if any(r.get("ceil") for r in rows):
+            lines.append("")
+            lines.append("🔒 = dong cua GIA TRAN: trang ben ban, gan nhu khong khop duoc — "
+                         "hom sau gap-up thi diem vao da lech xa pivot, dung mua duoi.")
         lines += ["", "👉 Tab Watch tren journal de xem day du"]
         send_telegram(cfg, "\n".join(lines))
 
