@@ -1,14 +1,9 @@
 [
   {
-    "symbol": "ASTH",
-    "pivot": 52,
-    "stop": null,
-    "note": "RS 91 · scan 2026-07-14"
-  },
-  {
-    "symbol": "DELL",
-    "pivot": 464,
-    "stop": null,
-    "note": "RS 98 · scan 2026-07-14"
+    "symbol": "MSB",
+    "pivot": 16500,
+    "stop": 15400,
+    "note": "VCP · scan 2026-08-06",
+    "cc": "VND"
   }
 ]
