@@ -113,6 +113,28 @@ Hạ ngưỡng thanh khoản **không giúp**. HOSE+HNX: 3 tỷ → 10,08%, 10 t
 9,88%. CAGR phẳng nhưng tỉ lệ thắng tăng đều 32,1% → 43,7% khi nâng ngưỡng, và backtest
 chưa tính trượt giá. Giữ 10 tỷ.
 
+### ⚠️ Giá trong cache đã ĐIỀU CHỈNH cổ tức
+
+Mọi nguồn vnstock (KBS, VCI) đều trả giá **đã điều chỉnh cổ tức** — VNM 02/01/2019 về
+68,7 nghìn trong cache trong khi biểu đồ TradingView vùng đó nằm khoảng 100-120 nghìn.
+Không tắt được.
+
+Hệ quả cần nhớ: **đường trung bình động trong scan sẽ lệch so với đồ thị TradingView** ở
+mã trả cổ tức lớn. Scan có thể báo "giá trên MA200" trong khi đồ thị cho thấy ngược lại.
+Và các con số backtest ở trên đều tính trên giá đã điều chỉnh, nên có phần **ưu ái** chiến
+lược bám xu hướng với nhóm cổ tức cao. Luôn mở đồ thị xác nhận trước khi vào lệnh.
+
+### Trend Template: dùng để PHÂN LOẠI, không dùng để vào lệnh
+
+Bộ lọc bối cảnh trong scan chỉ kiểm 3 điều kiện (giá > MA50, > MA200, trong 25% đỉnh 52T).
+Siết lên đủ 8 điều kiện Trend Template **không cải thiện cửa vào lệnh** (CAGR 9,67% →
+9,55%, Sharpe 0,82 → 0,84) nên cửa vào lệnh giữ nguyên.
+
+Nhưng 3 điều kiện đó **không đủ để gọi là "xu hướng tăng"**: VNM ngày 31/07/2026 vượt cả
+ba trong khi MA50 < MA150 < MA200 (xếp ngược hoàn toàn) và MA200 vẫn dốc xuống — đúng là
+cổ phiếu cắm đầu đi xuống nhiều năm. Nay scan tính đủ 8 tiêu chí và **chỉ mã đạt 8/8 mới
+vào nhóm `TREND`**; còn lại xuống nhóm `POOL` kèm điểm N/8 và danh sách tiêu chí còn thiếu.
+
 ### TUỔI NIÊM YẾT — phát hiện mạnh nhất
 
 Cần chạy `fetch_listing_dates.py` trước (tuổi **không** suy được từ dữ liệu giá: nguồn KBS

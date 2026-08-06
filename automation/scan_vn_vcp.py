@@ -348,6 +348,7 @@ def main():
     adtv = ((close * 1000 * vol) / 1e9).rolling(20).mean()
     vsh20 = vol.rolling(20).mean()          # KL TB20 tinh bang co phieu
     ma50 = close.rolling(50).mean()
+    ma150 = close.rolling(150).mean()
     ma200 = close.rolling(200).mean()
     hi52 = close.rolling(252).max()
     lo52 = close.rolling(252).min()
@@ -410,6 +411,25 @@ def main():
     # Chuan VAO LENH: GTGD >= --liq (nhu backtest) VA KL >= --vol-min co phieu.
     # Rang buoc KL bo sung bat truong hop GTGD dat nho gia cao nhung so co phieu
     # khop moi phien qua it — so lenh mong, cat lo la tu dap gia minh.
+    # ── TREND TEMPLATE DAY DU (Minervini Ch.5) — de PHAN LOAI, khong de vao lenh ──
+    # Bo loc `up` ben duoi chi kiem 3 dieu kien; no la thu da qua backtest nen giu
+    # nguyen lam cua vao lenh (siet du 8 dieu kien do duoc: CAGR 9,67 -> 9,55, Sharpe
+    # 0,82 -> 0,84 — khong cai thien). NHUNG 3 dieu kien do KHONG du de goi la "xu
+    # huong tang": VNM 31/07/2026 vuot ca ba ma MA50 < MA150 < MA200 (xep nguoc hoan
+    # toan) va MA200 van doc xuong — dung la co phieu cam dau di xuong nhieu nam.
+    # Tinh du 8 tieu chi de HIEN RA, va chi ma dat 8/8 moi duoc goi la xu huong tang.
+    TT = {
+        "giá > MA150": c > ma150.iloc[i],
+        "giá > MA200": c > ma200.iloc[i],
+        "MA150 > MA200": ma150.iloc[i] > ma200.iloc[i],
+        "MA200 dốc lên ≥1 tháng": ma200.iloc[i] > ma200.iloc[i - 22],
+        "MA50 > MA150": ma50.iloc[i] > ma150.iloc[i],
+        "MA50 > MA200": ma50.iloc[i] > ma200.iloc[i],
+        "giá ≥ 25% trên đáy 52T": c >= lo52.iloc[i] * 1.25,
+        "giá trong 25% đỉnh 52T": c >= hi52.iloc[i] * 0.75,
+    }
+    tt_n = sum(v.fillna(False).astype(int) for v in TT.values())
+
     liq_sig = (adtv.iloc[i] >= args.liq) & (vsh20.iloc[i] >= args.vol_min)
     liq_obs = adtv.iloc[i] >= args.obs_liq   # chuan QUAN SAT — noi phieu
     up = (c > ma50.iloc[i]) & (c > ma200.iloc[i]) & (c >= hi52.iloc[i] * 0.75)
@@ -456,7 +476,9 @@ def main():
         elif bool(vcp2.get(s, False)):
             tier = "VCP2"
         elif bool(up_obs.get(s, False)):
-            tier = "TREND"
+            # Chi ma dat DU 8/8 moi duoc goi la xu huong tang. Con lai la be theo doi:
+            # tren MA50/MA200 that, nhung cau truc MA chua xep dung chieu tang.
+            tier = "TREND" if int(tt_n.get(s, 0)) == 8 else "POOL"
         else:
             continue
         # Gia luu bang VND (khong phai nghin dong) de khop voi TradingView —
@@ -477,6 +499,10 @@ def main():
             "close": round(px_now),
             "change": round((px_now / pxp - 1) * 100, 2) if pxp else 0.0,
             "tier": tier,
+            # Dat bao nhieu / 8 tieu chi Trend Template, va thieu nhung gi.
+            # Hien ra de doi chieu duoc voi bang tieu chi tren TradingView.
+            "tt": int(tt_n.get(s, 0)),
+            "tt_fail": [k for k, v in TT.items() if not bool(v.get(s, False))],
             "tight": round(float(r3[s]) * 100, 1) if pd.notna(r3.get(s)) else None,
             "contractions": (3 if tier in ("BREAKOUT", "BO_FAR", "VCP3") else (2 if tier == "VCP2" else 0)),
             "pivot": round(pv) if pd.notna(pv) else None,
@@ -517,12 +543,13 @@ def main():
             "lead": bool((not allow) and off_hi >= -5),
         })
 
-    order = {"BREAKOUT": 0, "BO_FAR": 1, "VCP3": 2, "VCP2": 3, "TREND": 4}
+    order = {"BREAKOUT": 0, "BO_FAR": 1, "VCP3": 2, "VCP2": 3, "TREND": 4, "POOL": 5}
     # trong cung tier: ma "dan dat" truoc, roi nen chat nhat (Minervini — cang chat
     # cang tot), rieng TREND thi xep theo khoang cach toi diem mua
     rows.sort(key=lambda r: (order[r["tier"]],
                              0 if r.get("lead") else 1,
-                             r["tight"] if r["tier"] != "TREND" else 99,
+                             -r.get("tt", 0) if r["tier"] == "POOL" else 0,
+                             r["tight"] if r["tier"] not in ("TREND", "POOL") else 99,
                              abs(r["to_pivot"]) if r["to_pivot"] is not None else 99))
 
     tz = ZoneInfo("Asia/Ho_Chi_Minh")

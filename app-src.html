@@ -2458,8 +2458,10 @@ class Component extends DCLogic {
        'Ba lần nén biên độ nhỏ dần + khối lượng cạn. Đây là danh sách theo dõi chính: canh phiên vượt pivot.'],
       ['VCP2', '🟡 VCP 2 NÉN — chưa đạt kiểm định, chỉ tham khảo', 'var(--amber)',
        'Nới lỏng còn 2 lần nén thì backtest cho CAGR −0,78%. Không phải tín hiệu mua — chỉ để theo dõi xem có nén thêm lần nữa không.'],
-      ['TREND', '📈 XU HƯỚNG TĂNG — chưa có VCP', 'var(--text3)',
-       'Trên MA50 và MA200, trong vòng 25% đỉnh 52 tuần. Là bể chứa để chờ hình thành nền VCP.'],
+      ['TREND', '📈 XU HƯỚNG TĂNG — đạt đủ 8/8 Trend Template', 'var(--text2)',
+       'Đạt trọn bộ tiêu chí Trend Template của Minervini (Ch.5): giá trên MA150 và MA200, MA50 > MA150 > MA200, MA200 dốc lên, cách đáy 52 tuần ≥25%, trong vòng 25% đỉnh 52 tuần. Chưa có nền VCP nên chưa phải điểm mua — đây là bể chứa chất lượng cao.'],
+      ['POOL', '👁 TRÊN MA50/MA200 — chưa đủ Trend Template', 'var(--text3)',
+       'Vượt MA50 và MA200 nhưng cấu trúc trung bình động CHƯA xếp đúng chiều tăng. Trước đây nhóm này bị gộp chung và gọi nhầm là "xu hướng tăng" — VNM lọt vào đây dù MA50 nằm dưới MA200 và MA200 vẫn dốc xuống. Xem số N/8 trên từng mã để biết còn thiếu gì.'],
     ];
     let out = this._regimeBanner(d, esc);
     for (const [tier, title, color, why] of GROUPS) {
@@ -2508,6 +2510,7 @@ class Component extends DCLogic {
             </span>
           </div>
           <div style="font-size:10px;color:var(--text3);margin-top:2px;line-height:1.5">
+            ${r.tt == null ? '' : `<span title="Đạt ${r.tt}/8 tiêu chí Trend Template của Minervini (Ch.5).${(r.tt_fail || []).length ? '\n\nCòn thiếu:\n· ' + r.tt_fail.join('\n· ') : ' Đạt trọn bộ.'}\n\n⚠️ Giá trong scan đã ĐIỀU CHỈNH cổ tức, biểu đồ TradingView của bạn thì không — nên đường trung bình động hai bên sẽ lệch nhau ở mã trả cổ tức lớn. Luôn nhìn lại đồ thị trước khi vào lệnh." style="color:${r.tt === 8 ? 'var(--green)' : r.tt >= 6 ? 'var(--amber)' : 'var(--red)'};font-weight:700">${r.tt}/8</span> · `}
             <span title="Biên độ lần nén cuối — càng chặt càng tốt">nén <b style="color:var(--text2)">${this._fmt(r.tight, 1)}%</b></span>
             · <span title="Giá trị giao dịch trung bình 20 phiên${r.vol20 != null ? ` · khối lượng TB20: ${this._fmt(r.vol20, 0)} cp/phiên` : ''}">${this._fmt(r.adtv, 0)} tỷ</span>
             ${r.max_pos && (tier === 'BREAKOUT' || tier === 'VCP3') ? `· <span title="Trần vị thế = ${this._fmt(d.max_pos_pct || 2, 0)}% giá trị giao dịch TB20. Mua nhiều hơn thế thì chính bạn là người đẩy giá lên lúc vào, và là người đạp giá xuống lúc cắt lỗ — ở HOSE sổ lệnh mỏng nên đây là rủi ro thật, không phải lý thuyết.">tối đa <b style="color:var(--text2)">${this._posCap(r.max_pos)}</b></span>` : ''}
@@ -2520,6 +2523,8 @@ class Component extends DCLogic {
     const nHid = d.results.filter(r => (marks[r.symbol] || {}).h === cur).length;
     const hidTog = nHid ? ` · <span onclick="window._tj.showHiddenScan()" style="cursor:pointer;color:var(--accent);font-weight:700">${this._scanShowHidden ? '▾' : '▸'} ${nHid} ${tr.wlScanHidden}</span>` : '';
     out += `<div style="font-size:9px;color:var(--text3);margin-top:8px;line-height:1.6">💪 khỏe hơn thị trường (dẫn dắt?) · ✨ niêm yết 2-8 năm (vùng tốt nhất) · ⏳ chưa đủ 2 năm · 🔒 đóng cửa giá trần, không khớp được · ⚑ nhiều phiên trần trong nền, nghi đội lái · 💧 chưa đủ chuẩn thanh khoản, chỉ quan sát · 🔔 sắp tới điểm mua · ⚠️ đã căng · 🕳 dưới ATH −40%<br>
+      <b>N/8</b> = số tiêu chí Trend Template đạt được — di chuột lên để xem còn thiếu gì.<br>
+      ⚠️ <b>Giá trong scan đã điều chỉnh cổ tức, biểu đồ TradingView thì không.</b> Với mã trả cổ tức lớn (VNM, FPT…) đường MA hai bên sẽ lệch — scan có thể báo "trên MA200" trong khi đồ thị của bạn cho thấy ngược lại. Mọi nguồn dữ liệu VN đều trả giá đã điều chỉnh, không đổi được. <b>Luôn mở đồ thị xác nhận trước khi vào lệnh.</b><br>
       Giá đơn vị nghìn đồng. Không dùng RS Rating: backtest HOSE 2018-2026 cho thấy RS <b>không</b> dự báo được ở VN (siết RS≥90 cho alpha âm). ${tr.wlScanSeenHint}${hidTog}</div>`;
     return out;
   }
