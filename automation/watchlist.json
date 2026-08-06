@@ -1,5 +1,12 @@
 [
   {
+    "symbol": "STB",
+    "pivot": 76800,
+    "stop": 70600,
+    "note": "VCP · scan 2026-08-06",
+    "cc": "VND"
+  },
+  {
     "symbol": "MSB",
     "pivot": 16500,
     "stop": 15400,
