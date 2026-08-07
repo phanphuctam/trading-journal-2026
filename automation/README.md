@@ -1,18 +1,37 @@
-# Tự động hóa Trading Journal — Scan Minervini + Alert Telegram
+# Tự động hóa Trading Journal — Công tắc thị trường + Alert Telegram
+
+## ⚠️ Đã bỏ bộ lọc tự động (2026-08-07)
+
+`scan_vn_vcp.py` **đã xóa**. Việc **chọn cổ phiếu** chuyển sang lọc bằng mắt trên
+TradingView: trực quan hơn, nhìn thẳng vào đồ thị, linh hoạt hơn hẳn một bảng số.
+
+Ở lại đây đúng những thứ TradingView **không** làm được:
+
+| Thứ giữ lại | Vì sao TradingView không thay được |
+|---|---|
+| Công tắc tổng (`regime.py`) | TradingView không có khái niệm "được phép vào lệnh". Đây là thứ chặn tay lúc thị trường đang xả — và nó chặn được cả những lệnh mà đồ thị riêng lẻ trông vẫn đẹp |
+| ⚑ Cờ đội lái (`watch_stats.py`) | Chống lại đúng điểm mù của việc nhìn mắt: đồ thị bị làm giá **trông rất đẹp**, đó là mục đích của làm giá. Đếm 4 phiên trần rải trong 60 phiên thì mắt không làm nổi |
+| Trần vị thế (`watch_stats.py`) | Số học từ GTGD, mắt không tính được. Chỉ lên tiếng với mã mỏng |
+| Cảnh báo nhiều mã (`alert_watcher.py`) | TradingView bản free giới hạn số alert; ở đây không giới hạn, và bắn thẳng Telegram |
+
+Định nghĩa VCP-3 (từng là cửa vào lệnh của scan) nay chỉ còn trong
+`backtest_vn_params.py` — giữ vì đó là **bằng chứng**: lý do biết VCP-3 nén ăn tiền
+còn RS/Trend Template thì không. Muốn dựng lại scan cũ: `git log -- automation/scan_vn_vcp.py`.
 
 ## Có gì trong thư mục này
 
 | File | Công dụng |
 |---|---|
+| `regime.py` | **Công tắc tổng** VN-Index (MA50/MA200 + ngày phân phối + FTD) → `scans/regime_vn.json`. Chỉ 1 request |
+| `watch_stats.py` | Trần vị thế + 🔒 đóng trần + ⚑ đội lái cho **mã trong watchlist** → `scans/watch_stats.json` |
 | `alert_watcher.py` | Theo dõi watchlist, báo Telegram khi **vượt pivot / gần pivot / chạm stop** |
-| `scan_trend_template.py` | Scan **Trend Template Minervini + RS Rating** toàn thị trường Mỹ, gửi top qua Telegram |
+| `scan_trend_template.py` | Scan **Trend Template Minervini + RS Rating** thị trường Mỹ (tạm gác, xem `US-DORMANT.md`) |
 | `watchlist.json` | Danh sách mã theo dõi (xuất từ tab **Watch** trong journal) |
 | `config.json` | Token Telegram + cài đặt (KHÔNG commit lên git) |
-| `scan_vn_vcp.py` | Scan **VCP** cổ phiếu Việt (HOSE/HNX) + công tắc tổng VN-Index → `scans/latest_vn.json` |
 | `backtest_vn_params.py` | Backtest **tham số thoát lệnh** cho chiến lược VCP Việt trên cache giá |
-| `fetch_listing_dates.py` | Lấy **ngày niêm yết thật** → `.vncache/_listing.json` (cần cho bộ lọc tuổi) |
+| `fetch_listing_dates.py` | Lấy **ngày niêm yết thật** → `.vncache/_listing.json` (tra tay khi thêm mã mới) |
 | `rebuild_index.py` | Nhúng lại `app-src.html` vào `index.html` sau khi sửa giao diện journal |
-| `scans/` | Kết quả scan hằng ngày (CSV + JSON, tự tạo) |
+| `scans/` | Kết quả scan Mỹ cũ (CSV + JSON, lưu trữ) |
 
 ## Bước 1 — Tạo bot Telegram (5 phút, miễn phí)
 
@@ -29,8 +48,11 @@
 ## Bước 2 — Bot 24/7 trên GitHub Actions (không cần máy bật)
 
 Workflow `.github/workflows/trading.yml` chạy trên máy chủ GitHub:
-- **9h00 sáng VN mỗi ngày**: scan Trend Template + check watchlist EOD → Telegram, tự commit `scans/latest.json` → GitHub Pages tự cập nhật
-- **30 phút/lần trong phiên Mỹ** (20h30–3h sáng VN): check watchlist realtime → báo ngay khi vượt pivot / chạm stop
+- **9h sáng thứ Bảy VN**: công tắc tổng → Telegram + số liệu watchlist + check watchlist EOD
+- **30 phút/lần trong phiên HOSE** (9h–15h VN): cập nhật công tắc tổng (1 request) + check watchlist realtime → báo ngay khi vượt pivot / chạm stop
+
+Tự commit `scans/regime_vn.json` + `scans/watch_stats.json` → GitHub Pages tự cập nhật,
+journal đọc thẳng hai file này.
 
 Cài 1 lần trên web GitHub (repo → **Settings**):
 1. **General → Danger Zone → Change visibility → Private** (bảo vệ watchlist)
@@ -43,9 +65,15 @@ Backup trên máy (nếu không dùng Actions): task "TJ-DailyScan" 9h sáng —
 
 ## Quy trình dùng hằng ngày
 
-1. **9h sáng**: bot Telegram gửi kết quả scan — **bấm tên mã để mở thẳng chart TradingView** (layout riêng của bạn) + cảnh báo watchlist (🚀 vượt pivot / 👀 gần pivot / 🛑 chạm stop)
-2. Scan xong script tự ghi `scans/latest.json` → **commit + push GitHub → GitHub Pages tự deploy** → mở https://phanphuctam.github.io/trading-journal-2026 tab **Watch** thấy bảng kết quả scan (kèm giờ scan), bấm mã mở chart, bấm **＋** để đưa vào watchlist
-3. Điền pivot + stop cho mã vừa thêm → bấm **⤴ Push GitHub** ngay trong tab Watch — xong, bot 24/7 dùng ngay.
+1. **Lọc trên TradingView bằng mắt**: bộ lọc cơ bản (thanh khoản, vốn hóa, tăng trưởng
+   EPS/doanh thu) + giá trên MA50/MA200 → còn vài chục mã → lướt đồ thị tìm nền VCP.
+2. Mở tab **Watch** trong journal, xem **công tắc tổng** trên cùng. Đỏ = không vào lệnh,
+   dù đồ thị đẹp đến đâu.
+3. Thêm mã + pivot vào watchlist (bỏ trống ô stop thì tự điền −6% dưới pivot, theo
+   backtest). Bấm **⤴ Push GitHub** — bot 24/7 dùng ngay.
+4. Chạy `python automation/watch_stats.py` để có **trần vị thế** và cờ **⚑ đội lái** cho
+   mã mới — hai dòng này hiện ngay dưới ghi chú của mã trong tab Watch.
+5. Bot Telegram báo 🚀 vượt pivot / 👀 gần pivot / 🛑 chạm stop.
    - Lần đầu bấm sẽ hỏi GitHub token: tạo **fine-grained PAT** tại github.com → Settings → Developer settings → Fine-grained tokens → chỉ chọn repo `trading-journal-2026`, quyền **Contents: Read and write**. Token chỉ lưu trong trình duyệt.
    - Đường dự phòng (không cần token): bấm **⬇ watchlist.json** rồi chạy `python "automation\push_watchlist.py"` (hoặc double-click `Cap nhat watchlist.bat`).
 4. Vào lệnh xong thì ghi vào journal như bình thường, xóa mã khỏi Watch → bấm ⤴ Push GitHub lại
@@ -57,9 +85,12 @@ Cấu hình thêm trong `config.json`:
 ## Lệnh thủ công
 
 ```powershell
-python "automation\scan_trend_template.py" --no-telegram        # scan, chi in man hinh
-python "automation\scan_trend_template.py" --rs 80 --top 30     # nguong RS 80, top 30
-python "automation\alert_watcher.py" --force                    # check gia ngay ca khi market dong
+python "automation\regime.py"                    # cap nhat cong tac tong (1 request)
+python "automation\regime.py" --offline          # chi doc cache, khong goi API
+python "automation\watch_stats.py"               # tran vi the + co doi lai cho watchlist
+python "automation\watch_stats.py" --offline     # chi doc cache
+python "automation\alert_watcher.py" --force     # check gia ngay ca khi market dong
+python "automation\daily_run.py"                 # ca ba buoc tren, theo thu tu
 ```
 
 ## Backtest tham số thoát lệnh (cổ phiếu Việt)
@@ -119,21 +150,28 @@ Mọi nguồn vnstock (KBS, VCI) đều trả giá **đã điều chỉnh cổ t
 68,7 nghìn trong cache trong khi biểu đồ TradingView vùng đó nằm khoảng 100-120 nghìn.
 Không tắt được.
 
-Hệ quả cần nhớ: **đường trung bình động trong scan sẽ lệch so với đồ thị TradingView** ở
-mã trả cổ tức lớn. Scan có thể báo "giá trên MA200" trong khi đồ thị cho thấy ngược lại.
-Và các con số backtest ở trên đều tính trên giá đã điều chỉnh, nên có phần **ưu ái** chiến
-lược bám xu hướng với nhóm cổ tức cao. Luôn mở đồ thị xác nhận trước khi vào lệnh.
+Hệ quả cần nhớ: mọi con số tính từ cache (`watch_stats.py`, `backtest_vn_params.py`)
+**sẽ lệch so với đồ thị TradingView** ở mã trả cổ tức lớn. Và các con số backtest ở trên
+đều tính trên giá đã điều chỉnh, nên có phần **ưu ái** chiến lược bám xu hướng với nhóm
+cổ tức cao.
 
-### Trend Template: dùng để PHÂN LOẠI, không dùng để vào lệnh
+Từ 2026-08-07 việc chọn mã đã làm thẳng trên đồ thị TradingView nên vấn đề này bớt nguy
+hiểm hẳn — nhưng GTGD (và do đó **trần vị thế**) vẫn tính từ giá điều chỉnh, nên coi nó là
+con số xấp xỉ chứ đừng coi là chính xác đến từng đồng.
 
-Bộ lọc bối cảnh trong scan chỉ kiểm 3 điều kiện (giá > MA50, > MA200, trong 25% đỉnh 52T).
-Siết lên đủ 8 điều kiện Trend Template **không cải thiện cửa vào lệnh** (CAGR 9,67% →
-9,55%, Sharpe 0,82 → 0,84) nên cửa vào lệnh giữ nguyên.
+### Trend Template: không cải thiện cửa vào lệnh
+
+Bộ lọc bối cảnh chỉ kiểm 3 điều kiện (giá > MA50, > MA200, trong 25% đỉnh 52T). Siết lên
+đủ 8 điều kiện Trend Template **không cải thiện** gì (CAGR 9,67% → 9,55%, Sharpe 0,82 →
+0,84).
 
 Nhưng 3 điều kiện đó **không đủ để gọi là "xu hướng tăng"**: VNM ngày 31/07/2026 vượt cả
 ba trong khi MA50 < MA150 < MA200 (xếp ngược hoàn toàn) và MA200 vẫn dốc xuống — đúng là
-cổ phiếu cắm đầu đi xuống nhiều năm. Nay scan tính đủ 8 tiêu chí và **chỉ mã đạt 8/8 mới
-vào nhóm `TREND`**; còn lại xuống nhóm `POOL` kèm điểm N/8 và danh sách tiêu chí còn thiếu.
+cổ phiếu cắm đầu đi xuống nhiều năm.
+
+→ Bài học còn dùng được sau khi bỏ scan: khi lọc trên TradingView, **đừng dừng ở "giá trên
+MA50"**. Nhìn thứ tự MA50/MA150/MA200 và độ dốc MA200 trên đồ thị — đó chính là chỗ 3 điều
+kiện kia nói dối.
 
 ### TUỔI NIÊM YẾT — phát hiện mạnh nhất
 

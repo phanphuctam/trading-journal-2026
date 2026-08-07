@@ -1024,10 +1024,7 @@ const TJ_TR = {
     wlToastAdd:'Đã thêm vào watchlist',wlToastExport:'Đã xuất watchlist.json',
     wlScanTitle:'📊 Kết quả scan Trend Template',wlScanSub:'Tự cập nhật sau scan 9h sáng · bấm mã để mở chart TradingView',
     wlScanNone:'Chưa tải được dữ liệu scan (scans/latest.json). Site sẽ tự hiển thị sau lần scan + deploy kế tiếp.',
-    wlScanNoneVN:'Chưa có dữ liệu scan VN (scans/latest_vn.json). Chạy: python automation/scan_vn_vcp.py --refresh',
     wlScanAt:'Scan lúc',wlScanPass:'mã đạt chuẩn',wlOffHigh:'cách đỉnh',
-    wlScanSeenT:'Đánh dấu đã xem / chưa xem',wlScanNoteT:'Ghi chú cho mã này',wlScanHideT:'Ẩn khỏi danh sách (scan mới sẽ hiện lại)',wlScanUnhideT:'Hiện lại mã này',
-    wlScanHidden:'mã đã ẩn',wlScanNotePh:'Ghi chú… (Enter lưu · Esc hủy)',wlScanSeenHint:'bấm mã / ＋ tự đánh dấu ✓ đã xem',
     kpiROI:'ROI',kpiDD:'Max DD',
     kpiPeak:'Đỉnh',kpiTimes:'lần nạp',kpiOnCap:'trên vốn nạp',
     mExpect:'Kỳ vọng/lệnh',mAvgWin:'TB thắng',mAvgLoss:'TB thua',mStreak:'Chuỗi hiện tại',mWinShort:'W',mLossShort:'L',
@@ -1124,10 +1121,7 @@ const TJ_TR = {
     wlToastAdd:'Added to watchlist',wlToastExport:'watchlist.json exported',
     wlScanTitle:'📊 Trend Template scan results',wlScanSub:'Auto-updates after the 9AM scan · click a symbol to open its TradingView chart',
     wlScanNone:'Scan data not available yet (scans/latest.json). The site shows it after the next scan + deploy.',
-    wlScanNoneVN:'No VN scan data yet (scans/latest_vn.json). Run: python automation/scan_vn_vcp.py --refresh',
     wlScanAt:'Scanned at',wlScanPass:'stocks passed',wlOffHigh:'off high',
-    wlScanSeenT:'Toggle seen / unseen',wlScanNoteT:'Note for this symbol',wlScanHideT:'Hide from list (reappears on next scan)',wlScanUnhideT:'Unhide this symbol',
-    wlScanHidden:'hidden',wlScanNotePh:'Note… (Enter save · Esc cancel)',wlScanSeenHint:'clicking symbol / ＋ marks it ✓ seen',
     kpiROI:'ROI',kpiDD:'Max DD',
     kpiPeak:'Peak',kpiTimes:'deposits',kpiOnCap:'on capital',
     mExpect:'Expectancy',mAvgWin:'Avg Win',mAvgLoss:'Avg Loss',mStreak:'Current Streak',mWinShort:'W',mLossShort:'L',
@@ -1611,7 +1605,7 @@ class Component extends DCLogic {
     if (!this.state.watchlist.some(x => String(x.symbol || '').toUpperCase() === sym)) {
       w.push(`• ${sym} KHÔNG có trong watchlist — đây là lệnh ngoài kế hoạch.`);
     }
-    const reg = this._scanCache && this._scanCache.VN && this._scanCache.VN.regime;
+    const reg = this._regimeCache && this._regimeCache.regime;
     if (t.a === 'Buy' && reg && reg.state !== 'ON') {
       w.push(`• Thị trường đang ĐỨNG NGOÀI: ${reg.reason}. VN không cho bán khống — lúc này giữ tiền mặt.`);
     }
@@ -1868,7 +1862,14 @@ class Component extends DCLogic {
     const note = (this._gv('wlNote') || '').trim();
     if (!sym || !(pivot > 0)) { alert(tr.wlNeed); return; }
     const cc = this._scanMkt() === 'VN' ? 'VND' : 'USD';
-    const watchlist = [{ symbol: sym, pivot, stop: isNaN(stopV) ? null : stopV, note, cc }, ...this.state.watchlist.filter(w => w.symbol !== sym)];
+    // Bỏ trống ô stop thì điền sẵn −6% dưới pivot. Quy tắc này trước nằm trong nút
+    // "chọn từ scan"; scan đã gỡ nên chuyển vào đây để nó không mất theo.
+    // Theo backtest_vn_params.py (HOSE 2018-2026, 8 vị thế, thoát khi thủng MA50):
+    // stop 6% cho CAGR 10,1% / sụt giảm tối đa −19,1%, so với stop 10% chỉ 9,4% /
+    // −20,4%. Siết tiếp xuống 4% thì hỏng hẳn (CAGR 6,0%) — cắt đúng lúc nền còn rung.
+    const stop = !isNaN(stopV) ? stopV
+      : (cc === 'VND' ? Math.round(pivot * 0.94 / 10) * 10 : null);
+    const watchlist = [{ symbol: sym, pivot, stop, note, cc }, ...this.state.watchlist.filter(w => w.symbol !== sym)];
     this.setState({ watchlist }, () => {
       this._persistWl();
       ['wlSym','wlPivot','wlStop','wlNote'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
@@ -1929,24 +1930,46 @@ class Component extends DCLogic {
     const tr = this._tr(), wl = this.state.watchlist;
     const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const inp = 'border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;min-width:0';
+    // Số liệu phòng thủ đi kèm từng mã (watch_stats.py). Chỉ hai thứ được lên dòng:
+    //   · trần vị thế — mua quá 2% GTGD TB20 thì chính mình đẩy giá lúc vào và đạp
+    //     giá lúc cắt lỗ. Nó chỉ lên tiếng với mã mỏng, mã lớn thì không bao giờ chạm.
+    //   · ⚑ nhiều phiên trần trong nền — vân tay đội lái. Đây là thứ mắt KHÔNG bắt
+    //     được, vì đồ thị bị làm giá trông rất đẹp; đó chính là mục đích của làm giá.
+    const stat = w => {
+      const s = this._wstat(w.symbol);
+      if (!s) return '';
+      const bits = [];
+      if (s.manip) bits.push(`<span title="${s.ceil_base} phiên trần trong ${(this._statsCache || {}).ceil_base_n || 60} phiên gần nhất (ngưỡng nghi ngờ: ${(this._statsCache || {}).ceil_manip || 4}). Đây là vân tay quen thuộc của đội lái — kéo trần vài phiên với khối lượng tự đối ứng để VẼ RA một cái nền đẹp. Nền càng đẹp càng phải nghi." style="color:var(--red);font-weight:700">⚑ ${s.ceil_base} phiên trần</span>`);
+      else if (s.ceil) bits.push(`<span title="Phiên gần nhất đóng cửa GIÁ TRẦN — trắng bên bán, mua không khớp được, hôm sau gap-up và điểm vào lệch xa pivot." style="color:var(--amber)">🔒 đóng trần</span>`);
+      if (s.max_pos) bits.push(`<span title="Trần vị thế = ${this._fmt((this._statsCache || {}).max_pos_pct || 2, 0)}% giá trị giao dịch TB20 (${this._fmt(s.adtv, 1)} tỷ/phiên). Mua nhiều hơn thế thì chính bạn là người đẩy giá lên lúc vào, và là người đạp giá xuống lúc cắt lỗ — ở HOSE sổ lệnh mỏng nên đây là rủi ro thật, không phải lý thuyết.">tối đa <b style="color:var(--text2)">${this._posCap(s.max_pos)}</b></span>`);
+      return bits.length ? `<div style="font-size:9px;color:var(--text3);margin-top:2px;line-height:1.5">${bits.join(' · ')}</div>` : '';
+    };
     const rows = wl.length ? wl.map((w, i) => `
       <div style="display:grid;grid-template-columns:60px 1fr 1fr 1.6fr auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--border)">
-        <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent)">${esc(w.symbol)}</div>
+        <div style="min-width:0">
+          <a href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent('HOSE:' + String(w.symbol || '').toUpperCase())}" target="_blank" rel="noopener" title="Mở đồ thị trên TradingView" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${esc(w.symbol)} ↗</a>
+        </div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px">${this._px(w.pivot, w)}</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:${w.stop != null ? 'var(--red)' : 'var(--text3)'}">${w.stop != null ? this._px(w.stop, w) : '—'}</div>
-        <div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(w.note)}">${esc(w.note)}</div>
+        <div style="min-width:0">
+          <div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(w.note)}">${esc(w.note)}</div>
+          ${stat(w)}
+        </div>
         <span onclick="window._tj.delWatch(${i})" style="cursor:pointer;color:var(--text3);font-size:12px;flex-shrink:0;padding:2px 4px">🗑</span>
       </div>`).join('') : `<div style="color:var(--text3);font-size:12px;padding:6px 0">${tr.wlEmpty}</div>`;
     el.innerHTML = `
+    ${this._regimeBox()}
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
       <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px">
         <div style="min-width:0">
           <div style="font-size:12px;font-weight:700">${tr.wlTitle}</div>
           <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${tr.wlSub}</div>
         </div>
-        <div style="display:flex;gap:5px;flex-shrink:0">
+        <div style="display:flex;gap:5px;flex-shrink:0;align-items:center">
+          <button onclick="window._tj.openFA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn">🔬 Cơ bản</button>
           <button onclick="window._tj.pushWatchlist()" title="${tr.wlPushTitle}" style="background:var(--accent);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--btn-fg);white-space:nowrap">${tr.wlPush}</button>
           <button onclick="window._tj.exportWatchlist()" style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap">${tr.wlExport}</button>
+          <button onclick="window._tj.reloadScan()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:12px;cursor:pointer;color:var(--text2)" title="Nạp lại công tắc thị trường + số liệu watchlist">⟳</button>
         </div>
       </div>
       <div style="padding:12px 14px">
@@ -1960,17 +1983,16 @@ class Component extends DCLogic {
         <div>${rows}</div>
         <div style="font-size:9.5px;color:var(--text3);margin-top:8px;line-height:1.5">${tr.wlHint}</div>
       </div>
-    </div>
-    <div id="wlScanBox"></div>`;
-    this._loadScanResults();
+    </div>`;
+    this._loadRegimeData();
   }
 
-  // Thị trường hiển thị ở bảng scan. Bộ lọc Mỹ tạm gác (pháp lý chưa cho chuyển tiền
-  // ra nước ngoài) — code vẫn còn nguyên, mở lại bằng cách đổi thành ['VN','US'].
+  // Bộ lọc Mỹ tạm gác (pháp lý chưa cho chuyển tiền ra nước ngoài) — code vẫn còn
+  // nguyên, mở lại bằng cách đổi thành ['VN','US'].
   // Công tắc thị trường — đổi MỘT dòng này là bật lại toàn bộ phần Mỹ:
-  //   ['US','VN'] = giữ cả hai, hiện nút chuyển · ['US'] = chỉ Mỹ
-  // Nó tự kéo theo: nút chuyển thị trường, _faList() chọn _FA_US, watchlist
-  // đóng dấu cc:'USD'. Chi tiết + việc còn thiếu: automation/US-DORMANT.md
+  //   ['US','VN'] = giữ cả hai · ['US'] = chỉ Mỹ
+  // Nó tự kéo theo: _faList() chọn _FA_US, watchlist đóng dấu cc:'USD'.
+  // Chi tiết + việc còn thiếu: automation/US-DORMANT.md
   SCAN_MARKETS = ['VN'];
 
   _scanMkt() {
@@ -1984,36 +2006,7 @@ class Component extends DCLogic {
     if (this._scanMarket === m) return;
     this._scanMarket = m;
     localStorage.setItem('tj_scan_market', m);
-    this._scanNoteEdit = null; this._scanShowHidden = false;
-    this._loadScanResults();
-  }
-
-  toggleScanTrend = () => { this._scanOpenTrend = !this._scanOpenTrend; this._loadScanResults(); }
-
-  reloadScan = () => { this._scanCache = {}; this._scanData = undefined; this._loadScanResults(); }
-
-  pickScan = (sym, rs) => {
-    const si = document.getElementById('wlSym'), ni = document.getElementById('wlNote'), pi = document.getElementById('wlPivot');
-    if (si) { si.value = sym; si.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    if (ni && !ni.value) ni.value = 'RS ' + rs + ' · scan ' + this._today();
-    if (pi) pi.focus();
-    this._scanMark(sym, { s: String(this._scanData?.scanned_at || '') });
-  }
-
-  // Mã VN: pivot đã tính sẵn trong scan → điền thẳng làm điểm mua, stop −6%.
-  // −6% thay cho −10% trước đây, theo backtest_vn_params.py (HOSE 2018-2026, 8 vị thế,
-  // thoát khi thủng MA50): stop 6% cho CAGR 10,1% / sụt giảm tối đa −19,1%, so với
-  // stop 10% chỉ 9,4% / −20,4%. Siết tiếp xuống 4% thì hỏng hẳn (CAGR 6,0%) — cắt
-  // đúng lúc nền còn rung. Chạy lại script đó nếu muốn kiểm chứng con số này.
-  pickScanVN = (sym, pivot) => {
-    const si = document.getElementById('wlSym'), ni = document.getElementById('wlNote'),
-          pi = document.getElementById('wlPivot'), st = document.getElementById('wlStop');
-    if (si) { si.value = sym; si.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    if (pi && pivot > 0) pi.value = pivot;
-    if (st && pivot > 0 && !st.value) st.value = Math.round(pivot * 0.94);
-    if (ni && !ni.value) ni.value = 'VCP · scan ' + this._today();
-    if (pi) pi.focus();
-    this._scanMark(sym, { s: String(this._scanData?.scanned_at || '') });
+    this._renderWatchlist();
   }
 
   // ══ BẢNG ĐỌC YẾU TỐ CƠ BẢN (SEPA) ══
@@ -2264,14 +2257,27 @@ class Component extends DCLogic {
     [...new Set(this._faList().map(s => s.u(t)))].forEach((url, i) =>
       setTimeout(() => window.open(url, '_blank', 'noopener'), i * 260));
   }
+  // Kết quả đọc cơ bản ghi thẳng vào ghi chú watchlist. Trước đây nó ghi vào ghi chú
+  // của bảng scan — bảng đó đã gỡ, và watchlist mới là chỗ đúng: nó tồn tại lâu dài
+  // và đi cùng mã sang tận lúc ghi lệnh, còn ghi chú scan thì hết hạn theo phiên scan.
   faToNote = () => {
     const sym = this._faSym; if (!sym) return;
     const st = (this._faGet()[sym]) || {};
     const ok = this._faList().filter(s => st[s.k] === 1).length;
     const bad = this._faList().filter(s => st[s.k] === -1).map(s => s.k);
     const txt = `CB ${ok}/${this._faList().length} đạt${bad.length ? ' · hỏng: ' + bad.join(',') : ''}`;
-    this._scanMark(sym, { n: txt, t: Date.now() });
-    this._toast('Đã ghi vào ghi chú scan ' + sym);
+    const i = this.state.watchlist.findIndex(w => String(w.symbol || '').toUpperCase() === sym);
+    if (i < 0) {
+      const el = document.getElementById('wlNote');
+      if (el) el.value = txt;
+      this._toast(sym + ' chưa có trong watchlist — đã điền sẵn vào ô ghi chú');
+      return;
+    }
+    const watchlist = this.state.watchlist.map((w, x) => x === i
+      ? Object.assign({}, w, { note: [String(w.note || '').replace(/CB \d+\/\d+ đạt[^·]*(· hỏng: [^·]*)?/, '').trim(), txt].filter(Boolean).join(' · ') })
+      : w);
+    this.setState({ watchlist }, () => { this._persistWl(); this._renderWatchlist(); });
+    this._toast('Đã ghi vào ghi chú watchlist ' + sym);
   }
 
   _renderFA() {
@@ -2331,56 +2337,36 @@ class Component extends DCLogic {
     if (i && document.activeElement !== i && !t) i.focus();
   }
 
-  // ── Đánh dấu đã xem / ẩn / ghi chú cho từng mã scan (lưu localStorage, không đụng dữ liệu scan) ──
-  _scanMkGet() {
-    if (!this._scanMk) { try { this._scanMk = JSON.parse(localStorage.getItem('tj_scanmarks_v1') || '{}') || {}; } catch (e) { this._scanMk = {}; } }
-    return this._scanMk;
-  }
-  _scanMkSave() {
-    const cur = String(this._scanData?.scanned_at || ''), m = this._scanMkGet(), now = Date.now(), keep = {};
-    for (const k in m) {
-      const e = m[k];
-      if (e.n && now - (e.t || now) > 60 * 864e5) delete e.n; // ghi chú quá 60 ngày thì bỏ
-      if (e.n || e.s === cur || e.h === cur) keep[k] = e;      // đã xem/ẩn chỉ có giá trị với scan hiện tại
-    }
-    this._scanMk = keep;
-    localStorage.setItem('tj_scanmarks_v1', JSON.stringify(keep));
-  }
-  _scanMark(sym, patch) {
-    const m = this._scanMkGet();
-    m[sym] = Object.assign(m[sym] || {}, patch);
-    this._scanMkSave(); this._loadScanResults();
-  }
-  seenScan = (sym, force) => {
-    const cur = String(this._scanData?.scanned_at || '');
-    const seen = (this._scanMkGet()[sym] || {}).s === cur;
-    this._scanMark(sym, { s: (force || !seen) ? cur : '' });
-  }
-  hideScan = sym => {
-    const cur = String(this._scanData?.scanned_at || '');
-    const hid = (this._scanMkGet()[sym] || {}).h === cur;
-    this._scanMark(sym, { h: hid ? '' : cur });
-  }
-  showHiddenScan = () => { this._scanShowHidden = !this._scanShowHidden; this._loadScanResults(); }
-  editScanNote = sym => { this._scanNoteEdit = sym; this._loadScanResults(); }
-  saveScanNote = (sym, val) => {
-    if (sym === null) { this._scanNoteEdit = null; this._loadScanResults(); return; } // Esc: hủy
-    if (this._scanNoteEdit !== sym) return;
-    this._scanNoteEdit = null;
-    this._scanMark(sym, { n: String(val || '').trim(), t: Date.now() });
+  // ══ NẠP CÔNG TẮC TỔNG + SỐ LIỆU WATCHLIST ══
+  // Bảng scan VCP tự động đã bỏ (2026-08-07): việc CHỌN CỔ PHIẾU chuyển sang lọc
+  // bằng mắt trên TradingView — trực quan hơn, nhìn thẳng vào đồ thị. Còn lại ở đây
+  // là hai thứ TradingView không làm được:
+  //   · regime_vn.json — "được phép vào lệnh hay không". TradingView không có khái
+  //     niệm này, và nó chính là thứ chặn lệnh lúc thị trường đang xả.
+  //   · watch_stats.json — trần vị thế + cờ ⚑ đội lái cho các mã trong watchlist.
+  async _loadRegimeData() {
+    if (this._regimeCache !== undefined) return;
+    const get = async (path) => {
+      try { const r = await fetch(path, { cache: 'no-store' }); return r.ok ? await r.json() : null; }
+      catch (e) { return null; }
+    };
+    const [reg, st] = await Promise.all([
+      get('scans/regime_vn.json'), get('scans/watch_stats.json')]);
+    this._regimeCache = reg;
+    this._statsCache = st;
+    // Vẽ lại nếu tab Watch đang mở. Cổng chặn lệnh (_planWarnings) đọc thẳng
+    // _regimeCache lúc bấm Lưu nên không cần vẽ lại gì.
+    if (this.state.rightTab === 'watchlist') this._renderWatchlist();
   }
 
-  // Nạp sẵn scan VN ngay khi mở app — cổng chặn lệnh cần biết trạng thái thị trường
-  // kể cả khi người dùng chưa mở tab Watch lần nào.
-  async _preloadScanVN() {
-    this._scanCache = this._scanCache || {};
-    if (this._scanCache.VN !== undefined) return;
-    try {
-      const r = await fetch('scans/latest_vn.json', { cache: 'no-store' });
-      this._scanCache.VN = r.ok ? await r.json() : null;
-    } catch (e) { this._scanCache.VN = null; }
-    if (this.state.rightTab === 'watchlist') this._loadScanResults();
+  // Số liệu phòng thủ của một mã. Chưa chạy watch_stats.py thì trả {} — mọi chỗ
+  // dùng đều phải chịu được thiếu, không được chặn việc ghi lệnh vì lý do này.
+  _wstat(sym) {
+    return (this._statsCache && this._statsCache.stats
+            && this._statsCache.stats[String(sym || '').toUpperCase()]) || null;
   }
+
+  reloadScan = () => { this._regimeCache = undefined; this._loadRegimeData(); }
 
   // ── Công tắc tổng: VN không cho bán khống, thị trường giảm thì lựa chọn duy nhất
   //    là giữ tiền mặt. Chọn đúng thời điểm ăn đứt chọn đúng cổ phiếu ở HOSE. ──
@@ -2393,16 +2379,17 @@ class Component extends DCLogic {
     const head = on ? '🟢 ĐƯỢC PHÉP VÀO LỆNH'
       : unknown ? '🟡 CHƯA XÁC ĐỊNH ĐƯỢC TRẠNG THÁI — coi như đứng ngoài'
       : '🔴 ĐỨNG NGOÀI — KHÔNG VÀO LỆNH NÀO';
-    const breadth = r.breadth50 == null ? '' :
-      `<div style="font-size:9.5px;color:var(--text3);margin-top:3px">Độ rộng: <b style="color:var(--text2)">${this._fmt(r.breadth50, 0)}%</b> số mã trên MA50 · <b style="color:var(--text2)">${this._fmt(r.breadth200, 0)}%</b> trên MA200 <span title="Chỉ để tham khảo — độ rộng không tham gia quyết định, tránh thêm biến số chưa kiểm định">ⓘ</span></div>`;
+    // Độ rộng thị trường đã bỏ cùng lúc với bảng scan: tính nó phải quét cả sàn
+    // (~151 mã, 8 phút gọi API) trong khi nó vốn được ghi rõ là "chỉ để tham khảo,
+    // không tham gia quyết định". Trả 8 phút lấy một dòng chữ không dùng đến.
     const tail = on
-      ? 'Vẫn chỉ vào lệnh ở nhóm BREAKOUT, đúng pivot, stop −6% (backtest: tốt hơn cả −8% lẫn −10%).'
-      : 'Giữ tiền mặt. Danh sách dưới đây chỉ để theo dõi nền giá — không phải tín hiệu mua.';
+      ? 'Vẫn chỉ vào lệnh đúng pivot đã đặt trong watchlist, stop −6% (backtest: tốt hơn cả −8% lẫn −10%).'
+      : 'Giữ tiền mặt. Watchlist dưới đây chỉ để theo dõi nền giá — không phải tín hiệu mua.';
+    const at = d.checked_at ? `<span style="color:var(--text3)"> · cập nhật ${esc(d.checked_at)}</span>` : '';
     return `<div style="background:${bg};border:1px solid ${col};border-radius:9px;padding:8px 11px;margin-bottom:8px;line-height:1.5"
         title="Quy tắc: VN-Index &gt; MA50 VÀ MA50 &gt; MA200. Không đạt cả hai thì đứng ngoài.">
       <div style="font-size:11px;font-weight:700;color:${col}">${head}</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:2px">${esc(r.reason || '')}</div>
-      ${breadth}
+      <div style="font-size:10px;color:var(--text2);margin-top:2px">${esc(r.reason || '')}${at}</div>
       ${this._regimeEarly(r, esc)}
       <div style="font-size:9.5px;color:var(--text3);margin-top:4px">${tail}</div>
     </div>`;
@@ -2437,190 +2424,23 @@ class Component extends DCLogic {
     return `<div style="font-size:9.5px;color:var(--text3);margin-top:3px">${bits.join(' · ')}</div>`;
   }
 
-  // ── Bảng scan VN: nhóm theo mẫu hình VCP (không dùng RS — backtest HOSE cho alpha ≈ 0) ──
-  _scanBodyVN(d, esc) {
-    const tr = this._tr();
-    const base = d.chart_base || 'https://www.tradingview.com/chart/';
-    const marks = this._scanMkGet(), cur = String(d.scanned_at || '');
-    const act = (fn, icon, title, style) => `<span onclick="${fn}" title="${title}" style="cursor:pointer;font-size:11px;line-height:1;padding:2px 4px;border-radius:6px;${style}">${icon}</span>`;
-    // Thị trường đóng thì "vượt pivot" chỉ là dữ kiện, không phải tín hiệu vào lệnh
-    const gateOn = d.entries_allowed === true;
-    const GROUPS = [
-      ['BREAKOUT',
-       gateOn ? '🎯 BREAKOUT HÔM NAY — vượt pivot kèm khối lượng ≥1,5×'
-              : '🚫 VƯỢT PIVOT HÔM NAY — chỉ ghi nhận, thị trường đang đứng ngoài',
-       gateOn ? 'var(--green)' : 'var(--text3)',
-       gateOn ? 'Tín hiệu vào lệnh đã qua kiểm định: backtest HOSE 2018-2026 cho CAGR +10,4%, sụt giảm tối đa −15,9%, thắng 38,6% với tỷ lệ lãi/lỗ 3,75:1.'
-              : 'Breakout khi chỉ số dưới MA50 có kỳ vọng âm — cả sàn chạy theo một nhịp. Ghi nhận để theo dõi, không vào lệnh.'],
-      ['BO_FAR', `⛔ VƯỢT PIVOT NHƯNG ĐÃ XA > ${this._fmt(d.chase || 5, 0)}% — mua đuổi`, 'var(--red)',
-       `Đủ mọi điều kiện breakout nhưng giá đã đi quá ${this._fmt(d.chase || 5, 0)}% trên điểm mua. Minervini cấm mua ở đây: stop buộc phải kéo rộng ra, tỷ lệ lãi/lỗ hỏng ngay từ lúc vào. Ở VN chuyện này rất hay xảy ra vì biên độ trần ±7% đẩy giá qua pivot chỉ trong một phiên. Bỏ qua, chờ nền sau.`],
-      ['VCP3', '🔵 VCP 3 NÉN — đang nén, chờ phá vỡ', 'var(--accent)',
-       'Ba lần nén biên độ nhỏ dần + khối lượng cạn. Đây là danh sách theo dõi chính: canh phiên vượt pivot.'],
-      ['VCP2', '🟡 VCP 2 NÉN — chưa đạt kiểm định, chỉ tham khảo', 'var(--amber)',
-       'Nới lỏng còn 2 lần nén thì backtest cho CAGR −0,78%. Không phải tín hiệu mua — chỉ để theo dõi xem có nén thêm lần nữa không.'],
-      ['TREND', '📈 XU HƯỚNG TĂNG — đạt đủ 8/8 Trend Template', 'var(--text2)',
-       'Đạt trọn bộ tiêu chí Trend Template của Minervini (Ch.5): giá trên MA150 và MA200, MA50 > MA150 > MA200, MA200 dốc lên, cách đáy 52 tuần ≥25%, trong vòng 25% đỉnh 52 tuần. Chưa có nền VCP nên chưa phải điểm mua — đây là bể chứa chất lượng cao.'],
-      ['POOL', '👁 TRÊN MA50/MA200 — chưa đủ Trend Template', 'var(--text3)',
-       'Vượt MA50 và MA200 nhưng cấu trúc trung bình động CHƯA xếp đúng chiều tăng. Trước đây nhóm này bị gộp chung và gọi nhầm là "xu hướng tăng" — VNM lọt vào đây dù MA50 nằm dưới MA200 và MA200 vẫn dốc xuống. Xem số N/8 trên từng mã để biết còn thiếu gì.'],
-    ];
-    let out = this._regimeBanner(d, esc);
-    for (const [tier, title, color, why] of GROUPS) {
-      const all = d.results.filter(r => r.tier === tier);
-      if (!all.length) {
-        if (tier === 'BREAKOUT') out += `<div style="font-size:10px;color:var(--text3);padding:8px 10px;margin:2px 0 4px;background:var(--bg);border-radius:8px;line-height:1.5" title="${esc(why)}"><b style="color:var(--text2)">🎯 Không có breakout hôm nay.</b> Bình thường — backtest chỉ ra ~14 lệnh/năm. Không có thì không vào lệnh.</div>`;
-        continue;
-      }
-      // Nhóm "xu hướng tăng" chỉ là bể chờ, không phải tín hiệu → thu gọn mặc định
-      const foldable = tier === 'TREND';
-      const open = !foldable || this._scanOpenTrend;
-      const rows = (open ? all : []).filter(r => this._scanShowHidden || (marks[r.symbol] || {}).h !== cur);
-      out += `<div ${foldable ? `onclick="window._tj.toggleScanTrend()" style="cursor:pointer;` : 'style="'}font-size:9.5px;font-weight:700;color:${color};letter-spacing:.04em;margin:10px 0 2px;padding-top:6px;border-top:1px solid var(--border)" title="${esc(why)}">${foldable ? (open ? '▾ ' : '▸ ') : ''}${title}: ${all.length} mã</div>`;
-      out += rows.map(r => {
-        const sym = esc(r.symbol), mk = marks[r.symbol] || {};
-        const seen = mk.s === cur, hid = mk.h === cur, editing = this._scanNoteEdit === r.symbol;
-        const noteLine = editing
-          ? `<input id="wlScanNoteInp" value="${esc(mk.n)}" placeholder="${tr.wlScanNotePh}" onkeydown="if(event.key==='Enter')this.blur();else if(event.key==='Escape')window._tj.saveScanNote(null)" onblur="window._tj.saveScanNote('${sym}',this.value)" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--accent);border-radius:6px;padding:4px 7px;font-size:11px;color:var(--text)">`
-          : (mk.n ? `<div onclick="window._tj.editScanNote('${sym}')" title="${tr.wlScanNoteT}" style="cursor:pointer;font-size:10.5px;color:var(--amber);margin-top:2px;line-height:1.4">📝 ${esc(mk.n)}</div>` : '');
-        const tp = r.to_pivot;
-        const tpTxt = tp == null ? '' : (tp <= 0 ? ` · trên pivot ${this._fmt(-tp, 1)}%` : ` · còn ${this._fmt(tp, 1)}%`);
-        const tpCol = tp == null ? 'var(--text3)' : (tp <= 0 ? 'var(--green)' : (tp <= 8 ? 'var(--amber)' : 'var(--text3)'));
-        const flags = [
-          r.lead ? ['💪', `Khỏe hơn thị trường: VN-Index đang dưới MA50 mà mã này vẫn bám sát đỉnh 52T (cách ${this._fmt(r.off_high, 0)}%) — ứng viên dẫn dắt chu kỳ tăng sau. Minervini: leader lộ diện ngay trong pha điều chỉnh`] : null,
-          r.young ? ['✨', `Niêm yết ${r.age} năm — nằm trong vùng 2-8 năm. Đây là phát hiện mạnh nhất của backtest HOSE+HNX 2018-2026: lọc riêng vùng này cho tỉ lệ thắng 57,4% và sụt giảm tối đa chỉ −8,3%, so với mã trên 8 năm chỉ thắng 32,1% và sụt giảm −27,2%. Đúng tiêu chí "công ty non trẻ" của Minervini (Ch.6).\n⚠️ Chỉ 47 lệnh trong 8 năm — mẫu nhỏ, và 2021 chiếm 15 lệnh. Là điểm cộng mạnh, chưa phải luật`] : null,
-          r.tooyoung ? ['⏳', `Mới niêm yết ${r.age} năm — CHƯA ĐỦ 2 NĂM. Backtest cho nhóm này thắng chỉ 16,7% và CAGR âm: chưa đủ lịch sử giá để tạo nền tử tế, và cổ phiếu mới lên sàn ở VN hay bị làm giá. Chờ thêm`] : null,
-          r.ceil ? ['🔒', `Hôm nay ĐÓNG CỬA GIÁ TRẦN — trắng bên bán, gần như không khớp được lệnh. Phiên sau thường gap-up và điểm vào đã lệch xa pivot: đó là mua đuổi, không phải breakout`] : null,
-          r.manip ? ['⚑', `${r.ceil_base} phiên trần trong nền 60 phiên. Nền VCP đẹp kèm nhiều phiên trần là vân tay quen thuộc của đội lái (giao dịch tự chéo qua tài khoản vệ tinh để vẽ đồ thị). Soi kỹ trước khi tin`] : null,
-          r.lowliq ? ['💧', `GTGD ${this._fmt(r.adtv, 1)} tỷ${r.vol20 != null ? ` · KL TB20 ${this._fmt(r.vol20 / 1000, 0)}k cp` : ''} — đủ để quan sát, CHƯA đủ chuẩn vào lệnh (10 tỷ và 100k cp). Sổ lệnh mỏng, trượt giá lớn`] : null,
-          r.near ? ['🔔', `Cách điểm mua ${this._fmt(tp, 1)}% — sắp tới vùng vào lệnh`] : null,
-          r.extended ? ['⚠️', `Đã căng: trên MA50 ${this._fmt(r.ext50, 0)}%, trên MA200 ${this._fmt(r.ext200, 0)}% — dễ mua đuổi`] : null,
-          r.off_ath <= -40 ? ['🕳', `Cách đỉnh mọi thời đại ${this._fmt(r.off_ath, 0)}% — cổ phiếu bị lãng quên, Minervini khuyên tránh (Ch.6)`] : null,
-        ].filter(Boolean);
-        const tip = `${esc(r.desc)} — ${esc(r.sector)}\nBiên độ nén 20 phiên gần nhất: ${this._fmt(r.tight, 1)}%\nKhối lượng nén còn ${this._fmt((r.dry || 0) * 100, 0)}% so với đầu nền\nGTGD TB20: ${this._fmt(r.adtv, 0)} tỷ · cách đỉnh 52T ${this._fmt(r.off_high, 1)}% · trên đáy 52T ${this._fmt(r.above_low, 0)}%`;
-        // 2 dòng: dòng 1 mã + giá + nút, dòng 2 số liệu chạy hết bề ngang (mobile 430px không đủ cho 1 dòng)
-        return `<div style="padding:6px 0;border-bottom:1px dashed var(--border)${seen && !editing ? ';opacity:.5' : ''}">
-          <div style="display:flex;align-items:center;gap:8px">
-            <a href="${base}?symbol=${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener" onclick="window._tj.seenScan('${sym}',1)" title="${tip}" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;color:var(--accent);text-decoration:none;flex-shrink:0">${sym} ↗</a>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${this._fmt(r.close / 1000, 2)}<span style="color:${r.change >= 0 ? 'var(--green)' : 'var(--red)'};font-size:9.5px"> ${r.change >= 0 ? '+' : ''}${this._fmt(r.change, 1)}%</span>${flags.length ? `<span style="margin-left:5px" title="${esc(flags.map(f => f[0] + ' ' + f[1]).join(' · '))}">${flags.map(f => f[0]).join('')}</span>` : ''}</span>
-            <span style="display:flex;gap:3px;align-items:center;flex-shrink:0">
-              ${act(`window._tj.seenScan('${sym}')`, seen ? '✓' : '◌', tr.wlScanSeenT, `font-weight:700;color:${seen ? 'var(--green)' : 'var(--text3)'}`)}
-              ${act(`window._tj.openFA('${sym}')`, '🔬', 'Đọc yếu tố cơ bản (nguồn VN)', 'color:var(--text3)')}
-              ${act(`window._tj.editScanNote('${sym}')`, '✎', tr.wlScanNoteT, `color:${mk.n ? 'var(--amber)' : 'var(--text3)'}`)}
-              ${act(`window._tj.pickScanVN('${sym}',${+r.pivot || 0})`, '＋', 'Thêm vào watchlist với pivot làm điểm mua', 'color:var(--accent);font-weight:700;border:1px solid var(--accent);padding:1px 6px')}
-              ${act(`window._tj.hideScan('${sym}')`, hid ? '↩' : '✕', hid ? tr.wlScanUnhideT : tr.wlScanHideT, 'color:var(--text3)')}
-            </span>
-          </div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px;line-height:1.5">
-            ${r.tt == null ? '' : `<span title="Đạt ${r.tt}/8 tiêu chí Trend Template của Minervini (Ch.5).${(r.tt_fail || []).length ? '\n\nCòn thiếu:\n· ' + r.tt_fail.join('\n· ') : ' Đạt trọn bộ.'}\n\n⚠️ Giá trong scan đã ĐIỀU CHỈNH cổ tức, biểu đồ TradingView của bạn thì không — nên đường trung bình động hai bên sẽ lệch nhau ở mã trả cổ tức lớn. Luôn nhìn lại đồ thị trước khi vào lệnh." style="color:${r.tt === 8 ? 'var(--green)' : r.tt >= 6 ? 'var(--amber)' : 'var(--red)'};font-weight:700">${r.tt}/8</span> · `}
-            <span title="Biên độ lần nén cuối — càng chặt càng tốt">nén <b style="color:var(--text2)">${this._fmt(r.tight, 1)}%</b></span>
-            · <span title="Giá trị giao dịch trung bình 20 phiên${r.vol20 != null ? ` · khối lượng TB20: ${this._fmt(r.vol20, 0)} cp/phiên` : ''}">${this._fmt(r.adtv, 0)} tỷ</span>
-            ${r.max_pos && (tier === 'BREAKOUT' || tier === 'VCP3') ? `· <span title="Trần vị thế = ${this._fmt(d.max_pos_pct || 2, 0)}% giá trị giao dịch TB20. Mua nhiều hơn thế thì chính bạn là người đẩy giá lên lúc vào, và là người đạp giá xuống lúc cắt lỗ — ở HOSE sổ lệnh mỏng nên đây là rủi ro thật, không phải lý thuyết.">tối đa <b style="color:var(--text2)">${this._posCap(r.max_pos)}</b></span>` : ''}
-            · <span title="Điểm mua = đỉnh đóng cửa 60 phiên = ${this._fmt(r.pivot, 0)} đ">pivot <b style="color:var(--text2)">${this._fmt(r.pivot / 1000, 2)}</b></span>
-            <b style="color:${tpCol}">${tpTxt}</b>
-          </div>${noteLine}
-        </div>`;
-      }).join('');
+  // ── Hộp công tắc tổng trong tab Watch ──
+  // Trước đây chỗ này là bảng scan VCP xếp theo tier (BREAKOUT / VCP3 / VCP2 /
+  // TREND / POOL). Đã gỡ 2026-08-07: chọn cổ phiếu bằng mắt trên TradingView trực
+  // quan hơn hẳn, còn cái bảng thì chỉ lặp lại thứ đồ thị đã nói rõ hơn.
+  // Giữ lại đúng công tắc tổng, vì đó là câu TradingView không nói được.
+  _regimeBox() {
+    const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const d = this._regimeCache;
+    if (d === undefined) return '';                       // chưa nạp xong
+    if (!d || !d.regime) {
+      return `<div style="background:var(--amber-soft);border:1px solid var(--amber);border-radius:9px;padding:8px 11px;margin-bottom:8px;font-size:10px;color:var(--text2);line-height:1.5">
+        🟡 Chưa có dữ liệu công tắc thị trường — coi như <b>đứng ngoài</b>.
+        Chạy: <code>python automation/regime.py</code></div>`;
     }
-    const nHid = d.results.filter(r => (marks[r.symbol] || {}).h === cur).length;
-    const hidTog = nHid ? ` · <span onclick="window._tj.showHiddenScan()" style="cursor:pointer;color:var(--accent);font-weight:700">${this._scanShowHidden ? '▾' : '▸'} ${nHid} ${tr.wlScanHidden}</span>` : '';
-    out += `<div style="font-size:9px;color:var(--text3);margin-top:8px;line-height:1.6">💪 khỏe hơn thị trường (dẫn dắt?) · ✨ niêm yết 2-8 năm (vùng tốt nhất) · ⏳ chưa đủ 2 năm · 🔒 đóng cửa giá trần, không khớp được · ⚑ nhiều phiên trần trong nền, nghi đội lái · 💧 chưa đủ chuẩn thanh khoản, chỉ quan sát · 🔔 sắp tới điểm mua · ⚠️ đã căng · 🕳 dưới ATH −40%<br>
-      <b>N/8</b> = số tiêu chí Trend Template đạt được — di chuột lên để xem còn thiếu gì.<br>
-      ⚠️ <b>Giá trong scan đã điều chỉnh cổ tức, biểu đồ TradingView thì không.</b> Với mã trả cổ tức lớn (VNM, FPT…) đường MA hai bên sẽ lệch — scan có thể báo "trên MA200" trong khi đồ thị của bạn cho thấy ngược lại. Mọi nguồn dữ liệu VN đều trả giá đã điều chỉnh, không đổi được. <b>Luôn mở đồ thị xác nhận trước khi vào lệnh.</b><br>
-      Giá đơn vị nghìn đồng. Không dùng RS Rating: backtest HOSE 2018-2026 cho thấy RS <b>không</b> dự báo được ở VN (siết RS≥90 cho alpha âm). ${tr.wlScanSeenHint}${hidTog}</div>`;
-    return out;
+    return this._regimeBanner(d, esc);
   }
 
-  async _loadScanResults() {
-    if (!document.getElementById('wlScanBox')) return;
-    const tr = this._tr();
-    const mkt = this._scanMkt();
-    this._scanCache = this._scanCache || {};
-    if (this._scanCache[mkt] === undefined) {
-      try {
-        const r = await fetch(mkt === 'VN' ? 'scans/latest_vn.json' : 'scans/latest.json', { cache: 'no-store' });
-        this._scanCache[mkt] = r.ok ? await r.json() : null;
-      } catch (e) { this._scanCache[mkt] = null; }
-    }
-    const box = document.getElementById('wlScanBox'); if (!box) return;
-    const d = this._scanData = this._scanCache[mkt];
-    const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    const ok = d && Array.isArray(d.results) && d.results.length;
-    const dropTxt = ok && d.dropped_ath ? ` · <span title="Nhóm “cựu dẫn dắt / bị lãng quên” — cách đỉnh mọi thời đại quá xa, Minervini khuyên tránh hoàn toàn (Ch.6). Chỉ giữ lại nếu đạt SEPA/EARLY + qua kiểm tra turnaround.">đã loại ${d.dropped_ath} mã dưới ATH −40%</span>` : '';
-    const isVN = mkt === 'VN';
-    const sub = !ok ? (isVN ? tr.wlScanNoneVN : tr.wlScanSub)
-      : isVN
-        ? `${tr.wlScanAt} <b>${esc(d.scanned_at)}</b> · phiên <b>${esc(d.bar_date)}</b> · ${d.total}/${d.universe} mã quan sát (≥ ${d.obs_liq || d.liq_min} tỷ)${d.obs_liq && d.obs_liq < d.liq_min ? ` · vào lệnh cần ≥ ${d.liq_min} tỷ` : ''}`
-        : `${tr.wlScanAt} <b>${esc(d.scanned_at)}</b> · ${d.total} ${tr.wlScanPass} (RS ≥ ${d.rs_min})${dropTxt}`;
-    let body;
-    if (!ok) {
-      body = `<div style="color:var(--text3);font-size:11.5px;padding:6px 0;line-height:1.5">${isVN ? tr.wlScanNoneVN : tr.wlScanNone}</div>`;
-    } else if (isVN) {
-      body = this._scanBodyVN(d, esc);
-    } else {
-      const base = d.chart_base || 'https://www.tradingview.com/chart/';
-      const badges = { SEPA: '🏆', EARLY: '🚀', IPO: '🌱' };
-      const marks = this._scanMkGet(), cur = String(d.scanned_at || '');
-      // 🎯 nền sớm là nhóm THÊM vào đầu bảng — phải nới slice để nhóm cũ (nền 3-4 mạnh) không bị đẩy văng
-      const nEarly = d.results.filter(r => r.early2).length;
-      const list = d.results.slice(0, 40 + nEarly);
-      const nHid = list.filter(r => (marks[r.symbol] || {}).h === cur).length;
-      const shown = list.filter(r => this._scanShowHidden || (marks[r.symbol] || {}).h !== cur);
-      const act = (fn, icon, title, style) => `<span onclick="${fn}" title="${title}" style="cursor:pointer;font-size:11px;line-height:1;padding:2px 4px;border-radius:6px;${style}">${icon}</span>`;
-      const firstRest = shown.findIndex(r => !r.early2);
-      body = shown.map((r, idx) => {
-        const sym = esc(r.symbol), mk = marks[r.symbol] || {};
-        const sep = idx === firstRest && firstRest > 0
-          ? `<div style="font-size:9.5px;font-weight:700;color:var(--text3);letter-spacing:.04em;margin:10px 0 2px;padding-top:8px;border-top:1px solid var(--border)">CÒN LẠI — XẾP THEO TIER · RS (NỀN 2-4)</div>` : '';
-        const seen = mk.s === cur, hid = mk.h === cur, editing = this._scanNoteEdit === r.symbol;
-        const noteLine = editing
-          ? `<input id="wlScanNoteInp" value="${esc(mk.n)}" placeholder="${tr.wlScanNotePh}" onkeydown="if(event.key==='Enter')this.blur();else if(event.key==='Escape')window._tj.saveScanNote(null)" onblur="window._tj.saveScanNote('${sym}',this.value)" style="width:100%;margin-top:3px;background:var(--bg);border:1px solid var(--accent);border-radius:6px;padding:4px 7px;font-size:11px;color:var(--text)">`
-          : (mk.n ? `<div onclick="window._tj.editScanNote('${sym}')" title="${tr.wlScanNoteT}" style="cursor:pointer;font-size:10.5px;color:var(--amber);margin-top:2px;line-height:1.4">📝 ${esc(mk.n)}</div>` : '');
-        // Nhãn phụ (Ch.7-8): 🔥 Mật Mã 33, ⚡ bất ngờ EPS, 🔄 turnaround đã xác nhận
-        const qBadge = [
-          r.star ? ['⭐', `RS ${r.rs} ≥ 85 — vùng RS của siêu cổ phiếu tại điểm phá vỡ (TB 87)`] : null,
-          r.code33 ? ['🔥', 'Mật Mã 33 — doanh số tăng tốc + lợi nhuận tăng tốc + biên lợi nhuận nở'] : null,
-          r.surprise ? ['⚡', `Bất ngờ lợi nhuận quý gần nhất +${this._fmt(r.eps_surp, 1)}% so với ước tính`] : null,
-          r.turn ? ['🔄', 'Dưới đỉnh mọi thời đại nhưng đã qua kiểm tra turnaround: lợi nhuận quý dương, EPS 12 tháng tăng, biên lợi nhuận phục hồi'] : null,
-        ].filter(Boolean);
-        return `${idx === 0 && r.early2 ? `<div style="font-size:9.5px;font-weight:700;color:var(--accent);letter-spacing:.04em;margin:2px 0 2px" title="Nền 1-2 của Giai đoạn 2 là cơ hội mua tốt nhất (Ch.5). Xếp theo thứ tự điểm phá vỡ: mã sát đỉnh 52 tuần nhất đứng trước (Ch.9).">🎯 NỀN 1-2 — SÁT ĐIỂM PHÁ VỠ, CHƯA CĂNG SO VỚI MA200</div>` : ''}${sep}
-        <div style="padding:5px 0;border-bottom:1px dashed var(--border)${seen && !editing ? ';opacity:.5' : ''}">
-          <div style="display:grid;grid-template-columns:76px 30px 1.2fr 1fr auto;gap:6px;align-items:center">
-            <a href="${base}?symbol=${encodeURIComponent(r.ticker)}" target="_blank" rel="noopener" onclick="window._tj.seenScan('${sym}',1)" title="${esc(r.desc)} — ${esc(r.sector)}${r.tier ? ' — ' + esc(r.tier) : ''}${r.ext200 != null ? ` — trên MA200 ${this._fmt(r.ext200, 0)}%, trên đáy 52W ${this._fmt(r.above_low, 0)}%` : ''}${r.off_ath != null ? `, cách đỉnh mọi thời đại ${this._fmt(r.off_ath, 0)}%` : ''}${r.early2 ? ' — 🎯 nền 1-2, sát điểm phá vỡ' : ''}${r.extended ? ' — ⚠️ đã căng, chờ hồi về MA50' : ''}" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${badges[r.tier] ? badges[r.tier] + ' ' : ''}${sym} ↗</a>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${r.star ? 'var(--green)' : 'var(--text2)'}" title="RS Rating (IBD 40/20/20/20) — tối thiểu 70, lý tưởng ≥ 90">${r.rs}</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px">$${this._fmt(r.close, 2)} <span style="color:${r.change >= 0 ? 'var(--green)' : 'var(--red)'}">${r.change >= 0 ? '+' : ''}${this._fmt(r.change, 1)}%</span></span>
-            <span style="font-size:10px;color:var(--text3);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tr.wlOffHigh} ${this._fmt(r.off_high, 1)}%${qBadge.length || r.extended ? `<span style="font-size:9px;margin-left:3px" title="${esc(qBadge.map(b => b[0] + ' ' + b[1]).concat(r.extended ? ['⚠️ Đã căng — giá xa MA50/MA200, dễ mua đuổi'] : []).join(' · '))}">${qBadge.map(b => b[0]).join('')}${r.extended ? '⚠️' : ''}</span>` : ''}</span>
-            <span style="display:flex;gap:3px;align-items:center;flex-shrink:0">
-              ${act(`window._tj.seenScan('${sym}')`, seen ? '✓' : '◌', tr.wlScanSeenT, `font-weight:700;color:${seen ? 'var(--green)' : 'var(--text3)'}`)}
-              ${act(`window._tj.openFA('${sym}')`, '🔬', 'Đọc yếu tố cơ bản', 'color:var(--text3)')}
-              ${act(`window._tj.editScanNote('${sym}')`, '✎', tr.wlScanNoteT, `color:${mk.n ? 'var(--amber)' : 'var(--text3)'}`)}
-              ${act(`window._tj.pickScan('${sym}',${+r.rs || 0})`, '＋', tr.wlToastAdd, 'color:var(--accent);font-weight:700;border:1px solid var(--accent);padding:1px 6px')}
-              ${act(`window._tj.hideScan('${sym}')`, hid ? '↩' : '✕', hid ? tr.wlScanUnhideT : tr.wlScanHideT, 'color:var(--text3)')}
-            </span>
-          </div>
-          ${noteLine}
-        </div>`;
-      }).join('');
-      const hidTog = nHid ? ` · <span onclick="window._tj.showHiddenScan()" style="cursor:pointer;color:var(--accent);font-weight:700">${this._scanShowHidden ? '▾' : '▸'} ${nHid} ${tr.wlScanHidden}</span>` : '';
-      body += `<div style="font-size:9px;color:var(--text3);margin-top:6px;line-height:1.6">🏆 SEPA · 🚀 Early Stage · 🌱 IPO ≤5Y · 📈 Trend<br>⭐ RS≥85 · 🔥 Mật Mã 33 · ⚡ bất ngờ EPS ≥5% · 🔄 turnaround · ⚠️ đã căng · ${tr.wlScanSeenHint}${hidTog}</div>`;
-    }
-    box.innerHTML = `
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
-      <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px">
-        <div style="min-width:0">
-          <div style="font-size:12px;font-weight:700">${isVN ? '🇻🇳 Scan VCP — cổ phiếu Việt Nam' : tr.wlScanTitle}</div>
-          <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${sub}</div>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
-          ${this.SCAN_MARKETS.length < 2 ? '' : `<span style="display:inline-flex;border:1px solid var(--border);border-radius:7px;overflow:hidden">
-            ${this.SCAN_MARKETS.map(m => `<button onclick="window._tj.setScanMarket('${m}')" title="${m === 'VN' ? 'HOSE — mẫu hình VCP (đã backtest 2018-2026)' : 'Mỹ — Trend Template + cơ bản'}" style="background:${mkt === m ? 'var(--accent)' : 'transparent'};color:${mkt === m ? '#fff' : 'var(--text3)'};border:0;padding:5px 9px;font-size:10.5px;font-weight:700;cursor:pointer">${m}</button>`).join('')}
-          </span>`}
-          <button onclick="window._tj.openFA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent)" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn">🔬 Cơ bản</button>
-          <button onclick="window._tj.reloadScan()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;color:var(--text2)" title="Reload">⟳</button>
-        </div>
-      </div>
-      <div style="padding:6px 14px 12px">${body}</div>
-    </div>`;
-    if (this._scanNoteEdit) { const i = document.getElementById('wlScanNoteInp'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
-  }
 
   _renderNotes() {
     const el = document.getElementById('noteList'); if (!el) return;
@@ -3212,7 +3032,7 @@ class Component extends DCLogic {
     this._setupPWA();
     this._applyTheme();
     this._loadFx();
-    this._preloadScanVN();
+    this._loadRegimeData();   // cổng chặn lệnh cần biết trạng thái thị trường ngay từ đầu
     setTimeout(() => { if (this._backupOverdue()) this._toast(this._tr().bkRemind, 'var(--amber)'); }, 1500);
     this._fillSelects();
     this._setupPreviewListeners();
@@ -3270,11 +3090,7 @@ class Component extends DCLogic {
       delDep: i=>this.delDep(i), dupDep: i=>this.dupDep(i),
       delNote: (d,i)=>this.delNote(d,i),
       addWatch: ()=>this.addWatch(), delWatch: i=>this.delWatch(i), pushWatchlist: ()=>this.pushWatchlist(), exportWatchlist: ()=>this.exportWatchlist(),
-      pickScan: (s,r)=>this.pickScan(s,r), reloadScan: ()=>this.reloadScan(),
-      pickScanVN: (s,p)=>this.pickScanVN(s,p), setScanMarket: m=>this.setScanMarket(m),
-      toggleScanTrend: ()=>this.toggleScanTrend(),
-      seenScan: (s,f)=>this.seenScan(s,f), hideScan: s=>this.hideScan(s), showHiddenScan: ()=>this.showHiddenScan(),
-      editScanNote: s=>this.editScanNote(s), saveScanNote: (s,v)=>this.saveScanNote(s,v),
+      reloadScan: ()=>this.reloadScan(), setScanMarket: m=>this.setScanMarket(m),
       openFA: s=>this.openFA(s), closeFA: ()=>this.closeFA(), setFASym: v=>this.setFASym(v),
       markFA: (k,v)=>this.markFA(k,v), openAllFA: ()=>this.openAllFA(), faToNote: ()=>this.faToNote(),
       setPeriod: p=>{ localStorage.setItem('tj_period',p); this.setState({period:p}); },

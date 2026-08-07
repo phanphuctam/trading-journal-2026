@@ -1,0 +1,36 @@
+{
+  "app": "trading-journal",
+  "market": "VN",
+  "checked_at": "2026-08-07 10:24",
+  "max_pos_pct": 2.0,
+  "ceil_manip": 4,
+  "ceil_base_n": 60,
+  "stats": {
+    "MSB": {
+      "symbol": "MSB",
+      "exchange": "HOSE",
+      "bar_date": "2026-07-31",
+      "close": 15950,
+      "adtv": 113.3,
+      "vol20": 7069460,
+      "max_pos": 2266195695,
+      "ceil": false,
+      "ceil_base": 0,
+      "manip": false,
+      "age": 5.6
+    },
+    "STB": {
+      "symbol": "STB",
+      "exchange": "HOSE",
+      "bar_date": "2026-07-31",
+      "close": 71300,
+      "adtv": 292.6,
+      "vol20": 4083695,
+      "max_pos": 5851985240,
+      "ceil": false,
+      "ceil_base": 0,
+      "manip": false,
+      "age": 20.1
+    }
+  }
+}

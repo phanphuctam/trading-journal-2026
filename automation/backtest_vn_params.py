@@ -43,7 +43,10 @@ CACHE = BASE / ".vncache"
 OUT = BASE.parent / "scans" / "backtest_vn.json"
 INDEX = "VNINDEX"
 
-# ── Cua vao lenh: sao chep y nguyen scan_vn_vcp.py, KHONG chinh ──
+# ── Cua vao lenh VCP-3. scan_vn_vcp.py da bi xoa (2026-08-07, chuyen sang loc bang
+#    mat tren TradingView) nen file nay gio la ban ghi DUY NHAT cua dinh nghia do.
+#    Giu lai vi day la bang chung: no la ly do biet VCP-3 nen an tien con RS/Trend
+#    Template thi khong. Dung chinh tham so neu khong dinh chay lai toan bo backtest. ──
 W = 20
 TIGHT3 = 0.10
 BASE_N = 60
@@ -63,7 +66,7 @@ GOC = {"cagr": 10.36, "maxdd": -15.9, "win": 38.6, "avg_win": 25.9, "avg_loss": 
 
 
 def load_meta():
-    """Bang symbol -> san, do scan_vn_vcp.py ghi ra. Khong co thi coi het la HOSE."""
+    """Bang symbol -> san (.vncache/_meta.json). Khong co thi coi het la HOSE."""
     f = CACHE / "_meta.json"
     if not f.exists():
         return {}
@@ -92,7 +95,10 @@ def load_panels(exch=None):
         d["symbol"] = f.stem
         frames.append(d)
     if not frames:
-        raise SystemExit("[!] Cache rong — chay `python scan_vn_vcp.py` truoc de tai du lieu")
+        raise SystemExit(
+            "[!] Cache .vncache rong. Backtest can OHLCV ca san, ma khong con script nao "
+            "tai ve nua (scan_vn_vcp.py da xoa). Khoi phuc bang: git show <commit>:"
+            "automation/scan_vn_vcp.py > /tmp/s.py && python /tmp/s.py --all --refresh")
     px = pd.concat(frames, ignore_index=True)
     px["time"] = pd.to_datetime(px["time"])
     px = (px[px["time"] >= START]
@@ -114,7 +120,7 @@ def load_panels(exch=None):
 
 
 def build_signals(p, liq=LIQ_MIN):
-    """Tin hieu breakout VCP-3 — dinh nghia y het scan_vn_vcp.py."""
+    """Tin hieu breakout VCP-3 — dinh nghia goc, xem chu thich o dau file."""
     close, vol = p["close"], p["volume"]
     adtv = ((close * 1000 * vol) / 1e9).rolling(20).mean()
     ma50, ma200 = close.rolling(50).mean(), close.rolling(200).mean()

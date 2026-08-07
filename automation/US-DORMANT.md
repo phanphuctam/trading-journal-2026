@@ -39,18 +39,29 @@ ngoài đứng tên mình, chưa từng về Việt Nam. Khi nào có nguồn đ
 
 ## Cách bật lại
 
-1. `app-src.html`: `SCAN_MARKETS = ['VN']` → `['US', 'VN']` (giữ cả hai, có nút chuyển)
-   hoặc `['US']`. Một dòng này tự kéo theo: nút chuyển thị trường, `_faList()` chọn
-   `_FA_US`, watchlist đóng dấu `cc: 'USD'`.
-2. `.github/workflows/trading.yml`: bỏ chú thích phần Mỹ ở cuối file —
+> ⚠️ **Việc này đã đắt hơn trước.** Ngày 2026-08-07 toàn bộ **bảng hiển thị kết quả
+> scan** trong giao diện đã bị gỡ (`_loadScanResults()`, `_scanBodyVN()`, đánh dấu
+> đã xem/ẩn/ghi chú, nút chuyển thị trường). Journal nay chỉ đọc `scans/regime_vn.json`
+> và `scans/watch_stats.json`. `scan_trend_template.py` vẫn chạy và vẫn ghi
+> `scans/latest.json`, nhưng **không còn chỗ nào hiển thị nó**.
+>
+> Bật lại phần Mỹ giờ gồm hai việc tách biệt: (a) chạy lại script, (b) **viết lại** bảng
+> hiển thị. Lấy bản cũ làm mẫu: `git show HEAD~1:app-src.html` (trước commit gỡ scan).
+
+1. `app-src.html`: `SCAN_MARKETS = ['VN']` → `['US', 'VN']` hoặc `['US']`. Dòng này nay
+   chỉ còn kéo theo `_faList()` chọn `_FA_US` và watchlist đóng dấu `cc: 'USD'` —
+   nút chuyển thị trường đã bị gỡ, phải dựng lại nếu muốn giữ cả hai.
+2. Viết lại bảng kết quả scan Mỹ trong tab Watch (xem cảnh báo trên).
+3. `.github/workflows/trading.yml`: bỏ chú thích phần Mỹ ở cuối file —
    cron thứ Bảy chạy `scan_trend_template.py --no-push` với `CHART_LAYOUT_ID: zg2TshOU`,
    thêm cron phiên Mỹ `*/30 13-21 * * 1-5` gọi `alert_watcher.py --market us`,
    `git add` thêm `scans/latest.json`.
-3. `python automation/rebuild_index.py` rồi push.
+4. `python automation/rebuild_index.py` rồi push.
 
 ## Việc CHƯA làm — công tắc tổng cho thị trường Mỹ
 
-Bản VN có công tắc tổng (`market_regime()` trong `scan_vn_vcp.py`), bản Mỹ **chưa có**.
+Bản VN có công tắc tổng (`market_regime()` trong **`regime.py`** — trước ở `scan_vn_vcp.py`,
+file đó đã xóa 2026-08-07), bản Mỹ **chưa có**.
 Kế hoạch đã duyệt là dùng quy tắc **QQQ > MA50 VÀ MA50 > MA200**.
 
 **Cạm bẫy đã tốn thời gian dò ra — đừng dò lại:**
@@ -83,15 +94,18 @@ def fetch_index_close(symbol="QQQ"):
 Đã kiểm chứng 03/08/2026: QQQ close 700,07 · MA50 714,83 · MA200 645,55
 → dưới MA50 nên trạng thái **OFF**. (Stooq trả về trang HTML chặn, không dùng được.)
 
-Sau đó viết `market_regime()` theo đúng khuôn trong `scan_vn_vcp.py`, thêm `regime` và
-`entries_allowed` vào payload của `write_site_json()` — **dùng đúng tên trường như bản VN**
-để `_regimeBanner()` ở giao diện dùng chung được, khỏi phải viết hai nhánh.
+Cách gọn nhất: sao `regime.py` thành `regime_us.py`, đổi nguồn giá sang Yahoo ở trên,
+ghi ra `scans/regime_us.json` với **đúng tên trường như bản VN** để `_regimeBanner()` ở
+giao diện dùng chung được, khỏi phải viết hai nhánh.
 
 Còn phải sửa thêm khi bật lại:
 - `_regimeBanner()` đang ghi cứng "VN-Index" trong thuộc tính `title` → đổi sang `r.index`.
-- Câu kết khi trạng thái ON ghi "chỉ vào lệnh ở nhóm BREAKOUT" (tier của VN) → ở Mỹ là SEPA/EARLY.
-- `_planWarnings()` đang đọc cứng `this._scanCache.VN.regime` → đổi sang thị trường đang hoạt động.
-- `_preloadScanVN()` → nạp `scans/latest.json` hay `latest_vn.json` theo `_scanMkt()`.
+- Câu kết khi trạng thái ON ghi "đúng pivot đã đặt trong watchlist" — ở Mỹ vẫn hợp lý,
+  nhưng con số stop −6% là của backtest HOSE, đừng bê sang.
+- `_planWarnings()` và `_loadRegimeData()` đang đọc cứng `scans/regime_vn.json`
+  → chọn file theo `_scanMkt()`.
+- `_wstat()` / `watch_stats.py` là logic riêng của VN (biên độ trần, đội lái). Thị trường
+  Mỹ không có giá trần nên phần 🔒/⚑ không áp dụng; trần vị thế thì vẫn dùng được.
 
 Kế hoạch đầy đủ đã duyệt: `~/.claude/plans/b-n-i-t-i-kho-n-happy-lobster.md`
 
