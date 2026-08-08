@@ -636,7 +636,16 @@ details summary::-webkit-details-marker{display:none}
 .tj-btngroup button{border:none;border-left:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;padding:0 10px;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
 .tj-btngroup button:first-child{border-left:none}
 .tj-btngroup button:hover{background:var(--accent-soft);color:var(--accent)}
-@media(max-width:900px){#tjGrid{grid-template-columns:minmax(0,1fr)!important;overflow:visible!important;height:auto!important}#tjGrid>div{overflow-y:visible!important}html,body{overflow-x:hidden!important;overflow-y:auto!important}.tj-tabbar{top:52px}}
+/* ══ CHIA CỘT — φ (1.618) làm mốc, cột phải có sàn 420px để chart còn đọc được ══ */
+#tjGrid{grid-template-columns:minmax(0,1.618fr) minmax(420px,1fr)}
+/* ≥1600px: bảng nhật ký đã dư chỗ → nhả bớt cho biểu đồ (≈56/44) */
+@media(min-width:1600px){#tjGrid{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}}
+/* Thanh kéo chỉnh tỉ lệ — nằm đè lên đường ranh giới 2 cột */
+#tjResizer{position:fixed;top:52px;bottom:0;width:11px;margin-left:-5px;z-index:250;cursor:col-resize;display:none;touch-action:none}
+#tjResizer::after{content:'';position:absolute;top:0;bottom:0;left:5px;width:1px;background:transparent;transition:background .15s,width .15s}
+#tjResizer:hover::after,#tjResizer.tj-dragging::after{background:var(--accent);width:3px;left:4px}
+@media(min-width:901px){#tjResizer{display:block}}
+@media(max-width:900px){#tjResizer{display:none!important}#tjGrid{grid-template-columns:minmax(0,1fr)!important;overflow:visible!important;height:auto!important}#tjGrid>div{overflow-y:visible!important}html,body{overflow-x:hidden!important;overflow-y:auto!important}.tj-tabbar{top:52px}}
 @media(max-width:600px){
   html,body{overflow-x:hidden!important}
   .tj-top{padding:0 10px!important;gap:9px!important}
@@ -705,9 +714,10 @@ details summary::-webkit-details-marker{display:none}
 <div id="tj_toast" style="position:fixed;bottom:24px;right:24px;z-index:999;background:var(--green);color:var(--btn-fg);font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;box-shadow:0 4px 20px rgba(190,255,203,.3);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none"></div>
 <input type="file" id="csvIn" accept=".csv,text/csv" style="display:none">
 <div id="tj_fa"></div>
+<div id="tjResizer" title="Kéo để chỉnh tỉ lệ 2 cột · nháy đúp để về mặc định"></div>
 
 <!-- ══ MAIN LAYOUT ══ -->
-<div id="tjGrid" style="display:grid;grid-template-columns:minmax(0,6fr) minmax(0,4fr);height:100vh;padding-top:52px;overflow:hidden">
+<div id="tjGrid" style="display:grid;height:100vh;padding-top:52px;overflow:hidden">
 
   <!-- ═══ LEFT COL ═══ -->
   <div style="overflow-y:auto;padding:16px 18px 20px">
@@ -3136,7 +3146,71 @@ class Component extends DCLogic {
     delete window._tj;
   }
 
+  // ══ THANH KÉO CHIA CỘT — lưu tỉ lệ vào localStorage, nháy đúp để về mặc định ══
+  _initResizer() {
+    const grid = document.getElementById('tjGrid'), bar = document.getElementById('tjResizer');
+    if (!grid || !bar || bar._tjSetup) return;
+    bar._tjSetup = true;
+    const MIN_L = 480, MIN_R = 420;   // dưới ngưỡng này bảng / biểu đồ hết đọc được
+    const wide = () => window.matchMedia('(min-width:901px)').matches;
+    const apply = pct => { grid.style.gridTemplateColumns = 'minmax(0,'+pct+'%) minmax(0,1fr)'; };
+    const place = () => {
+      if (!wide()) { bar.style.display = 'none'; return; }
+      bar.style.display = 'block';
+      bar.style.left = grid.children[0].getBoundingClientRect().right + 'px';
+    };
+    const saved = parseFloat(localStorage.getItem('tj_split'));
+    if (saved > 0 && saved < 100) apply(saved);
+    place();
+
+    let dragging = false;
+    const move = e => {
+      if (!dragging) return;
+      const w = grid.clientWidth;
+      const x = Math.max(MIN_L, Math.min(w - MIN_R, e.clientX - grid.getBoundingClientRect().left));
+      apply(+(x / w * 100).toFixed(3));
+      place();
+    };
+    const up = () => {
+      if (!dragging) return;
+      dragging = false;
+      bar.classList.remove('tj-dragging');
+      document.body.style.userSelect = '';
+      const m = /([\d.]+)%/.exec(grid.style.gridTemplateColumns || '');
+      if (m) localStorage.setItem('tj_split', m[1]);
+      this._redrawCharts();
+    };
+    bar.addEventListener('pointerdown', e => {
+      if (!wide()) return;
+      dragging = true;
+      bar.classList.add('tj-dragging');
+      document.body.style.userSelect = 'none';
+      try { bar.setPointerCapture(e.pointerId); } catch(err) {}
+      e.preventDefault();
+    });
+    bar.addEventListener('pointermove', move);
+    bar.addEventListener('pointerup', up);
+    bar.addEventListener('pointercancel', up);
+    bar.addEventListener('dblclick', () => {
+      grid.style.gridTemplateColumns = '';
+      localStorage.removeItem('tj_split');
+      place(); this._redrawCharts();
+    });
+    window.addEventListener('resize', () => {
+      place();
+      clearTimeout(this._rszTimer);
+      this._rszTimer = setTimeout(() => { place(); this._redrawCharts(); }, 160);
+    });
+  }
+
+  // Chart.js ở đây chạy responsive:false → đổi bề rộng cột phải thì phải vẽ lại tay
+  _redrawCharts() {
+    if (this.state.rightTab !== 'overview') return;
+    this._drawLineChart(); this._drawDonutChart();
+  }
+
   _initAll() {
+    this._initResizer();
     this._renderKPI(); this._renderTable(); this._renderFund(); this._renderNotes();
     this._renderChartControls(); this._drawLineChart(); this._drawDonutChart(); this._updatePreview();
   }
