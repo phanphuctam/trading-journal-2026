@@ -1,5 +1,26 @@
 [
   {
+    "symbol": "GMD",
+    "pivot": 80000,
+    "stop": 75200,
+    "note": "",
+    "cc": "VND"
+  },
+  {
+    "symbol": "VHM",
+    "pivot": 83000,
+    "stop": 78020,
+    "note": "CB 1/13 đạt",
+    "cc": "VND"
+  },
+  {
+    "symbol": "VIC",
+    "pivot": 225000,
+    "stop": 211400,
+    "note": "VCP · scan 2026-08-06",
+    "cc": "VND"
+  },
+  {
     "symbol": "STB",
     "pivot": 76800,
     "stop": 70600,
