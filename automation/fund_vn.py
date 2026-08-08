@@ -56,8 +56,16 @@ NONCORE_WARN = 30.0         # > 30% LNTT den tu ngoai cot loi = dang nghi
 
 # ── Ten truong. Doanh nghiep thuong va ngan hang khac nhau nen thu theo thu tu ──
 K_REV = ["net_sales", "total_operating_income", "net_interest_income"]
-K_NPAT = ["net_profit_loss_after_tax", "attributable_to_parent_company"]
+# LOI NHUAN NAO MOI DUNG — sua 2026-08-08 sau khi doi chieu VIC.
+# EPS = loi nhuan cua CO DONG CONG TY ME / so co phieu, va gia di theo EPS. Lay LNST
+# TONG (gom co dong khong kiem soat) la sai o moi tap doan co cong ty con lo nang:
+#   VIC 2024 — LNST tong 5.276 ty, nhung LNST cong ty me 11.903 ty (CDTS -6.627 ty).
+#   Chenh 2,3 lan. Dung so tong thi cham diem tang truong sai hoan toan.
+# Chi lui ve LNST tong khi bao cao khong co dong cong ty me (doanh nghiep khong hop nhat).
+K_NPAT_PARENT = ["attributable_to_parent_company"]
+K_NPAT_TOTAL = ["net_profit_loss_after_tax"]
 K_PBT = ["net_accounting_profit_loss_before_tax"]
+K_MINORITY_EQ = ["minority_interests"]     # trong BANG CAN DOI: loi ich CDTS, nam TRONG von chu
 K_OCF = ["net_cash_inflows_outflows_from_operating_activities",
          "net_cash_from_operating_activities"]
 K_EQUITY = ["owners_equity"]
@@ -101,6 +109,41 @@ def row(df, keys, cols):
     return [None] * len(cols)
 
 
+def npat_of(df, cols):
+    """LNST cua co dong cong ty me; khong co thi lui ve LNST tong.
+
+    Tra (list gia tri, 'parent'|'total') de ghi ro so nay lay tu dau — nguoi doc
+    phai biet minh dang nhin cai gi, khong duoc doan.
+    """
+    p = row(df, K_NPAT_PARENT, cols)
+    if any(v is not None and v != 0 for v in p):
+        return p, "parent"
+    return row(df, K_NPAT_TOTAL, cols), "total"
+
+
+def bs_check(bq, by):
+    """Tu kiem bang can doi: TONG TAI SAN = NO PHAI TRA + VON CHU SO HUU.
+
+    Day la dang thuc ke toan, khong phai uoc luong — lech qua 0,5% nghia la du lieu
+    tai ve bi thieu dong hoac ghep sai ky. Truong hop do thi KHONG cham diem, vi
+    mot con so sai co ve chac chan con nguy hiem hon la khong co so nao.
+    """
+    worst = None
+    for df in (bq, by):
+        cols = periods_of(df)
+        ta = row(df, ["total_assets"], cols)
+        li = row(df, ["liabilities", "total_liabilities"], cols)
+        eq = row(df, K_EQUITY, cols)
+        for i in range(len(cols)):
+            if None in (ta[i], li[i], eq[i]) or not ta[i]:
+                continue
+            d = abs((li[i] + eq[i] - ta[i]) / ta[i] * 100)
+            if worst is None or d > worst:
+                worst = d
+    return {"bs_dev_pct": None if worst is None else round(worst, 4),
+            "ok": worst is not None and worst <= 0.5}
+
+
 def pct(new, old):
     """Tang truong %. Goc am hoac 0 thi vo nghia -> None, khong tra so bia."""
     if new is None or old is None or old <= 0:
@@ -133,9 +176,10 @@ def build(sym, d, hist):
     iq, iy, bq, by, cq = d["iq"], d["iy"], d["bq"], d["by"], d["cq"]
     pq, py = periods_of(iq), periods_of(iy)
     is_bank = bool(len(bq[bq["item_id"] == K_BANK_MARK]))
+    chk = bs_check(bq, by)
 
     rev_q = row(iq, K_REV, pq)
-    npat_q = row(iq, K_NPAT, pq)
+    npat_q, basis_q = npat_of(iq, pq)
     pbt_q = row(iq, K_PBT, pq)
     ocf_q = row(cq, K_OCF, periods_of(cq))
     recv_q = row(bq, K_RECV, periods_of(bq))
@@ -149,9 +193,15 @@ def build(sym, d, hist):
         noncore_q.append(sum(vals) if vals else None)
 
     rev_y = row(iy, K_REV, py)
-    npat_y = row(iy, K_NPAT, py)
-    eq_y = row(by, K_EQUITY, periods_of(by))
-    cap_y = row(by, K_CAPITAL, periods_of(by))
+    npat_y, basis_y = npat_of(iy, py)
+    pby = periods_of(by)
+    # VCSH cua RIENG co dong cong ty me = von chu (ma 400) TRU loi ich CDTS (ma 429).
+    # Da kiem bang dang thuc ke toan tren VIC: TS = No + VCSH khop tuyet doi, va dong
+    # CDTS nam trong VCSH. Khong tru ra thi ROE cua tap doan co cong ty con bi thoi len.
+    eq_tot = row(by, K_EQUITY, pby)
+    eq_mi = row(by, K_MINORITY_EQ, pby)
+    eq_y = [None if eq_tot[i] is None else eq_tot[i] - (eq_mi[i] or 0) for i in range(len(pby))]
+    cap_y = row(by, K_CAPITAL, pby)
 
     # ── Ghi vao lich su tich luy. Day la thu duy nhat vuot duoc gioi han 4 ky ──
     h = hist.setdefault(sym, {})
@@ -267,9 +317,15 @@ def build(sym, d, hist):
         auto["vncf"] = 1 if ocf_ratio >= OCF_OK else -1
     if share_yoy is not None:
         auto["vndil"] = 1 if share_yoy <= DILUTE_OK else (-1 if share_yoy > DILUTE_BAD else 0)
+    # Bang can doi khong khop dang thuc ke toan -> KHONG cham gi het. Mot con so sai
+    # ma trong chac chan con nguy hiem hon la khong co so nao: no dat ten cho su nham lan.
+    if not chk["ok"]:
+        auto = {}
 
     return {
         "sector": "bank" if is_bank else "corp",
+        # Ghi ro so lay tu dau va da tu kiem chua — de nguoi doc biet minh dang nhin cai gi
+        "check": {**chk, "npat_basis": basis_y, "npat_basis_q": basis_q},
         "q_periods": pq,
         "y_periods": py,
         "q": {"rev": [ty(v) for v in rev_q], "npat": [ty(v) for v in npat_q],
@@ -337,8 +393,10 @@ def main():
                else f"OCF/LNST {c['ocf_ratio']}x" if c["ocf_ratio"] is not None else "OCF n/a")
         dil = f"CP {c['share_yoy']:+.1f}%" if c["share_yoy"] is not None else "CP n/a"
         bad = [k for k, v in f["auto"].items() if v == -1]
-        print(f"  {s:<5} [{f['sector']}] {yoy} · {roe} · {ocf} · {dil}"
-              + (f"  ⚠ hong: {','.join(bad)}" if bad else "  ✓"))
+        ck = f["check"]
+        note = "" if ck["ok"] else "  ⛔ BANG CAN DOI KHONG KHOP — khong cham diem"
+        print(f"  {s:<5} [{f['sector']}/{ck['npat_basis']}] {yoy} · {roe} · {ocf} · {dil}"
+              + (f"  ⚠ hong: {','.join(bad)}" if bad else "  ✓") + note)
     nq = sum(1 for f in funds.values() if f["calc"]["npat_yoy_q"] is None)
     if nq:
         print(f"[i] {nq} ma chua co quy cung ky nam truoc — buoc 1 doc tay tren CafeF."

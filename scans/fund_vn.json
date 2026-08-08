@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-08 14:39",
+  "checked_at": "2026-08-08 15:03",
   "source": "vnstock/VCI · ban cong dong chi tra 4 ky gan nhat",
   "thresholds": {
     "y_growth": 20.0,
@@ -14,6 +14,12 @@
   "funds": {
     "GMD": {
       "sector": "corp",
+      "check": {
+        "bs_dev_pct": 0.0,
+        "ok": true,
+        "npat_basis": "parent",
+        "npat_basis_q": "parent"
+      },
       "q_periods": [
         "2026-Q2",
         "2026-Q1",
@@ -34,10 +40,10 @@
           1560.5
         ],
         "npat": [
-          1285.4,
-          650.2,
-          738.3,
-          432.4
+          1133.5,
+          534.2,
+          592.2,
+          315.2
         ],
         "ocf": [
           691.3,
@@ -72,16 +78,16 @@
           3898.2
         ],
         "npat": [
-          2302.5,
-          1923.6,
-          2533.9,
-          1161.3
+          1755.6,
+          1455.5,
+          2250.6,
+          993.9
         ],
         "equity": [
-          14918.3,
-          13771.9,
-          9732.4,
-          7947.8
+          13139.8,
+          12381.9,
+          8580.5,
+          6926.1
         ],
         "shares_m": [
           426.5,
@@ -94,18 +100,18 @@
         "npat_yoy_q": null,
         "rev_yoy_q": null,
         "y_growth": [
-          19.7,
-          -24.1,
-          118.2
+          20.6,
+          -35.3,
+          126.4
         ],
         "y_ok3": false,
         "below_peak": true,
-        "roe": 16.1,
+        "roe": 13.8,
         "share_yoy": 3.0,
         "rev_growth_y": 23.3,
         "recv_vs_rev": 13.2,
         "inv_vs_rev": 10.9,
-        "ocf_ratio": 0.69,
+        "ocf_ratio": 0.83,
         "noncore_pct": 69.8,
         "bank": null
       },
@@ -113,12 +119,18 @@
         "vnone": -1,
         "vnnam": -1,
         "vnbs": 1,
-        "vncf": -1,
+        "vncf": 1,
         "vndil": 1
       }
     },
     "MSB": {
       "sector": "bank",
+      "check": {
+        "bs_dev_pct": 0.0,
+        "ok": true,
+        "npat_basis": "parent",
+        "npat_basis_q": "parent"
+      },
       "q_periods": [
         "2026-Q2",
         "2026-Q1",
@@ -227,6 +239,12 @@
     },
     "STB": {
       "sector": "bank",
+      "check": {
+        "bs_dev_pct": 0.0,
+        "ok": true,
+        "npat_basis": "parent",
+        "npat_basis_q": "parent"
+      },
       "q_periods": [
         "2026-Q2",
         "2026-Q1",
@@ -335,6 +353,12 @@
     },
     "VHM": {
       "sector": "corp",
+      "check": {
+        "bs_dev_pct": 0.0,
+        "ok": true,
+        "npat_basis": "parent",
+        "npat_basis_q": "parent"
+      },
       "q_periods": [
         "2026-Q2",
         "2026-Q1",
@@ -355,10 +379,10 @@
           16420.0
         ],
         "npat": [
-          26466.6,
-          25625.4,
-          28021.7,
-          4435.6
+          22583.2,
+          25551.9,
+          27514.3,
+          4183.9
         ],
         "ocf": [
           52247.8,
@@ -393,16 +417,16 @@
           62392.6
         ],
         "npat": [
-          43334.8,
-          35072.7,
-          33532.9,
-          29161.6
+          41895.3,
+          31801.3,
+          33371.4,
+          28830.9
         ],
         "equity": [
-          249216.7,
-          220744.0,
-          182636.3,
-          148521.8
+          238079.1,
+          202635.6,
+          179301.8,
+          145213.3
         ],
         "shares_m": [
           4107.4,
@@ -415,18 +439,18 @@
         "npat_yoy_q": null,
         "rev_yoy_q": null,
         "y_growth": [
-          23.6,
-          4.6,
-          15.0
+          31.7,
+          -4.7,
+          15.7
         ],
         "y_ok3": false,
         "below_peak": false,
-        "roe": 18.4,
+        "roe": 19.0,
         "share_yoy": 0.0,
         "rev_growth_y": 49.8,
         "recv_vs_rev": 30.6,
         "inv_vs_rev": 140.3,
-        "ocf_ratio": 1.06,
+        "ocf_ratio": 1.12,
         "noncore_pct": 12.6,
         "bank": null
       },
@@ -440,6 +464,12 @@
     },
     "VIC": {
       "sector": "corp",
+      "check": {
+        "bs_dev_pct": 0.0,
+        "ok": true,
+        "npat_basis": "parent",
+        "npat_basis_q": "parent"
+      },
       "q_periods": [
         "2026-Q2",
         "2026-Q1",
@@ -460,10 +490,10 @@
           39135.1
         ],
         "npat": [
-          14764.0,
-          5610.8,
-          3499.7,
-          3025.3
+          10002.6,
+          7276.0,
+          4671.9,
+          640.2
         ],
         "ocf": [
           50127.0,
@@ -498,16 +528,16 @@
           101793.6
         ],
         "npat": [
-          11064.8,
-          5276.1,
-          2056.1,
-          2044.3
+          11349.9,
+          11903.0,
+          2156.9,
+          8781.9
         ],
         "equity": [
-          151488.9,
-          153834.5,
-          148221.7,
-          135655.4
+          147566.3,
+          137396.8,
+          113741.0,
+          110092.8
         ],
         "shares_m": [
           7733.5,
@@ -520,18 +550,18 @@
         "npat_yoy_q": null,
         "rev_yoy_q": null,
         "y_growth": [
-          109.7,
-          156.6,
-          0.6
+          -4.6,
+          451.9,
+          -75.4
         ],
         "y_ok3": false,
-        "below_peak": false,
-        "roe": 7.2,
+        "below_peak": true,
+        "roe": 8.0,
         "share_yoy": 99.4,
         "rev_growth_y": 75.5,
         "recv_vs_rev": 40.6,
         "inv_vs_rev": 76.7,
-        "ocf_ratio": 2.79,
+        "ocf_ratio": 3.33,
         "noncore_pct": 129.7,
         "bank": null
       },

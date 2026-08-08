@@ -713,7 +713,7 @@ details summary::-webkit-details-marker{display:none}
 </div>
 <div id="tj_toast" style="position:fixed;bottom:24px;right:24px;z-index:999;background:var(--green);color:var(--btn-fg);font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;box-shadow:0 4px 20px rgba(190,255,203,.3);opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none"></div>
 <input type="file" id="csvIn" accept=".csv,text/csv" style="display:none">
-<div id="tj_fa"></div>
+<!-- Bảng cơ bản nay là TAB (nằm trong khối tab bên phải), không còn là popup nổi -->
 <div id="tjResizer" title="Kéo để chỉnh tỉ lệ 2 cột · nháy đúp để về mặc định"></div>
 
 <!-- ══ MAIN LAYOUT ══ -->
@@ -896,6 +896,7 @@ details summary::-webkit-details-marker{display:none}
       <div style="display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:3px;box-shadow:var(--shadow)">
         <button onclick="{{ goOverview }}" style="{{ tabOverviewStyle }}">{{ lbTabOv }}</button>
         <button onclick="{{ goWatch }}" style="{{ tabWatchBtnStyle }}">{{ lbTabWl }}</button>
+        <button onclick="{{ goFund }}" style="{{ tabFundBtnStyle }}">{{ lbTabFa }}</button>
         <button onclick="{{ goSystem }}" style="{{ tabSystemStyle }}">{{ lbTabSys }}</button>
         <button onclick="{{ goSetups }}" style="{{ tabSetupsStyle }}">{{ lbTabSu }}</button>
         <button onclick="{{ goEmotions }}" style="{{ tabEmotionsStyle }}">{{ lbTabEm }}</button>
@@ -967,6 +968,7 @@ details summary::-webkit-details-marker{display:none}
     <div style="{{ tabHmStyle }}"><div id="heatmapBox"></div></div>
     <!-- ═ WATCHLIST TAB ═ -->
     <div style="{{ tabWlStyle }}"><div id="watchlistBox"></div></div>
+    <div style="{{ tabFaStyle }}"><div id="tj_fa"></div></div>
     <!-- ═ SYSTEM TAB ═ -->
     <div style="{{ tabSysStyle }}"><div id="systemBox"></div></div>
   </div>
@@ -1021,7 +1023,7 @@ const TJ_TR = {
     btnAdd:'＋ Thêm vào nhật ký',btnUpdate:'✓ Cập nhật',btnCancel:'Hủy',
     journal:'📔 Nhật ký',journalSub:'Mới nhất ở trên · click hàng để xem chi tiết',
     searchPh:'🔍 Mã / ghi chú',fAll:'Tất cả',fWin:'Thắng',fLoss:'Thua',tradeUnit:'lệnh',
-    tabOv:'Overview',tabSu:'Setups',tabEm:'Cảm xúc',tabCal:'Lịch',tabHm:'Heatmap',
+    tabOv:'Overview',tabSu:'Setups',tabEm:'Cảm xúc',tabCal:'Lịch',tabHm:'Heatmap',tabFa:'🔬 Cơ bản',
     tabWl:'Watch',wlTitle:'👀 Watchlist — điểm mua (pivot)',wlSub:'Đẩy watchlist lên GitHub cho bot Telegram theo dõi',
     wlPush:'⤴ Push GitHub',wlPushTitle:'Đẩy watchlist thẳng lên GitHub — bot dùng ngay, không cần chạy script',
     wlPushing:'⏳ Đang đẩy watchlist lên GitHub…',wlPushed:'✅ Đã đẩy watchlist — bot dùng từ lần chạy kế tiếp',
@@ -1118,7 +1120,7 @@ const TJ_TR = {
     btnAdd:'＋ Add to Journal',btnUpdate:'✓ Update',btnCancel:'Cancel',
     journal:'📔 Journal',journalSub:'Latest on top · click row for details',
     searchPh:'🔍 Symbol / notes',fAll:'All',fWin:'Win',fLoss:'Loss',tradeUnit:'trades',
-    tabOv:'Overview',tabSu:'Setups',tabEm:'Emotions',tabCal:'Calendar',tabHm:'Heatmap',
+    tabOv:'Overview',tabSu:'Setups',tabEm:'Emotions',tabCal:'Calendar',tabHm:'Heatmap',tabFa:'🔬 Fundamentals',
     tabWl:'Watch',wlTitle:'👀 Watchlist — buy points (pivot)',wlSub:'Push the watchlist to GitHub for the Telegram alert bot',
     wlPush:'⤴ Push GitHub',wlPushTitle:'Push the watchlist straight to GitHub — the bot picks it up, no script needed',
     wlPushing:'⏳ Pushing watchlist to GitHub…',wlPushed:'✅ Watchlist pushed — the bot uses it from its next run',
@@ -2525,8 +2527,14 @@ class Component extends DCLogic {
     this._toast(`Đã áp dụng ${n} gợi ý của máy · các mục còn lại tự đọc`, 'var(--accent)');
   }
 
-  openFA = (sym) => { this._faSym = String(sym || this._faSym || '').toUpperCase(); this._renderFA(); this._loadRegimeData(); }
-  closeFA = () => { this._faSym = null; this._renderFA(); }
+  // Bảng cơ bản là TAB, không phải popup (đổi 2026-08-08). Popup che mất đồ thị và
+  // watchlist, mà đọc cơ bản thì phải đối chiếu qua lại — nó là việc ngồi lâu, không
+  // phải việc bấm rồi tắt.
+  openFA = (sym) => {
+    this._faSym = String(sym || this._faSym || '').toUpperCase();
+    this.setState({ rightTab: 'fund' }, () => { this._renderFA(); this._loadRegimeData(); });
+  }
+  closeFA = () => { this.setState({ rightTab: 'watchlist' }, () => this._renderWatchlist()); }
   setFASym = (v) => {
     this._faSym = String(v || '').toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
     this._renderFA();
@@ -2599,43 +2607,53 @@ class Component extends DCLogic {
       const v = st[s.k] || 0, dis = !t;
       const btn = (val, icon, col) => `<span onclick="${dis ? '' : `window._tj.markFA('${s.k}',${val})`}" title="${val === 1 ? 'Đạt' : 'Không đạt'}" style="cursor:${dis ? 'default' : 'pointer'};font-size:16px;font-weight:700;line-height:1;padding:5px 11px;border-radius:6px;border:1px solid ${v === val ? col : 'var(--border)'};background:${v === val ? col : 'transparent'};color:${v === val ? 'var(--btn-fg)' : 'var(--text3)'}">${icon}</span>`;
       return `
-      ${s.g ? `<div style="font-size:13.5px;font-weight:700;color:var(--accent);letter-spacing:.04em;margin:14px 0 5px">${s.g.toUpperCase()}</div>` : ''}
-      <div style="padding:9px 0;border-bottom:1px dashed var(--border);opacity:${v === -1 ? '.55' : '1'}">
+      ${s.g ? `<div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.04em;margin:14px 0 5px">${s.g.toUpperCase()}</div>` : ''}
+      <div style="padding:8px 0;border-bottom:1px dashed var(--border);opacity:${v === -1 ? '.55' : '1'}">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <a href="${t ? s.u(t) : '#'}" target="_blank" rel="noopener" onclick="${t ? '' : 'return false'}" style="font-size:15.5px;font-weight:700;color:${t ? 'var(--accent)' : 'var(--text3)'};text-decoration:none;flex:1;min-width:0">${s.s} ↗</a>
-          ${s.must ? '<span style="font-size:11.5px;font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:5px;padding:1px 6px;flex-shrink:0">BẮT BUỘC</span>' : ''}
+          <a href="${t ? s.u(t) : '#'}" target="_blank" rel="noopener" onclick="${t ? '' : 'return false'}" style="font-size:13px;font-weight:700;color:${t ? 'var(--accent)' : 'var(--text3)'};text-decoration:none;flex:1;min-width:120px">${s.s} ↗</a>
+          ${s.must ? '<span style="font-size:9.5px;font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:5px;padding:1px 5px;flex-shrink:0">BẮT BUỘC</span>' : ''}
           <span style="display:flex;gap:4px;flex-shrink:0">${btn(1, '✓', 'var(--green)')}${btn(-1, '✕', 'var(--red)')}</span>
         </div>
         ${t ? this._faData(s.k, t) : ''}
-        <div style="font-size:14.5px;color:var(--text2);line-height:1.7;margin-top:4px">👁 ${txt(s.w)}</div>
-        <div style="font-size:14.5px;color:var(--green);line-height:1.7;margin-top:3px">✓ ${txt(s.p)}</div>
-        ${s.f ? `<div style="font-size:14.5px;color:var(--red);line-height:1.7;margin-top:3px">✕ ${txt(s.f)}</div>` : ''}
-        ${s.src ? `<div style="font-size:12.5px;color:var(--text3);line-height:1.5;margin-top:4px;font-style:italic">📖 ${s.src}</div>` : ''}
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.65;margin-top:4px">👁 ${txt(s.w)}</div>
+        <div style="font-size:12.5px;color:var(--green);line-height:1.65;margin-top:3px">✓ ${txt(s.p)}</div>
+        ${s.f ? `<div style="font-size:12.5px;color:var(--red);line-height:1.65;margin-top:3px">✕ ${txt(s.f)}</div>` : ''}
+        ${s.src ? `<div style="font-size:10.5px;color:var(--text3);line-height:1.5;margin-top:4px;font-style:italic">📖 ${s.src}</div>` : ''}
       </div>`;
     }).join('');
 
+    // Chip nhảy nhanh giữa các mã trong watchlist — không phải gõ lại mã mỗi lần
+    const chips = this.state.watchlist.map(w => {
+      const s = String(w.symbol || '').toUpperCase(); if (!s) return '';
+      const on = s === t;
+      return `<span onclick="window._tj.openFA('${esc(s)}')" style="cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;border:1px solid ${on ? 'var(--accent)' : 'var(--border)'};background:${on ? 'var(--accent)' : 'transparent'};color:${on ? 'var(--btn-fg)' : 'var(--text2)'}">${esc(s)}</span>`;
+    }).join('');
+
+    // Máy đã tự kiểm chưa — trả lời thẳng câu "số này có đáng tin không"
+    const ck = fu && fu.check;
+    const checkLine = !ck ? '' : ck.ok
+      ? `<div style="font-size:10px;color:var(--green);margin-top:3px">✅ Máy đã tự kiểm: bảng cân đối khớp đẳng thức kế toán (TS = Nợ + VCSH), lệch ${this._fmt(ck.bs_dev_pct || 0, 2)}% · lợi nhuận lấy dòng <b>${ck.npat_basis === 'parent' ? 'cổ đông công ty mẹ' : 'LNST tổng (báo cáo không tách cổ đông mẹ)'}</b></div>`
+      : `<div style="font-size:10px;color:var(--red);margin-top:3px">⛔ Bảng cân đối KHÔNG khớp (lệch ${this._fmt(ck.bs_dev_pct || 0, 2)}%) — máy không chấm mã này, đọc tay hoàn toàn</div>`;
+
     host.innerHTML = `
-    <div onclick="if(event.target===this)window._tj.closeFA()" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.62);display:flex;align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;width:100%;max-width:1180px;margin:auto">
-        <div style="padding:13px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center">
-          <div style="flex:1;min-width:0">
-            <div style="font-size:18px;font-weight:700">🔬 Đọc yếu tố cơ bản — SEPA ${this._scanMkt() === 'VN' ? '🇻🇳 nguồn Việt Nam' : '🇺🇸'}</div>
-            <div style="font-size:13.5px;color:${vcol};margin-top:3px;font-weight:700">${verdict}</div>
-          </div>
-          <span onclick="window._tj.closeFA()" style="cursor:pointer;font-size:18px;color:var(--text3);padding:2px 6px;flex-shrink:0">✕</span>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:700">🔬 Đọc yếu tố cơ bản — SEPA ${this._scanMkt() === 'VN' ? '🇻🇳 nguồn Việt Nam' : '🇺🇸'}</div>
+          <div style="font-size:11px;color:${vcol};margin-top:2px;font-weight:700">${verdict}</div>
+          ${checkLine}
         </div>
-        <div style="padding:13px 18px 4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input id="faSymInp" value="${esc(t)}" placeholder="Mã cổ phiếu…" oninput="window._tj.setFASym(this.value)" style="flex:1;min-width:110px;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:8px 11px;font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--text);letter-spacing:.06em">
-          <button onclick="window._tj.openAllFA()" ${t ? '' : 'disabled'} style="background:var(--accent);color:var(--btn-fg);border:0;border-radius:8px;padding:9px 15px;font-size:14.5px;font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0">Mở tất cả ↗</button>
-          ${nAuto ? `<button onclick="window._tj.applyFAAuto()" style="background:var(--green-soft);color:var(--green);border:1px solid var(--green);border-radius:8px;padding:9px 15px;font-size:14.5px;font-weight:700;cursor:pointer;flex-shrink:0" title="Đánh dấu ✓/✕ theo gợi ý của máy cho ${nAuto} mục — vẫn sửa lại từng mục được">⚡ Áp dụng gợi ý máy (${nAuto})</button>` : ''}
-          <button onclick="window._tj.faToNote()" ${t ? '' : 'disabled'} style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:9px 15px;font-size:14.5px;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0" title="Ghi kết quả vào ghi chú của mã trong bảng scan">→ Ghi chú</button>
+        <div style="padding:10px 14px 4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input id="faSymInp" value="${esc(t)}" placeholder="Mã…" oninput="window._tj.setFASym(this.value)" style="width:96px;flex-shrink:0;background:var(--bg);border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text);letter-spacing:.06em">
+          <button onclick="window._tj.openAllFA()" ${t ? '' : 'disabled'} style="background:var(--accent);color:var(--btn-fg);border:0;border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0">Mở tất cả ↗</button>
+          ${nAuto ? `<button onclick="window._tj.applyFAAuto()" style="background:var(--green-soft);color:var(--green);border:1px solid var(--green);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;flex-shrink:0" title="Đánh dấu ✓/✕ theo gợi ý của máy cho ${nAuto} mục — vẫn sửa lại từng mục được">⚡ Gợi ý máy (${nAuto})</button>` : ''}
+          <button onclick="window._tj.faToNote()" ${t ? '' : 'disabled'} style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:10.5px;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0" title="Ghi kết quả vào ghi chú của mã trong watchlist">→ Ghi chú</button>
         </div>
-        ${t && !this._fund(t) ? `<div style="padding:0 18px;font-size:12.5px;color:var(--text3);line-height:1.6">Chưa có số máy điền cho ${esc(t)} — chạy <b>python automation/fund_vn.py ${esc(t)}</b> (mã trong watchlist thì daily_run.py tự chạy mỗi sáng).</div>` : ''}
-        <div style="padding:0 18px 16px">${rows}
-          <div style="font-size:13px;color:var(--text3);line-height:1.6;margin-top:12px">Tối thiểu để vào lệnh: <b>${fa.mustTotal} mục BẮT BUỘC</b> đều đạt${t && fa.mustLeft > 0 ? ` — <b style="color:var(--amber)">còn ${fa.mustLeft} mục chưa đọc</b>` : ''}. Đánh dấu ✓/✕ được lưu trên máy bạn theo từng mã, và cổng chặn lệnh sẽ hỏi lại nếu bạn mua mã chưa đạt.</div>
+        ${chips ? `<div style="padding:2px 14px 8px;display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="font-size:9.5px;color:var(--text3)">watchlist:</span>${chips}</div>` : ''}
+        ${t && !this._fund(t) ? `<div style="padding:0 14px 8px;font-size:11px;color:var(--text3);line-height:1.6">Chưa có số máy điền cho ${esc(t)} — chạy <b>python automation/fund_vn.py ${esc(t)}</b> (mã trong watchlist thì bot tự chạy).</div>` : ''}
+        <div style="padding:0 14px 14px">${rows}
+          <div style="font-size:11px;color:var(--text3);line-height:1.6;margin-top:12px">Tối thiểu để vào lệnh: <b>${fa.mustTotal} mục BẮT BUỘC</b> đều đạt${t && fa.mustLeft > 0 ? ` — <b style="color:var(--amber)">còn ${fa.mustLeft} mục chưa đọc</b>` : ''}. Đánh dấu ✓/✕ lưu trên máy bạn theo từng mã, và cổng chặn lệnh sẽ hỏi lại nếu bạn mua mã chưa đạt.<br><b>Máy chỉ gợi ý</b> — nó áp ngưỡng trong sách vào số trong báo cáo, không hiểu câu chuyện của doanh nghiệp. Bấm link nguồn ở mỗi bước để tự kiểm.</div>
         </div>
-      </div>
-    </div>`;
+      </div>`;
     const i = document.getElementById('faSymInp');
     if (i && document.activeElement !== i && !t) i.focus();
   }
@@ -3608,7 +3626,7 @@ class Component extends DCLogic {
       lbSearchPh: tr.searchPh, lbFilterAll: tr.fAll, lbFilterWin: tr.fWin, lbFilterLoss: tr.fLoss,
       lbTradeUnit: tr.tradeUnit, tradeCount: s.trades.length,
       // Tab labels
-      lbTabOv: tr.tabOv, lbTabSu: tr.tabSu, lbTabEm: tr.tabEm, lbTabCal: tr.tabCal, lbTabHm: tr.tabHm, lbTabSys: tr.tabSys, lbTabWl: tr.tabWl,
+      lbTabOv: tr.tabOv, lbTabSu: tr.tabSu, lbTabEm: tr.tabEm, lbTabCal: tr.tabCal, lbTabHm: tr.tabHm, lbTabSys: tr.tabSys, lbTabWl: tr.tabWl, lbTabFa: tr.tabFa,
       // Chart section labels
       lbChartLine: tr.chartLine, lbChartLineSub: tr.chartLineSub, lbChartDonut: tr.chartDonut,
       // Fund/Notes labels
@@ -3625,9 +3643,10 @@ class Component extends DCLogic {
       tabHmStyle: { display: s.rightTab==='heatmap'?'block':'none' },
       tabSysStyle: { display: s.rightTab==='system'?'block':'none' },
       tabWlStyle: { display: s.rightTab==='watchlist'?'block':'none' },
+      tabFaStyle: { display: s.rightTab==='fund'?'block':'none' },
       tabOverviewStyle: tabSt('overview'), tabSetupsStyle: tabSt('setups'), tabSystemStyle: tabSt('system'),
       tabEmotionsStyle: tabSt('emotions'), tabCalendarStyle: tabSt('calendar'), tabHeatmapStyle: tabSt('heatmap'),
-      tabWatchBtnStyle: tabSt('watchlist'),
+      tabWatchBtnStyle: tabSt('watchlist'), tabFundBtnStyle: tabSt('fund'),
       // Handlers
       toggleForm: () => this.setState(s=>({formOpen:!s.formOpen})),
       toggleActions: () => this.setState(s=>({actionsOpen:!s.actionsOpen})),
@@ -3644,6 +3663,7 @@ class Component extends DCLogic {
       goHeatmap: () => this.setState({rightTab:'heatmap'},()=>this._renderHeatmap()),
       goSystem: () => this.setState({rightTab:'system'},()=>this._renderSystem()),
       goWatch: () => this.setState({rightTab:'watchlist'},()=>this._renderWatchlist()),
+      goFund: () => this.openFA(''),
     };
   }
 }
