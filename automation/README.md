@@ -24,6 +24,7 @@ còn RS/Trend Template thì không. Muốn dựng lại scan cũ: `git log -- au
 |---|---|
 | `regime.py` | **Công tắc tổng** VN-Index (MA50/MA200 + ngày phân phối + FTD) → `scans/regime_vn.json`. Chỉ 1 request |
 | `watch_stats.py` | Trần vị thế + 🔒 đóng trần + ⚑ đội lái cho **mã trong watchlist** → `scans/watch_stats.json` |
+| `fund_vn.py` | **Số liệu cơ bản** (LNST năm, ROE, OCF/LNST, pha loãng, phải thu/tồn kho, chỉ số ngân hàng) cho mã trong watchlist → `scans/fund_vn.json`. Bảng 🔬 Cơ bản trong journal đọc file này và điền sẵn số |
 | `alert_watcher.py` | Theo dõi watchlist, báo Telegram khi **vượt pivot / gần pivot / chạm stop** |
 | `scan_trend_template.py` | Scan **Trend Template Minervini + RS Rating** thị trường Mỹ (tạm gác, xem `US-DORMANT.md`) |
 | `watchlist.json` | Danh sách mã theo dõi (xuất từ tab **Watch** trong journal) |
@@ -51,8 +52,15 @@ Workflow `.github/workflows/trading.yml` chạy trên máy chủ GitHub:
 - **9h sáng thứ Bảy VN**: công tắc tổng → Telegram + số liệu watchlist + check watchlist EOD
 - **30 phút/lần trong phiên HOSE** (9h–15h VN): cập nhật công tắc tổng (1 request) + check watchlist realtime → báo ngay khi vượt pivot / chạm stop
 
-Tự commit `scans/regime_vn.json` + `scans/watch_stats.json` → GitHub Pages tự cập nhật,
-journal đọc thẳng hai file này.
+Tự commit `scans/regime_vn.json` + `scans/watch_stats.json` + `scans/fund_vn.json` →
+GitHub Pages tự cập nhật, journal đọc thẳng ba file này.
+
+> **Vì sao `scans/fund_hist.json` cũng phải được commit:** vnstock bản cộng đồng chỉ
+> trả **4 kỳ gần nhất**, tức không có quý cùng kỳ năm trước để so — đúng bước 1 (chữ C
+> của CAN SLIM). `fund_hist.json` là nơi tích luỹ dần mỗi lần chạy; sau ~4 quý chạy đều
+> là tự so được cùng kỳ mà không phải trả tiền. **Xoá file này = mất toàn bộ lịch sử,
+> bắt đầu đếm lại từ đầu.** Từ giờ tới đó, bước 1 đọc tay trên CafeF rồi gõ số vào ô
+> nhập trong bảng 🔬 Cơ bản.
 
 Cài 1 lần trên web GitHub (repo → **Settings**):
 1. **General → Danger Zone → Change visibility → Private** (bảo vệ watchlist)

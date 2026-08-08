@@ -55,6 +55,7 @@ jobs:
         run: |
           python automation/regime.py --telegram
           python automation/watch_stats.py
+          python automation/fund_vn.py
           python automation/alert_watcher.py --force --market vn
 
       - name: Check watchlist trong phien HOSE
@@ -64,11 +65,19 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python automation/alert_watcher.py --market vn
 
-      - name: Commit ket qua (regime + so lieu watchlist + state)
+      - name: Commit ket qua (regime + so lieu watchlist + co ban + state)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scans/regime_vn.json scans/watch_stats.json scans/fx.json automation/state.json
+          # fund_hist.json PHAI duoc commit: vnstock ban cong dong chi tra 4 ky gan nhat,
+          # file nay la noi tich luy dan de sau ~4 quy tu so duoc quy voi cung ky nam truoc.
+          # Mat file = mat toan bo lich su, bat dau lai tu dau.
+          # Chi add file CO THAT: lan chay trong phien khong sinh fund_*.json, ma `git add`
+          # mot duong dan khong ton tai se lam hong ca buoc commit.
+          for f in scans/regime_vn.json scans/watch_stats.json scans/fx.json \
+                   scans/fund_vn.json scans/fund_hist.json automation/state.json; do
+            if [ -f "$f" ]; then git add "$f"; fi
+          done
           git diff --cached --quiet || { git commit -m "bot: regime VN/state $(date -u '+%Y-%m-%d %H:%M') UTC"; git push; }
 
 # Bo loc VCP tu dong da bo (2026-08-07): viec chon co phieu chuyen sang loc bang mat

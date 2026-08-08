@@ -1438,6 +1438,56 @@ class Component extends DCLogic {
     }));
   }
 
+  // ══ HẠNG CƠ BẢN LÚC VÀO LỆNH vs KẾT QUẢ THẬT ══
+  // Đây là thứ không sách nào có. Bảng của Minervini/O'Neil nói tiêu chí nào đúng
+  // TRÊN THỊ TRƯỜNG MỸ 1950–2000. Bảng này nói tiêu chí nào đúng VỚI CHÍNH BẠN, trên
+  // HOSE, bằng tiền thật. Dấu `fa` mới bắt đầu đóng lên từng lệnh từ 08/2026 nên lệnh
+  // cũ không có — cần khoảng 30–50 lệnh nữa thì các dòng dưới mới đủ nghĩa thống kê.
+  _FA_GRADE_NAME = { A: '🏆 Hạng A', B: '✅ Hạng B', C: 'Đủ mục bắt buộc',
+                     part: '⏳ Đọc dở', kill: '❌ Hỏng mục bắt buộc', none: 'Chưa đọc cơ bản' };
+
+  _faStats() {
+    const a = this._computed(), m = {};
+    a.forEach(t => {
+      const k = t.fa ? (this._FA_GRADE_NAME[t.fa.g] || t.fa.g) : 'Lệnh ghi trước 08/2026';
+      if (!m[k]) m[k] = { name: k, n: 0, win: 0, loss: 0, totR: 0, totNet: 0 };
+      m[k].n++; if (t._all > 0) m[k].win++; else if (t._all < 0) m[k].loss++;
+      m[k].totR += +t.r || 0; m[k].totNet += t._all;
+    });
+    return Object.values(m).sort((x, y) => y.n - x.n).map(x => ({
+      ...x, wr: (x.win + x.loss) ? (x.win / (x.win + x.loss) * 100).toFixed(1) : '—',
+      avgR: x.n ? (x.totR / x.n).toFixed(2) : '—' }));
+  }
+
+  // Những lý do đã tự gõ ra để vẫn vào lệnh dù hỏng tiêu chí bắt buộc, đặt cạnh
+  // đúng kết quả R của lệnh đó. Không có gì dạy nhanh bằng đọc lại lời bào chữa
+  // của chính mình bên cạnh con số nó đẻ ra.
+  _faReasonHtml() {
+    const rows = this._computed().filter(t => t.wr)
+      .sort((a, b) => String(b.d || '').localeCompare(String(a.d || '')));
+    if (!rows.length) return '';
+    const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const body = rows.map(t => {
+      const r = +t.r || 0, c = r >= 0 ? 'var(--green)' : 'var(--red)';
+      return `<div style="padding:7px 0;border-bottom:1px solid var(--border2)">
+        <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">
+          <b style="font-family:'JetBrains Mono',monospace;font-size:11.5px">${esc(t.s)}</b>
+          <span style="font-size:10px;color:var(--text3)">${esc(t.d)}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;color:${c}">${r >= 0 ? '+' : ''}${this._fmt(r, 2)}R</span>
+        </div>
+        <div style="font-size:11.5px;color:var(--text2);line-height:1.6;margin-top:2px">“${esc(t.wr)}”</div>
+      </div>`;
+    }).join('');
+    const totR = rows.reduce((s, t) => s + (+t.r || 0), 0);
+    return `<div style="background:var(--card);border:1px solid var(--red);border-radius:14px;overflow:hidden;margin-bottom:12px">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:700">📝 Lý do đã tự bào chữa khi hỏng tiêu chí bắt buộc</div>
+        <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${rows.length} lệnh · tổng <b style="color:${totR >= 0 ? 'var(--green)' : 'var(--red)'}">${totR >= 0 ? '+' : ''}${this._fmt(totR, 1)}R</b></div>
+      </div>
+      <div style="padding:4px 14px 12px">${body}</div>
+    </div>`;
+  }
+
   _emotionStats() {
     const a = this._computed(), m = {};
     a.forEach(t => {
@@ -1619,6 +1669,16 @@ class Component extends DCLogic {
     if (t.a === 'Buy' && reg && reg.state !== 'ON') {
       w.push(`• Thị trường đang ĐỨNG NGOÀI: ${reg.reason}. VN không cho bán khống — lúc này giữ tiền mặt.`);
     }
+    // Yếu tố cơ bản (thêm 2026-08-08). Trước đây bảng 🔬 Cơ bản chỉ là tờ giấy nháp:
+    // đánh ✕ vào "kiểm toán ngoại trừ" xong vẫn ghi lệnh mua được, không một tiếng động.
+    // Một checklist không nối vào cổng chặn thì sớm muộn cũng bị bỏ qua.
+    if (t.a === 'Buy') {
+      const fa = this._faStat(sym);
+      if (fa.bad.length)      w.push(`• Cơ bản: đã tự tay đánh HỎNG ${fa.bad.length} tiêu chí BẮT BUỘC — ${fa.bad.join(', ')}.`);
+      else if (!fa.read)      w.push(`• Chưa đọc yếu tố cơ bản của ${sym} (nút 🔬 Cơ bản ở tab Watch). Mua mà chưa biết doanh nghiệp lãi thật hay lãi giấy.`);
+      else if (fa.mustLeft)   w.push(`• Cơ bản đọc dở: còn ${fa.mustLeft}/${fa.mustTotal} tiêu chí BẮT BUỘC chưa đọc.`);
+      else if (fa.stale)      w.push(`• Kết quả đọc cơ bản ${sym} là của Q${fa.rq.q}/${fa.rq.y} — đã có BCTC quý mới, cần đọc lại.`);
+    }
     const r = +t.r || 0;
     if (r <= -2) w.push(`• Lệnh này lỗ ${this._fmt(r, 2)}R, vượt xa mức 1R. Stop đã không được tôn trọng.`);
     return w;
@@ -1631,10 +1691,33 @@ class Component extends DCLogic {
     const old = isEdit ? this.state.trades[this.state.editIdx] : null;
     // Sửa lệnh cũ: giữ nguyên tỉ giá lúc ghi, không đóng dấu lại theo tỉ giá hôm nay
     if (old && +old.fx > 0) t.fx = +old.fx;
+    // Đóng dấu hạng cơ bản TẠI THỜI ĐIỂM VÀO LỆNH vào chính bản ghi lệnh. Bảng 🔬 lưu
+    // theo mã và sẽ bị ghi đè ở lần đọc sau, nên không chụp lại ở đây thì vĩnh viễn
+    // không trả lời được câu đáng giá nhất: "lệnh thắng lúc mua có hạng cơ bản gì?".
+    // Sửa lệnh cũ thì giữ nguyên dấu cũ — cùng lý do với tỉ giá.
+    if (isEdit) { if (old && old.fa) t.fa = old.fa; if (old && old.wr) t.wr = old.wr; }
+    else { const f = this._faStat(t.s); t.fa = { g: f.grade, ok: f.ok, n: f.total, b: f.bad }; }
 
     const warns = this._planWarnings(t);
     if (warns.length && !(isEdit && old && old.np)) {
-      if (!confirm(`⚠️ LỆNH NGOÀI HỆ THỐNG\n\n${warns.join('\n')}\n\n`
+      const head = `⚠️ LỆNH NGOÀI HỆ THỐNG\n\n${warns.join('\n')}\n\n`;
+      const faBad = t.a === 'Buy' ? this._faStat(t.s).bad : [];
+      if (faBad.length) {
+        // Hỏng tiêu chí BẮT BUỘC thì không cho bấm OK cho xong. Phải gõ ra một câu:
+        // ma sát vừa đủ để không bấm theo phản xạ, và ba tháng sau đọc lại còn biết
+        // mình đã tự bào chữa bằng lý do gì — đó mới là thứ sửa được hành vi.
+        const why = prompt(head
+          + `Đây là tiêu chí BẮT BUỘC, không bấm OK cho qua được.\n`
+          + `Muốn vẫn ghi thì gõ LÝ DO (ít nhất 10 ký tự). Lý do lưu vào lệnh và hiện\n`
+          + `ở tab Setups ngay cạnh kết quả R của chính lệnh này.\n\n`
+          + `Bỏ trống hoặc Cancel = không ghi — đây thường là lựa chọn đúng.`, '');
+        const w = String(why || '').trim();
+        if (w.length < 10) {
+          if (why !== null) this._toast('Lý do quá ngắn — lệnh chưa được ghi', 'var(--red)');
+          return;
+        }
+        t.wr = w;
+      } else if (!confirm(head
         + `Chỉ vào lệnh với mã đã có trong watchlist, khi thị trường cho phép.\n\n`
         + `Bấm OK để vẫn ghi (lệnh sẽ bị đánh dấu NGOÀI KH và tính riêng ở tab Setups).\n`
         + `Bấm Cancel để bỏ — đây thường là lựa chọn đúng.`)) return;
@@ -1954,10 +2037,23 @@ class Component extends DCLogic {
       if (s.max_pos) bits.push(`<span title="Trần vị thế = ${this._fmt((this._statsCache || {}).max_pos_pct || 2, 0)}% giá trị giao dịch TB20 (${this._fmt(s.adtv, 1)} tỷ/phiên). Mua nhiều hơn thế thì chính bạn là người đẩy giá lên lúc vào, và là người đạp giá xuống lúc cắt lỗ — ở HOSE sổ lệnh mỏng nên đây là rủi ro thật, không phải lý thuyết.">tối đa <b style="color:var(--text2)">${this._posCap(s.max_pos)}</b></span>`);
       return bits.length ? `<div style="font-size:9px;color:var(--text3);margin-top:2px;line-height:1.5">${bits.join(' · ')}</div>` : '';
     };
+    // Huy hiệu cơ bản ngay trên dòng watchlist. Trước đây muốn biết một mã đã đọc cơ bản
+    // hay chưa thì phải mở modal rồi gõ lại mã — nên thực tế là không bao giờ kiểm.
+    const fab = sym => {
+      const f = this._faStat(sym);
+      const short = f.grade === 'kill' ? '❌ loại'
+        : f.grade === 'none' ? '🔬 chưa đọc'
+        : f.grade === 'part' ? `⏳ ${f.mustOk}/${f.mustTotal} bắt buộc`
+        : f.stale ? '⏳ cơ bản cũ'
+        : f.grade === 'A' ? '🏆 hạng A' : f.grade === 'B' ? '✅ hạng B' : `✓ ${f.ok}/${f.total}`;
+      const col = f.stale && f.grade !== 'kill' ? 'var(--amber)' : f.col;
+      return `<div onclick="window._tj.openFA('${esc(sym)}')" title="${esc(f.txt)} — bấm để mở bảng đọc yếu tố cơ bản" style="cursor:pointer;font-size:9px;font-weight:700;color:${col};margin-top:2px;line-height:1.3">${short}</div>`;
+    };
     const rows = wl.length ? wl.map((w, i) => `
       <div style="display:grid;grid-template-columns:60px 1fr 1fr 1.6fr auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--border)">
         <div style="min-width:0">
           <a href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent('HOSE:' + String(w.symbol || '').toUpperCase())}" target="_blank" rel="noopener" title="Mở đồ thị trên TradingView" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${esc(w.symbol)} ↗</a>
+          ${fab(w.symbol)}
         </div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px">${this._px(w.pivot, w)}</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:${w.stop != null ? 'var(--red)' : 'var(--text3)'}">${w.stop != null ? this._px(w.stop, w) : '—'}</div>
@@ -2030,15 +2126,19 @@ class Component extends DCLogic {
   // CafeF là nguồn DUY NHẤT đã kiểm chứng render sẵn HTML (Vietstock/Simplize/TradingView
   // là ứng dụng JS — chạy được trên trình duyệt nhưng không kiểm chứng được từ script).
   // Dạng URL đã thử: /incsta/ và /bsheet/ đều trả số thật, có nút chuyển 4 quý ↔ 4 năm.
-  _quy() {                       // quý gần nhất ĐÃ công bố (BCTC ra chậm ~30-45 ngày)
-    const d = new Date(), m = d.getMonth();       // 0-11
-    const q = Math.floor(m / 3) + 1;              // quý hiện tại
-    const back = new Date(d.getFullYear(), m - 2, 1);  // lùi ~1 quý cho kịp công bố
-    return { y: back.getFullYear(), q: Math.max(1, Math.floor(back.getMonth() / 3) + 1) };
+  // Quý gần nhất ĐÃ công bố (BCTC ra chậm ~30-45 ngày). Nhận `dt` để tính được quý
+  // của MỘT MỐC THỜI GIAN BẤT KỲ — dùng để biết kết quả đọc cơ bản đã cũ hay chưa:
+  // đọc ở quý nào, nay đã sang quý khác thì con số trong bảng không còn là số mới nhất.
+  _quy(dt) {
+    const d = dt || new Date();
+    const back = new Date(d.getFullYear(), d.getMonth() - 2, 1);  // lùi ~1 quý cho kịp công bố
+    return { y: back.getFullYear(), q: Math.floor(back.getMonth() / 3) + 1 };
   }
-  _CF = (t, kind, slug) => {
+  // yOff = -1 → cùng quý NĂM TRƯỚC. O'Neil bắt so cùng kỳ chứ không so quý liền trước;
+  // trước đây bảng bảo người dùng tự sửa năm trên URL — việc thủ công thì sẽ bị bỏ qua.
+  _CF = (t, kind, slug, yOff) => {
     const { y, q } = this._quy();
-    return `https://cafef.vn/du-lieu/bao-cao-tai-chinh/${String(t).toLowerCase()}/${kind}/${y}/${q}/0/0/${slug}.chn`;
+    return `https://cafef.vn/du-lieu/bao-cao-tai-chinh/${String(t).toLowerCase()}/${kind}/${y + (yOff || 0)}/${q}/0/0/${slug}.chn`;
   }
   _VS = (t, page) => `https://finance.vietstock.vn/${t}/${page}.htm`
   _SZ = (t, page) => `https://simplize.vn/co-phieu/${t}${page ? '/' + page : ''}`
@@ -2076,7 +2176,7 @@ class Component extends DCLogic {
     { k: 'vnq', g: '1 · Lợi nhuận quý (chữ C của CAN SLIM)', must: 1, s: 'CafeF · Kết quả kinh doanh (quý)',
       src: "O'Neil Ch.1 tr.24–36 · Minervini Ch.7 tr.145–172",
       u: t => this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh'),
-      w: 'Trang mặc định hiện <b>4 quý gần nhất</b>. Đọc <b>Doanh thu thuần</b> và <b>Lợi nhuận sau thuế</b>.<br>⚠️ Phải so với <b>CÙNG QUÝ NĂM TRƯỚC</b>, không phải quý liền trước — mùa vụ ở VN rất mạnh (bán lẻ quý 4, thép/xây dựng quý 2-3, ngân hàng quý 4). Đổi năm trên URL để lấy quý đối chiếu',
+      w: t => `Trang mặc định hiện <b>4 quý gần nhất</b>. Đọc <b>Doanh thu thuần</b> và <b>Lợi nhuận sau thuế</b>.<br>⚠️ Phải so với <b>CÙNG QUÝ NĂM TRƯỚC</b>, không phải quý liền trước — mùa vụ ở VN rất mạnh (bán lẻ quý 4, thép/xây dựng quý 2-3, ngân hàng quý 4).<br>→ <a href="${this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh', -1)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">mở thẳng cùng kỳ năm trước ↗</a> để đặt cạnh nhau mà so`,
       p: 'LNST cùng quý năm trước tăng <b>≥ 25%</b> và <b>đang tăng tốc</b> · doanh thu tăng <b>≥ 20%</b><br><span style="opacity:.75">Ngưỡng gốc của O\'Neil là EPS ≥ 20-25%. Giữ nguyên — không có lý do hạ chuẩn cho VN.</span>',
       f: '<b>Doanh thu đứng yên mà lợi nhuận tăng vọt = bẫy.</b> Ở VN nguồn phổ biến nhất là <b>hoàn nhập dự phòng</b>, <b>lãi từ thanh lý tài sản / công ty con</b>, hoặc <b>đánh giá lại tài sản</b>. Xem bước 2<br>Lợi nhuận âm quý gần nhất → loại' },
 
@@ -2122,10 +2222,10 @@ class Component extends DCLogic {
       p: 'Số lượng lưu hành <b>ổn định hoặc giảm</b>. Có mua lại cổ phiếu quỹ = điểm cộng lớn',
       f: '<b>Doanh nghiệp VN pha loãng liên tục</b> — nhiều mã tăng 30-50% số cổ phiếu mỗi năm. Lợi nhuận tăng 25% mà số cổ phiếu tăng 30% thì <b>EPS giảm</b>, và giá cổ phiếu đi theo EPS chứ không theo tổng lợi nhuận.<br>Có kế hoạch phát hành lớn <b>chưa thực hiện</b> = quả bom hẹn giờ trên đầu, dù báo cáo hiện tại đẹp.<br>O\'Neil: ưu tiên doanh nghiệp có lượng cổ phiếu lưu hành nhỏ và không phình' },
 
-    { k: 'vnfo', g: '6 · Bảo trợ của dòng tiền lớn', s: 'CafeF · Giao dịch khối ngoại & tự doanh',
+    { k: 'vnfo', g: '6 · Bảo trợ của dòng tiền lớn', s: 'Vietstock · Thống kê giao dịch (theo mã)',
       src: "O'Neil Ch.6 tr.79–87 — VN không có 13F nên phải thay bằng nguồn khác",
-      u: () => 'https://cafef.vn/du-lieu/thong-ke-giao-dich-khoi-ngoai.chn',
-      w: '<b>Khối ngoại mua/bán ròng</b> mã này trong 1-3 tháng · <b>tự doanh CTCK</b> · danh mục các quỹ lớn (VEIL, Pyn Elite, VinaCapital, Dragon Capital) công bố hằng tháng<br>⚠️ <b>Xem TỶ LỆ SỞ HỮU NƯỚC NGOÀI CÒN LẠI trước tiên</b> — nếu mã này <b>kín room</b> thì đọc tiếp phần dưới',
+      u: t => this._VS(t, 'thong-ke-giao-dich'),
+      w: t => `Tab <b>GD nước ngoài</b> trên trang này: <b>khối ngoại mua/bán ròng</b> mã này 1-3 tháng · tự doanh CTCK · danh mục các quỹ lớn (VEIL, Pyn Elite, VinaCapital, Dragon Capital) công bố hằng tháng<br>⚠️ <b>Xem TỶ LỆ SỞ HỮU NƯỚC NGOÀI CÒN LẠI trước tiên</b> — nếu mã này <b>kín room</b> thì đọc tiếp phần dưới<br>→ <a href="https://cafef.vn/du-lieu/thong-ke-giao-dich-khoi-ngoai.chn" target="_blank" rel="noopener" style="color:var(--accent)">bảng khối ngoại toàn sàn ↗</a> để xem ${t} nằm ở đâu so với phần còn lại`,
       p: 'Khối ngoại <b>mua ròng đều đặn</b> nhiều tuần liên tiếp · có mặt trong danh mục ít nhất một quỹ lớn<br>Nếu <b>kín room</b>: bỏ qua tiêu chí này, đừng tính là điểm trừ',
       f: '⚠️ <b>Đây là hàng thay thế, không tương đương 13F.</b> VN không bắt quỹ công bố danh mục theo quý, nên bạn chỉ thấy được phần nổi.<br>Khối ngoại bán ròng kéo dài là cảnh báo mạnh ở VN — họ chiếm tỷ trọng nhỏ nhưng dẫn dắt tâm lý.<br>O\'Neil cảnh báo mặt ngược lại: <b>quá nhiều tổ chức sở hữu</b> thì cơ hội tốt nhất đã qua<br><br><b>🔑 Bẫy room ngoại (FOL) — chỉ có ở VN:</b> mã kín room (FPT, MWG, PNJ… thường xuyên) thì quỹ ngoại muốn mua <b>bắt buộc phải thoả thuận ngoài sàn với giá premium</b>. Lực mua đó <b>không hiện lên khớp lệnh</b>. Hệ quả: mã cơ bản tốt nhất sàn lại đi ngang uể oải trên đồ thị, và bảng này chấm nó "khối ngoại không mua" — <b>sai hoàn toàn</b>. Kín room = tiêu chí này mất hiệu lực, không phải mã xấu' },
 
@@ -2136,10 +2236,10 @@ class Component extends DCLogic {
       p: 'Không có bán ra lớn · nội bộ mua vào là điểm cộng',
       f: '<b>Ban lãnh đạo đăng ký bán khối lượng lớn ngay sau khi giá chạy = tín hiệu xấu bậc nhất ở VN.</b> Họ biết những gì bạn không biết.<br>Cẩn thận cả kiểu "đăng ký mua nhưng không mua hết" — thao túng kỳ vọng' },
 
-    { k: 'vnind', g: '7 · Nhóm ngành', s: 'CafeF · Dữ liệu ngành',
+    { k: 'vnind', g: '7 · Nhóm ngành', s: 'TradingView · trang mã (có sẵn ngành + mã cùng ngành)',
       src: "O'Neil Ch.15 · Minervini Ch.6 tr.119–143",
-      u: () => 'https://cafef.vn/du-lieu.chn',
-      w: 'Nhóm ngành của mã này đang mạnh hay yếu · có mã nào khác cùng ngành cũng đang tạo nền / phá vỡ không',
+      u: t => `https://www.tradingview.com/symbols/HOSE-${String(t).toUpperCase()}/`,
+      w: t => `Kéo xuống khối <b>Peers</b> / <b>Cùng ngành</b> ngay trên trang ${t}: nhóm ngành đang mạnh hay yếu · có mã nào khác cùng ngành cũng đang tạo nền / phá vỡ không<br>→ <a href="https://cafef.vn/du-lieu.chn" target="_blank" rel="noopener" style="color:var(--accent)">bảng ngành CafeF ↗</a> nếu muốn xem xếp hạng hiệu suất cả sàn`,
       p: 'Nhóm ngành đang mạnh <b>VÀ có ít nhất một mã cùng ngành xác nhận</b><br><span style="opacity:.75">Nhóm ngành quyết định ~49% biến động giá một cổ phiếu. Hơn 60% siêu cổ phiếu tăng theo nhóm.</span>',
       f: '⚠️ <b>Ở VN cả sàn chạy theo một nhịp mạnh hơn Mỹ nhiều</b>, và chỉ có ~5 nhóm ngành thật sự tách biệt: ngân hàng, bất động sản, chứng khoán, thép, bán lẻ.<br>Hệ quả: tiêu chí "dẫn dắt ngành" ở VN yếu hơn nhiều so với trong sách — dùng để xác nhận, đừng dùng để chọn' },
 
@@ -2149,6 +2249,17 @@ class Component extends DCLogic {
       w: 'Trả lời đúng một câu: <b>vì sao là BÂY GIỜ?</b> Tìm sự kiện mới trong 6-12 tháng: <b>sản phẩm/nhà máy/công suất mới</b>, <b>đổi ban lãnh đạo</b>, <b>chu kỳ ngành đảo chiều</b> (giá thép, giá heo, cước vận tải, lãi suất), <b>chính sách vĩ mô</b> (đầu tư công, nâng hạng thị trường, sửa luật đất đai), <b>M&A / thoái vốn nhà nước</b>',
       p: 'Chỉ ra được <b>một sự kiện cụ thể, gọi được tên</b>, giải thích vì sao lợi nhuận tăng tốc từ đây<br><span style="opacity:.75">O\'Neil: 95% siêu cổ phiếu đều có một "cái mới" tại thời điểm bắt đầu chạy. Không có chất xúc tác thì nền giá đẹp cũng chỉ là đồ thị đẹp.</span>',
       f: '<b>Không gọi tên được chất xúc tác = chưa hiểu vì sao mình mua.</b> Lúc giá giảm 5% bạn sẽ không biết nên cắt hay giữ.<br>⚠️ <b>Ở VN bước này quan trọng hơn ở Mỹ, không phải kém hơn.</b> Nghiên cứu ABSA + XGBoost trên rổ VN30 (2019-2024): kết hợp đọc tin tức với tín hiệu kỹ thuật cho lợi nhuận <b>16,7%</b> so với <b>7,1%</b> khi chỉ dùng kỹ thuật. VN là thị trường chạy theo câu chuyện mạnh hơn Mỹ nhiều.<br>Nhưng phân biệt cho kỹ: <b>tin đồn "sắp có tin" không phải chất xúc tác</b> — nó là bẫy. Chất xúc tác phải là sự kiện <b>đã xảy ra hoặc đã công bố chính thức</b> và đo được vào doanh thu' },
+
+    // Thêm 2026-08-08. Bảng trước đây chấm cơ bản mà hoàn toàn không biết cổ phiếu
+    // đang ở đâu trong chu kỳ — nên một mã đạt sạch 8 bước ở nền thứ 5 vẫn ra "Hạng A".
+    // Không để must: người dùng chọn giữ đúng 7 mục bắt buộc (08/2026). Nhưng đây là
+    // bước duy nhất mà cơ bản đẹp KHÔNG cứu được, nên nó đứng ngay trước phần yếu nhất.
+    { k: 'vnbase', g: '9 · Số nền giá — đang mua ở nền thứ mấy?', s: 'TradingView · đồ thị TUẦN',
+      src: "Minervini, Cách tư duy & giao dịch như một nhà vô địch, Phần 9 tr.195–220 · O'Neil Ch.10 tr.167–190",
+      u: t => `https://www.tradingview.com/chart/?symbol=${encodeURIComponent('HOSE:' + String(t).toUpperCase())}&interval=1W`,
+      w: 'Trên đồ thị <b>TUẦN</b>, đếm số nền giá đã hoàn thành <b>kể từ khi cổ phiếu thoát vùng đáy và bắt đầu xu hướng tăng</b>. Mỗi nền = một đợt đi ngang hoặc điều chỉnh rồi phá vỡ lên. Nền đang xét là nền thứ mấy?',
+      p: '<b>Nền 1 hoặc 2</b> — Minervini: <b>hơn 90% sóng tăng mạnh xuất hiện sau các đợt điều chỉnh này</b>.<br>Nền 3–4 vẫn vào được nhưng đã ở cuối chu kỳ: chỉ hợp giao dịch theo khung giá, và phải nhỏ vị thế lại.',
+      f: '<b>Nền 5–6: rủi ro thất bại cao</b> — cân nhắc BÁN sớm thay vì mua. Hay gặp <b>đỉnh cao trào (Climax Top)</b>: thổi bùng lên rồi gãy. Case Decker Outdoors đạt đỉnh ngay sau nền thứ 4 (12/2008).<br>O\'Neil về nền thứ 3–4: <i>"Lần đột phá thứ ba hiếm khi có sức quyến rũ. Nó đã quá rõ ràng, và gần như tất cả mọi người đều nhìn thấy."</i> Nền giai đoạn cuối thường <b>rộng và lỏng lẻo</b>.<br><b>Đây là bước mà cơ bản đẹp KHÔNG cứu được.</b> Đạt sạch 8 bước trên mà đang ở nền thứ 5 thì đồ thị đẹp chỉ là cái bẫy.<br>Kèm theo: <b>P/E đã tăng gấp đôi</b> kể từ khi xu hướng bắt đầu = giá đã chạy trước lợi nhuận quá xa (Minervini, cùng phần).' },
 
     { k: 'vnbr', s: 'Simplize · Báo cáo phân tích CTCK',
       src: '⚠️ Thay cho Zacks Estimate Revisions — nguồn YẾU HƠN HẲN',
@@ -2247,7 +2358,174 @@ class Component extends DCLogic {
     if (!this._faSt) { try { this._faSt = JSON.parse(localStorage.getItem('tj_fund_v1') || '{}') || {}; } catch (e) { this._faSt = {}; } }
     return this._faSt;
   }
-  openFA = (sym) => { this._faSym = String(sym || this._faSym || '').toUpperCase(); this._renderFA(); }
+
+  // Tên ngắn của từng bước, để cổng chặn lệnh gọi được đúng tên tiêu chí bị hỏng
+  // ("hỏng: vndisc,vnbs" thì đọc xong không hiểu gì). Bước không có tiêu đề nhóm
+  // thì thuộc về nhóm ngay phía trên nó — đúng như cách bảng hiển thị.
+  _faLabels() {
+    let g = ''; const m = {};
+    this._faList().forEach(s => {
+      if (s.g) g = s.g.replace(/^\d+\s*·\s*/, '').replace(/\s*\([^)]*\)\s*$/, '');
+      m[s.k] = g;
+    });
+    return m;
+  }
+
+  // ══ TRẠNG THÁI ĐỌC CƠ BẢN CỦA MỘT MÃ ══
+  // Một nguồn sự thật duy nhất, dùng chung cho: kết luận trong bảng, huy hiệu ở
+  // watchlist, cổng chặn lệnh, và dấu đóng lên lệnh lúc ghi sổ. Trước đây phần
+  // xếp hạng nằm ngay trong _renderFA nên chỉ cái bảng biết — cổng chặn lệnh mù tịt.
+  //
+  // Luật xếp hạng (sửa 2026-08-08): CHƯA ĐỌC HẾT MỤC BẮT BUỘC THÌ KHÔNG ĐƯỢC HẠNG NÀO.
+  // Lỗi cũ: chỉ cần không có mục bắt buộc nào bị đánh ✕ là đã tính hạng, nên tick vài
+  // mục phụ cũng ra "✅ Hạng B" trong khi 4 mục bắt buộc còn trắng. Đó là đèn xanh giả.
+  _faStat(sym) {
+    const list = this._faList(), lb = this._faLabels();
+    const st = (this._faGet()[String(sym || '').toUpperCase()]) || {};
+    const musts = list.filter(s => s.must);
+    const ok = list.filter(s => st[s.k] === 1).length;
+    const bad = musts.filter(s => st[s.k] === -1).map(s => lb[s.k]);
+    const mustOk = musts.filter(s => st[s.k] === 1).length;
+    const read = list.some(s => st[s.k]);
+    // "Cũ" = đọc từ quý trước, nay đã có BCTC quý mới. Số trong đầu bạn không còn là
+    // số mới nhất nữa — với cổ phiếu tăng trưởng thì một quý là đủ đổi cả câu chuyện.
+    const rq = st.t ? this._quy(new Date(st.t)) : null, nq = this._quy();
+    const stale = !!(rq && (rq.y * 4 + rq.q) < (nq.y * 4 + nq.q));
+    const r = { ok, total: list.length, bad, mustOk, mustTotal: musts.length,
+                mustLeft: musts.length - mustOk - bad.length, read, stale, rq, t: st.t || 0 };
+    if (bad.length)                 Object.assign(r, { grade: 'kill', txt: `❌ LOẠI — hỏng ${bad.length} mục bắt buộc`, col: 'var(--red)' });
+    else if (!read)                 Object.assign(r, { grade: 'none', txt: 'chưa đọc cơ bản', col: 'var(--text3)' });
+    else if (mustOk < musts.length) Object.assign(r, { grade: 'part', txt: `đọc dở — ${mustOk}/${musts.length} bắt buộc`, col: 'var(--amber)' });
+    else if (ok >= list.length - 2) Object.assign(r, { grade: 'A', txt: `🏆 Hạng A — ${ok}/${list.length} đạt`, col: 'var(--green)' });
+    else if (ok >= Math.ceil(list.length * 0.62))
+                                    Object.assign(r, { grade: 'B', txt: `✅ Hạng B — ${ok}/${list.length} đạt`, col: 'var(--green)' });
+    else                            Object.assign(r, { grade: 'C', txt: `đủ bắt buộc — ${ok}/${list.length} đạt`, col: 'var(--text2)' });
+    return r;
+  }
+  // ══ SO NGƯỜI TỰ NHẬP ══
+  // Bước 1 (quý cùng kỳ) là bước máy KHÔNG lấy được: vnstock bản cộng đồng chỉ trả
+  // 4 kỳ gần nhất nên không có quý cùng kỳ năm trước. Đọc tay trên CafeF rồi gõ số
+  // vào đây — để ba tháng sau còn tra được lúc đó mình thấy gì, chứ một cái ✓ thì
+  // không nhớ nổi là 26% hay 260%.
+  _faNumGet() {
+    if (!this._faNum) { try { this._faNum = JSON.parse(localStorage.getItem('tj_fund_num_v1') || '{}') || {}; } catch (e) { this._faNum = {}; } }
+    return this._faNum;
+  }
+  setFANum = (k, v) => {
+    const sym = this._faSym; if (!sym) return;
+    const st = this._faNumGet(), e = st[sym] = st[sym] || {};
+    const n = parseFloat(String(v).replace(',', '.'));
+    if (v === '' || isNaN(n)) delete e[k]; else e[k] = n;
+    localStorage.setItem('tj_fund_num_v1', JSON.stringify(st));
+    this._renderFA();
+  }
+
+  _faThr() {
+    const d = (this._fundCache && this._fundCache.thresholds) || {};
+    return { y_growth: d.y_growth ?? 20, roe: d.roe ?? 15, q_npat: d.q_npat ?? 25,
+             q_rev: d.q_rev ?? 20, dilute_ok: d.dilute_ok ?? 5, ocf: d.ocf ?? 0.8 };
+  }
+
+  // ══ KHỐI SỐ CỦA MỘT BƯỚC ══
+  // Máy điền số, người phán xét. Không tự bấm ✓/✕ thay người: con số đạt ngưỡng
+  // không đồng nghĩa câu chuyện đúng — đó là lý do Minervini vẫn đọc báo cáo bằng mắt.
+  _faData(k, t) {
+    const f = this._fund(t);
+    const T = this._faThr();
+    const n1 = v => v == null ? '—' : this._fmt(v, 1);
+    const n0 = v => v == null ? '—' : this._fmt(v, 0);
+    const pc = v => v == null ? '—' : (v >= 0 ? '+' : '') + this._fmt(v, 1) + '%';
+    const col = v => v == null ? 'var(--text3)' : v ? 'var(--green)' : 'var(--red)';
+    const box = inner => `<div style="background:var(--border2);border-radius:8px;padding:7px 10px;margin-top:6px;font-size:13.5px;line-height:1.75;font-family:'JetBrains Mono',monospace">${inner}</div>`;
+    const verdict = () => {
+      const a = f && f.auto && f.auto[k];
+      if (a === 1) return `<div style="color:var(--green);font-weight:700;margin-top:3px">⇒ máy chấm: ĐẠT</div>`;
+      if (a === -1) return `<div style="color:var(--red);font-weight:700;margin-top:3px">⇒ máy chấm: HỎNG</div>`;
+      if (a === 0) return `<div style="color:var(--amber);margin-top:3px">⇒ máy không kết luận được — tự đọc</div>`;
+      return '';
+    };
+    const stamp = f ? `<div style="font-size:11.5px;color:var(--text3);font-family:inherit;margin-top:3px">📊 ${(this._fundCache || {}).checked_at || ''} · vnstock</div>` : '';
+
+    // Bước 1 luôn có ô nhập tay, kể cả khi máy đã tự tính được — để đối chiếu
+    if (k === 'vnq') {
+      const num = (this._faNumGet()[t]) || {};
+      const auto = f && f.calc && f.calc.npat_yoy_q != null;
+      const q = f && f.q ? f.q : null;
+      const series = q ? `LNST 4 quý: ${q.npat.map(n1).join(' · ')} tỷ<br>D.thu 4 quý: ${q.rev.map(n0).join(' · ')} tỷ<br><span style="color:var(--text3)">${(f.q_periods || []).join(' · ')}</span>` : '';
+      const machine = auto
+        ? `<div style="color:var(--green)">Máy tính được YoY: LNST ${pc(f.calc.npat_yoy_q)} · D.thu ${pc(f.calc.rev_yoy_q)}</div>`
+        : `<div style="color:var(--amber)">Chưa đủ lịch sử để máy so cùng kỳ — đọc trên CafeF rồi gõ vào đây</div>`;
+      const inp = (key, lab, thr) => {
+        const v = num[key], ok = v == null ? null : v >= thr;
+        return `<label style="display:inline-flex;align-items:center;gap:5px;margin-right:12px;font-family:inherit;font-size:13.5px">${lab}
+          <input type="number" step="any" value="${v == null ? '' : v}" onchange="window._tj.setFANum('${key}',this.value)"
+            style="width:74px;background:var(--bg);border:1px solid ${v == null ? 'var(--border)' : col(ok)};border-radius:6px;padding:4px 7px;font-family:'JetBrains Mono',monospace;font-size:13.5px;color:var(--text)">%
+          <span style="color:${col(ok)};font-weight:700">${v == null ? '' : ok ? '≥' + thr : '<' + thr}</span></label>`;
+      };
+      return box(`${series}${series ? '<hr style="border:0;border-top:1px dashed var(--border);margin:6px 0">' : ''}${machine}
+        <div style="margin-top:5px;font-family:inherit">${inp('npat', 'LNST YoY', T.q_npat)}${inp('rev', 'D.thu YoY', T.q_rev)}</div>${verdict()}${stamp}`);
+    }
+
+    if (!f || !f.calc) return '';
+    const c = f.calc;
+
+    if (k === 'vnone' && c.noncore_pct != null)
+      return box(`Lãi ngoài cốt lõi / LNTT quý gần nhất: <b style="color:${c.noncore_pct > 30 ? 'var(--red)' : 'var(--green)'}">${n1(c.noncore_pct)}%</b>
+        <br><span style="color:var(--text3);font-family:inherit;font-size:12.5px">gồm doanh thu tài chính + thu nhập khác + lãi từ liên doanh</span>${verdict()}${stamp}`);
+
+    if (k === 'vnnam' && f.y)
+      return box(`LNST năm: ${f.y.npat.slice().reverse().map(n0).join(' → ')} tỷ
+        <br><span style="color:var(--text3)">${(f.y_periods || []).slice().reverse().join(' → ')}</span>
+        <br>Tăng: ${(c.y_growth || []).slice().reverse().map(g => `<b style="color:${col(g != null && g >= T.y_growth)}">${pc(g)}</b>`).join(' · ')} <span style="color:var(--text3)">(cần cả 3 ≥ ${T.y_growth}%)</span>
+        <br>ROE: <b style="color:${col(c.roe != null && c.roe >= T.roe)}">${n1(c.roe)}%</b> <span style="color:var(--text3)">(cần ≥ ${T.roe}%)</span>
+        ${c.below_peak ? '<br><b style="color:var(--red)">⚠ Bẫy phục hồi giả: LNST năm mới nhất vẫn THẤP HƠN đỉnh cũ</b>' : ''}${verdict()}${stamp}`);
+
+    if (k === 'vnsec' && c.bank)
+      return box(`Tăng trưởng cho vay: <b>${pc(c.bank.loans_growth)}</b> · tiền gửi: <b>${pc(c.bank.deposit_growth)}</b>
+        <br>LDR: <b>${n1(c.bank.ldr)}%</b> · Dự phòng/cho vay: <b>${n1(c.bank.provision_to_loans)}%</b>
+        <br><span style="color:var(--red);font-family:inherit;font-size:12.5px">⚠ KHÔNG có NPL ở đây — nợ nhóm 3-5 nằm trong thuyết minh BCTC, máy không đọc được. NPL và LLR vẫn phải đọc tay.</span>${stamp}`);
+
+    if (k === 'vnbs') {
+      if (f.sector === 'bank') return box(`<span style="color:var(--text3);font-family:inherit">Ngân hàng không có phải thu / hàng tồn kho — bước này không áp dụng, xem bước 3.</span>`);
+      if (c.recv_vs_rev == null) return '';
+      const bad = v => v != null && c.rev_growth_y != null && v > 2 * c.rev_growth_y;
+      return box(`Năm gần nhất so năm trước:
+        <br>Doanh thu <b>${pc(c.rev_growth_y)}</b> · Phải thu <b style="color:${bad(c.recv_vs_rev) ? 'var(--red)' : 'var(--green)'}">${pc(c.recv_vs_rev)}</b> · Tồn kho <b style="color:${bad(c.inv_vs_rev) ? 'var(--red)' : 'var(--green)'}">${pc(c.inv_vs_rev)}</b>
+        <br><span style="color:var(--text3);font-family:inherit;font-size:12.5px">Tính theo NĂM chứ không theo quý: chỉ lấy được 4 quý liên tiếp nên so quý sẽ lệch mùa vụ.</span>${verdict()}${stamp}`);
+    }
+
+    if (k === 'vncf') {
+      if (f.sector === 'bank') return box(`<span style="color:var(--text3);font-family:inherit">Ngân hàng: OCF bị chi phối bởi dòng tiền gửi và giải ngân cho vay, không phản ánh chất lượng lợi nhuận — máy không chấm bước này.</span>`);
+      if (!f.q) return '';
+      return box(`OCF 4 quý: ${f.q.ocf.map(n0).join(' · ')} tỷ
+        <br>LNST 4 quý: ${f.q.npat.map(n0).join(' · ')} tỷ
+        <br>Tổng OCF / tổng LNST: <b style="color:${col(c.ocf_ratio != null && c.ocf_ratio >= T.ocf)}">${c.ocf_ratio == null ? '—' : this._fmt(c.ocf_ratio, 2) + '×'}</b> <span style="color:var(--text3)">(cần ≥ ${T.ocf}×)</span>${verdict()}${stamp}`);
+    }
+
+    if (k === 'vndil' && f.y)
+      return box(`Số CP lưu hành: ${f.y.shares_m.slice().reverse().map(n1).join(' → ')} triệu
+        <br><span style="color:var(--text3)">${(f.y_periods || []).slice().reverse().join(' → ')} · suy từ vốn góp, mệnh giá 10.000đ</span>
+        <br>Năm gần nhất: <b style="color:${col(c.share_yoy != null && c.share_yoy <= T.dilute_ok)}">${pc(c.share_yoy)}</b> <span style="color:var(--text3)">(ổn định = ≤ ${T.dilute_ok}%)</span>${verdict()}${stamp}`);
+
+    return '';
+  }
+
+  // Áp dụng toàn bộ gợi ý của máy. Người vẫn phải bấm nút này — và vẫn sửa được
+  // từng mục sau đó. Máy chỉ tiết kiệm thao tác, không thay quyền quyết định.
+  applyFAAuto = () => {
+    const sym = this._faSym, f = this._fund(sym);
+    if (!sym || !f || !f.auto) return;
+    const st = this._faGet(), e = st[sym] = st[sym] || {};
+    let n = 0;
+    Object.entries(f.auto).forEach(([k, v]) => { if (v === 1 || v === -1) { e[k] = v; n++; } });
+    if (!n) { this._toast('Máy chưa chấm được mục nào cho ' + sym, 'var(--amber)'); return; }
+    e.t = Date.now();
+    localStorage.setItem('tj_fund_v1', JSON.stringify(st));
+    this._renderFA(); this._renderWatchlist();
+    this._toast(`Đã áp dụng ${n} gợi ý của máy · các mục còn lại tự đọc`, 'var(--accent)');
+  }
+
+  openFA = (sym) => { this._faSym = String(sym || this._faSym || '').toUpperCase(); this._renderFA(); this._loadRegimeData(); }
   closeFA = () => { this._faSym = null; this._renderFA(); }
   setFASym = (v) => {
     this._faSym = String(v || '').toUpperCase().replace(/[^A-Z0-9.\-]/g, '');
@@ -2264,18 +2542,26 @@ class Component extends DCLogic {
   openAllFA = () => {
     const t = this._faSym; if (!t) return;
     // Buoc 5 va 11 cung trang Earnings, buoc 1 va 1b cung Income statement -> bo trung
-    [...new Set(this._faList().map(s => s.u(t)))].forEach((url, i) =>
-      setTimeout(() => window.open(url, '_blank', 'noopener'), i * 260));
+    const urls = [...new Set(this._faList().map(s => s.u(t)))];
+    // Mo DONG BO trong cung mot cu bam. Truoc day dung setTimeout(i*260) nen tu tab
+    // thu 2 tro di Chrome coi la popup tu dong va chan sach — nut "Mo tat ca" thuc te
+    // chi mo duoc 1 tab. window.open tra null khi bi chan, dem lai de bao cho dung.
+    let ok = 0;
+    urls.forEach(u => { if (window.open(u, '_blank', 'noopener')) ok++; });
+    if (ok < urls.length) {
+      this._toast(`Trình duyệt chặn ${urls.length - ok}/${urls.length} tab — bấm biểu tượng chặn popup trên thanh địa chỉ, chọn "Luôn cho phép", rồi bấm lại`, 'var(--amber)');
+    }
   }
   // Kết quả đọc cơ bản ghi thẳng vào ghi chú watchlist. Trước đây nó ghi vào ghi chú
   // của bảng scan — bảng đó đã gỡ, và watchlist mới là chỗ đúng: nó tồn tại lâu dài
   // và đi cùng mã sang tận lúc ghi lệnh, còn ghi chú scan thì hết hạn theo phiên scan.
   faToNote = () => {
     const sym = this._faSym; if (!sym) return;
-    const st = (this._faGet()[sym]) || {};
-    const ok = this._faList().filter(s => st[s.k] === 1).length;
-    const bad = this._faList().filter(s => st[s.k] === -1).map(s => s.k);
-    const txt = `CB ${ok}/${this._faList().length} đạt${bad.length ? ' · hỏng: ' + bad.join(',') : ''}`;
+    const st = (this._faGet()[sym]) || {}, lb = this._faLabels(), fa = this._faStat(sym);
+    // Ghi TÊN tiêu chí hỏng, không ghi mã khoá. "hỏng: vndisc,vnbs" thì một tháng sau
+    // đọc lại chính ghi chú của mình cũng không hiểu là hỏng cái gì.
+    const bad = this._faList().filter(s => st[s.k] === -1).map(s => lb[s.k]);
+    const txt = `CB ${fa.ok}/${fa.total} đạt${bad.length ? ' · hỏng: ' + [...new Set(bad)].join(', ') : ''}`;
     const i = this.state.watchlist.findIndex(w => String(w.symbol || '').toUpperCase() === sym);
     if (i < 0) {
       const el = document.getElementById('wlNote');
@@ -2295,14 +2581,18 @@ class Component extends DCLogic {
     if (!this._faSym && this._faSym !== '') { host.innerHTML = ''; return; }
     const t = this._faSym, st = (this._faGet()[t]) || {};
     const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const nOk = this._faList().filter(s => st[s.k] === 1).length;
-    const killed = this._faList().some(s => s.must && st[s.k] === -1);
-    let verdict, vcol;
+    const fa = this._faStat(t);
+    const fu = this._fund(t);
+    const nAuto = fu && fu.auto ? Object.values(fu.auto).filter(v => v === 1 || v === -1).length : 0;
+    let verdict = fa.txt, vcol = fa.col;
     if (!t) { verdict = 'Nhập mã cổ phiếu để bắt đầu'; vcol = 'var(--text3)'; }
-    else if (killed) { verdict = '❌ LOẠI — hỏng tiêu chí bắt buộc'; vcol = 'var(--red)'; }
-    else if (nOk >= this._faList().length - 2) { verdict = `🏆 Hạng A — ${nOk}/${this._faList().length} đạt`; vcol = 'var(--green)'; }
-    else if (nOk >= Math.ceil(this._faList().length * 0.62)) { verdict = `✅ Hạng B — ${nOk}/${this._faList().length} đạt`; vcol = 'var(--green)'; }
-    else { verdict = `Đang đọc — ${nOk}/${this._faList().length} đạt`; vcol = 'var(--text2)'; }
+    else {
+      if (fa.grade === 'none') verdict = `Chưa đọc — 0/${fa.total}`;
+      // Ngày đọc đứng ngay cạnh kết luận: một cái ✓ đóng từ hai quý trước trông
+      // hệt như cái ✓ đóng sáng nay, mà giá trị thì khác hẳn.
+      if (fa.t) verdict += ` · đọc ${new Date(fa.t).toLocaleDateString('vi-VN')}`;
+      if (fa.stale) { verdict += ` · ⏳ ĐÃ CŨ (đọc ở Q${fa.rq.q}/${fa.rq.y}, nay đã có BCTC quý mới)`; vcol = 'var(--amber)'; }
+    }
 
     const txt = x => typeof x === 'function' ? x(t) : x;   // w/p/f có thể là hàm nhận mã
     const rows = this._faList().map(s => {
@@ -2316,6 +2606,7 @@ class Component extends DCLogic {
           ${s.must ? '<span style="font-size:11.5px;font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:5px;padding:1px 6px;flex-shrink:0">BẮT BUỘC</span>' : ''}
           <span style="display:flex;gap:4px;flex-shrink:0">${btn(1, '✓', 'var(--green)')}${btn(-1, '✕', 'var(--red)')}</span>
         </div>
+        ${t ? this._faData(s.k, t) : ''}
         <div style="font-size:14.5px;color:var(--text2);line-height:1.7;margin-top:4px">👁 ${txt(s.w)}</div>
         <div style="font-size:14.5px;color:var(--green);line-height:1.7;margin-top:3px">✓ ${txt(s.p)}</div>
         ${s.f ? `<div style="font-size:14.5px;color:var(--red);line-height:1.7;margin-top:3px">✕ ${txt(s.f)}</div>` : ''}
@@ -2336,10 +2627,12 @@ class Component extends DCLogic {
         <div style="padding:13px 18px 4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <input id="faSymInp" value="${esc(t)}" placeholder="Mã cổ phiếu…" oninput="window._tj.setFASym(this.value)" style="flex:1;min-width:110px;background:var(--bg);border:1px solid var(--accent);border-radius:8px;padding:8px 11px;font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--text);letter-spacing:.06em">
           <button onclick="window._tj.openAllFA()" ${t ? '' : 'disabled'} style="background:var(--accent);color:var(--btn-fg);border:0;border-radius:8px;padding:9px 15px;font-size:14.5px;font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0">Mở tất cả ↗</button>
+          ${nAuto ? `<button onclick="window._tj.applyFAAuto()" style="background:var(--green-soft);color:var(--green);border:1px solid var(--green);border-radius:8px;padding:9px 15px;font-size:14.5px;font-weight:700;cursor:pointer;flex-shrink:0" title="Đánh dấu ✓/✕ theo gợi ý của máy cho ${nAuto} mục — vẫn sửa lại từng mục được">⚡ Áp dụng gợi ý máy (${nAuto})</button>` : ''}
           <button onclick="window._tj.faToNote()" ${t ? '' : 'disabled'} style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:9px 15px;font-size:14.5px;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0" title="Ghi kết quả vào ghi chú của mã trong bảng scan">→ Ghi chú</button>
         </div>
+        ${t && !this._fund(t) ? `<div style="padding:0 18px;font-size:12.5px;color:var(--text3);line-height:1.6">Chưa có số máy điền cho ${esc(t)} — chạy <b>python automation/fund_vn.py ${esc(t)}</b> (mã trong watchlist thì daily_run.py tự chạy mỗi sáng).</div>` : ''}
         <div style="padding:0 18px 16px">${rows}
-          <div style="font-size:13px;color:var(--text3);line-height:1.6;margin-top:12px">Tối thiểu để vào lệnh: 4 mục <b>BẮT BUỘC</b> đều đạt. Đánh dấu ✓/✕ được lưu trên máy bạn theo từng mã.</div>
+          <div style="font-size:13px;color:var(--text3);line-height:1.6;margin-top:12px">Tối thiểu để vào lệnh: <b>${fa.mustTotal} mục BẮT BUỘC</b> đều đạt${t && fa.mustLeft > 0 ? ` — <b style="color:var(--amber)">còn ${fa.mustLeft} mục chưa đọc</b>` : ''}. Đánh dấu ✓/✕ được lưu trên máy bạn theo từng mã, và cổng chặn lệnh sẽ hỏi lại nếu bạn mua mã chưa đạt.</div>
         </div>
       </div>
     </div>`;
@@ -2360,10 +2653,13 @@ class Component extends DCLogic {
       try { const r = await fetch(path, { cache: 'no-store' }); return r.ok ? await r.json() : null; }
       catch (e) { return null; }
     };
-    const [reg, st] = await Promise.all([
-      get('scans/regime_vn.json'), get('scans/watch_stats.json')]);
+    const [reg, st, fu] = await Promise.all([
+      get('scans/regime_vn.json'), get('scans/watch_stats.json'),
+      get('scans/fund_vn.json')]);
     this._regimeCache = reg;
     this._statsCache = st;
+    this._fundCache = fu;
+    this._renderFA();          // bang co ban dang mo thi dien so vao ngay
     // Vẽ lại nếu tab Watch đang mở. Cổng chặn lệnh (_planWarnings) đọc thẳng
     // _regimeCache lúc bấm Lưu nên không cần vẽ lại gì.
     if (this.state.rightTab === 'watchlist') this._renderWatchlist();
@@ -2374,6 +2670,13 @@ class Component extends DCLogic {
   _wstat(sym) {
     return (this._statsCache && this._statsCache.stats
             && this._statsCache.stats[String(sym || '').toUpperCase()]) || null;
+  }
+
+  // So lieu co ban do fund_vn.py ke ra. Chua chay script thi tra null va moi cho
+  // dung phai chiu duoc thieu — bang van doc tay duoc nhu truoc, khong duoc chan.
+  _fund(sym) {
+    return (this._fundCache && this._fundCache.funds
+            && this._fundCache.funds[String(sym || '').toUpperCase()]) || null;
   }
 
   reloadScan = () => { this._regimeCache = undefined; this._loadRegimeData(); }
@@ -2746,6 +3049,10 @@ class Component extends DCLogic {
 
   _renderStatsTable(el, data, title, icon, colDefs) {
     if (!el) return;
+    el.innerHTML = this._statsTableHtml(data, title, icon, colDefs);
+  }
+
+  _statsTableHtml(data, title, icon, colDefs) {
     const tr = this._tr();
     const ths = colDefs.map(c => `<th style="text-align:${c.r?'right':'left'};padding:7px 8px;font-size:8.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap">${c.t}</th>`).join('');
     const tbody = data.map(x => {
@@ -2755,7 +3062,7 @@ class Component extends DCLogic {
       }).join('');
       return `<tr style="border-bottom:1px solid var(--border2)">${tds}</tr>`;
     }).join('');
-    el.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px">
       <div style="padding:10px 14px;border-bottom:1px solid var(--border)"><div style="font-size:12px;font-weight:700">${icon} ${title}</div></div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead><tr>${ths}</tr></thead>
@@ -2765,11 +3072,11 @@ class Component extends DCLogic {
   }
 
   _renderSetupStats() {
-    const el = document.getElementById('setupStatsBox');
-    const data = this._setupStats(), tr = this._tr();
+    const el = document.getElementById('setupStatsBox'); if (!el) return;
+    const tr = this._tr();
     const sgn = (v,s) => v>=0?`+${s}`:s;
-    this._renderStatsTable(el, data, tr.setupTitle, '📊', [
-      { t:tr.colSetup, get: x => x.name==='NOT IN PLAN'?'<span style="color:var(--red);font-weight:700">NOT IN PLAN</span>':x.name },
+    // Hai bang dung chung 7 cot so — chi khac cot dau. Tach ra de khoi viet lai.
+    const numCols = [
       { t:tr.colN, r:1, mono:true, get: x => x.n },
       { t:tr.colWin, r:1, mono:true, get: x => x.win, col: () => 'var(--green)' },
       { t:tr.colLoss, r:1, mono:true, get: x => x.loss, col: () => 'var(--red)' },
@@ -2777,7 +3084,19 @@ class Component extends DCLogic {
       { t:tr.colAvgR, r:1, mono:true, get: x => sgn(+x.avgR,x.avgR+'R'), col: x => +x.avgR>=0?'var(--green)':'var(--red)' },
       { t:tr.colTotR, r:1, mono:true, get: x => sgn(x.totR,this._fmt(x.totR,1)+'R'), col: x => x.totR>=0?'var(--green)':'var(--red)' },
       { t:tr.colNet+' '+this._ccySym(), r:1, mono:true, get: x => sgn(x.totNet,this._m(x.totNet)), col: x => x.totNet>=0?'var(--green)':'var(--red)' },
-    ]);
+    ];
+    const faCol = { t:'HẠNG CƠ BẢN', get: x => {
+      const c = x.name.startsWith('❌') ? 'var(--red)' : x.name.startsWith('🏆') || x.name.startsWith('✅') ? 'var(--green)'
+        : x.name.startsWith('⏳') ? 'var(--amber)' : 'var(--text2)';
+      return `<span style="color:${c};font-weight:700">${x.name}</span>`;
+    } };
+    el.innerHTML =
+      this._statsTableHtml(this._setupStats(), tr.setupTitle, '📊', [
+        { t:tr.colSetup, get: x => x.name==='NOT IN PLAN'?'<span style="color:var(--red);font-weight:700">NOT IN PLAN</span>':x.name },
+        ...numCols])
+      + this._statsTableHtml(this._faStats(),
+          'Hạng cơ bản lúc vào lệnh — tiêu chí nào thật sự đẻ ra tiền trên HOSE', '🔬', [faCol, ...numCols])
+      + this._faReasonHtml();
   }
 
   _renderEmotionStats() {
@@ -3103,6 +3422,7 @@ class Component extends DCLogic {
       reloadScan: ()=>this.reloadScan(), setScanMarket: m=>this.setScanMarket(m),
       openFA: s=>this.openFA(s), closeFA: ()=>this.closeFA(), setFASym: v=>this.setFASym(v),
       markFA: (k,v)=>this.markFA(k,v), openAllFA: ()=>this.openAllFA(), faToNote: ()=>this.faToNote(),
+      setFANum: (k,v)=>this.setFANum(k,v), applyFAAuto: ()=>this.applyFAAuto(),
       setPeriod: p=>{ localStorage.setItem('tj_period',p); this.setState({period:p}); },
       addSetup: ()=>this.addSetup(),
       calPrev: ()=>this.setState(s=>{let m=s.calMonth-1,y=s.calYear;if(m<0){m=11;y--;}return{calMonth:m,calYear:y};}),

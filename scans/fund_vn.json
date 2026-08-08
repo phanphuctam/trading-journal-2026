@@ -1,0 +1,232 @@
+{
+  "app": "trading-journal",
+  "market": "VN",
+  "checked_at": "2026-08-08 13:01",
+  "source": "vnstock/VCI · ban cong dong chi tra 4 ky gan nhat",
+  "thresholds": {
+    "y_growth": 20.0,
+    "roe": 15.0,
+    "q_npat": 25.0,
+    "q_rev": 20.0,
+    "dilute_ok": 5.0,
+    "ocf": 0.8
+  },
+  "funds": {
+    "MSB": {
+      "sector": "bank",
+      "q_periods": [
+        "2026-Q2",
+        "2026-Q1",
+        "2025-Q4",
+        "2025-Q3"
+      ],
+      "y_periods": [
+        "2025",
+        "2024",
+        "2023",
+        "2022"
+      ],
+      "q": {
+        "rev": [
+          3395.0,
+          3649.5,
+          3847.6,
+          3403.6
+        ],
+        "npat": [
+          1250.6,
+          1514.2,
+          1851.2,
+          1274.2
+        ],
+        "ocf": [
+          -3659.8,
+          9301.4,
+          6921.1,
+          4185.9
+        ],
+        "recv": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "inv": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "noncore_pct": [
+          12.1,
+          8.9,
+          9.0,
+          8.8
+        ]
+      },
+      "y": {
+        "rev": [
+          14044.5,
+          14218.2,
+          12259.0,
+          10693.7
+        ],
+        "npat": [
+          5628.5,
+          5519.4,
+          4644.2,
+          4616.2
+        ],
+        "equity": [
+          42446.1,
+          36817.6,
+          31298.2,
+          26654.0
+        ],
+        "shares_m": [
+          3120.0,
+          2600.0,
+          2000.0,
+          1985.8
+        ]
+      },
+      "calc": {
+        "npat_yoy_q": null,
+        "rev_yoy_q": null,
+        "y_growth": [
+          2.0,
+          18.8,
+          0.6
+        ],
+        "y_ok3": false,
+        "below_peak": false,
+        "roe": 14.2,
+        "share_yoy": 20.0,
+        "rev_growth_y": null,
+        "recv_vs_rev": null,
+        "inv_vs_rev": null,
+        "ocf_ratio": 2.84,
+        "noncore_pct": 12.1,
+        "bank": {
+          "loans_growth": 16.3,
+          "deposit_growth": 27.2,
+          "ldr": 104.3,
+          "provision_to_loans": 1.39
+        }
+      },
+      "auto": {
+        "vnone": 1,
+        "vnnam": -1,
+        "vndil": -1
+      }
+    },
+    "STB": {
+      "sector": "bank",
+      "q_periods": [
+        "2026-Q2",
+        "2026-Q1",
+        "2025-Q4",
+        "2025-Q3"
+      ],
+      "y_periods": [
+        "2025",
+        "2024",
+        "2023",
+        "2022"
+      ],
+      "q": {
+        "rev": [
+          9950.1,
+          7538.1,
+          7694.3,
+          8796.5
+        ],
+        "npat": [
+          1346.7,
+          1584.4,
+          -2752.5,
+          2901.3
+        ],
+        "ocf": [
+          17064.7,
+          -58545.4,
+          57606.8,
+          11877.9
+        ],
+        "recv": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "inv": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "noncore_pct": [
+          11.0,
+          15.4,
+          null,
+          1.4
+        ]
+      },
+      "y": {
+        "rev": [
+          32056.7,
+          28677.1,
+          26173.0,
+          26141.3
+        ],
+        "npat": [
+          5939.1,
+          10087.5,
+          7718.6,
+          5040.7
+        ],
+        "equity": [
+          59866.7,
+          54972.1,
+          45733.9,
+          38627.0
+        ],
+        "shares_m": [
+          1885.2,
+          1885.2,
+          1885.2,
+          1885.2
+        ]
+      },
+      "calc": {
+        "npat_yoy_q": null,
+        "rev_yoy_q": null,
+        "y_growth": [
+          -41.1,
+          30.7,
+          53.1
+        ],
+        "y_ok3": false,
+        "below_peak": true,
+        "roe": 10.3,
+        "share_yoy": 0.0,
+        "rev_growth_y": null,
+        "recv_vs_rev": null,
+        "inv_vs_rev": null,
+        "ocf_ratio": 9.09,
+        "noncore_pct": 11.0,
+        "bank": {
+          "loans_growth": 16.1,
+          "deposit_growth": 9.1,
+          "ldr": 101.3,
+          "provision_to_loans": 3.2
+        }
+      },
+      "auto": {
+        "vnone": 1,
+        "vnnam": -1,
+        "vndil": 1
+      }
+    }
+  }
+}
