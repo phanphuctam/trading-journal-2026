@@ -722,7 +722,10 @@ details summary::-webkit-details-marker{display:none}
   <!-- ═══ LEFT COL ═══ -->
   <div style="overflow-y:auto;padding:16px 18px 20px">
 
-    <!-- POSITION SIZING CARD — first -->
+    <!-- KPI GRID — tổng quan cả hành trình, luôn hiện, không phụ thuộc tab bên phải -->
+    <div id="kpiGrid" style="margin-bottom:14px"></div>
+
+    <!-- POSITION SIZING CARD -->
     <div style="background:var(--card);border:1px solid var(--border2);border-radius:12px;margin-bottom:14px;display:flex;align-items:stretch;overflow:hidden">
       <div style="flex:1;padding:12px 16px;border-right:1px solid var(--border)">
         <div style="font-size:8.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px">{{ lbOneR }}</div>
@@ -904,8 +907,8 @@ details summary::-webkit-details-marker{display:none}
         <button onclick="{{ goHeatmap }}" style="{{ tabHeatmapStyle }}">{{ lbTabHm }}</button>
       </div>
     </div>
-    <!-- KPI GRID (always visible) -->
-    <div id="kpiGrid" style="margin-bottom:14px"></div>
+    <!-- KPI GRID đã chuyển sang CỘT TRÁI: đó là tổng quan của cả hành trình, không
+         thuộc về tab nào. Bên phải giờ ấn tab nào ra đúng dữ liệu tab đó. -->
 
     <!-- ═ OVERVIEW TAB ═ -->
     <div style="{{ tabOvStyle }}">
@@ -2798,7 +2801,7 @@ class Component extends DCLogic {
         <div style="font-size:11px;color:var(--text2);margin-top:3px">${sub}</div>
       </div>`;
     const sgn = v => v >= 0 ? '+' : '';
-    el.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
       ${card(tr.kpiROI, sgn(s.totNet)+this._fmt(s.capNow?s.totNet/s.capNow*100:0,1)+'%', s.totNet>=0?'var(--green)':'var(--red)', `${tr.kpiOnCap} · ${this.state.deposits.length} ${tr.kpiTimes}`, false)}
       ${card(tr.kpiDD, this._fmt(s.maxDD,1)+'%', 'var(--red)', `${tr.kpiPeak} ${this._m(s.peak,0)} · ${s.win}W / ${s.loss}L`, false)}
     </div>${this._advStripHTML(s, tr)}`;
@@ -2814,7 +2817,7 @@ class Component extends DCLogic {
         <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700;white-space:nowrap">${l}</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;margin-top:3px;color:${col};line-height:1.1">${v}</div>${sub ? '<div style="font-size:9.5px;color:var(--text2);margin-top:2px;white-space:nowrap">'+sub+'</div>' : ''}
       </div>`;
-    return `<div class="tj-ministrip" style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:7px">
+    return `<div class="tj-ministrip" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:7px">
       ${mini(tr.mExpect, sgn(s.expectancy)+this._m(s.expectancy,1), s.expectancy>=0?'var(--green)':'var(--red)', `PF ${this._fmt(s.pf)} · Avg ${sgn(s.avgR)}${this._fmt(s.avgR,2)}R`)}
       ${mini(tr.mAvgWin, this._m(s.avgWin,1), 'var(--green)')}
       ${mini(tr.mAvgLoss, '-'+this._m(s.avgLoss,1), 'var(--red)')}
