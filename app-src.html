@@ -1833,7 +1833,10 @@ class Component extends DCLogic {
 
   _gdSnapshot = () => {
     let setups = []; try { setups = JSON.parse(localStorage.getItem('tj_setups_v1')||'[]')||[]; } catch(e){}
-    return { _app:'trading-journal-2026', _ts:Date.now(), trades:this.state.trades, deposits:this.state.deposits, notes:this.state.notes, setups, watchlist:this.state.watchlist };
+    // fund/fundNum: kết quả đọc cơ bản + số gốc gõ tay từ CafeF. Trước 09/08/2026
+    // chúng nằm ngoài bản sao lưu — đổi máy là mất sạch, mà đó là hàng giờ đọc báo cáo.
+    return { _app:'trading-journal-2026', _ts:Date.now(), trades:this.state.trades, deposits:this.state.deposits, notes:this.state.notes, setups, watchlist:this.state.watchlist,
+             fund:this._faGet(), fundNum:this._faNumGet() };
   }
 
   _loadGsi = () => new Promise((res,rej)=>{
@@ -1904,6 +1907,7 @@ class Component extends DCLogic {
           this._persist(); this._persistD(); this._persistWl();
           localStorage.setItem('tj_notes_v1', JSON.stringify(this.state.notes));
           if(d.setups) localStorage.setItem('tj_setups_v1', JSON.stringify(d.setups));
+          this._faRestore(d);
           this._toast('☁ Da khoi phuc tu Drive', 'var(--accent)');
         });
       } else alert('File khong hop le.');
@@ -2407,21 +2411,78 @@ class Component extends DCLogic {
     else                            Object.assign(r, { grade: 'C', txt: `đủ bắt buộc — ${ok}/${list.length} đạt`, col: 'var(--text2)' });
     return r;
   }
-  // ══ SO NGƯỜI TỰ NHẬP ══
-  // Bước 1 (quý cùng kỳ) là bước máy KHÔNG lấy được: vnstock bản cộng đồng chỉ trả
-  // 4 kỳ gần nhất nên không có quý cùng kỳ năm trước. Đọc tay trên CafeF rồi gõ số
-  // vào đây — để ba tháng sau còn tra được lúc đó mình thấy gì, chứ một cái ✓ thì
-  // không nhớ nổi là 26% hay 260%.
+  // ══ SỐ NGƯỜI TỰ ĐỌC TRÊN CAFEF ══
+  // vnstock bản cộng đồng chỉ trả 4 kỳ gần nhất nên quý CÙNG KỲ NĂM TRƯỚC luôn
+  // thiếu — đúng cái quý mà O'Neil bắt so. Trước 09/08/2026 ô nhập đòi gõ vào một
+  // con số % đã tự bấm máy tính sẵn. Hai chỗ hỏng:
+  //   · gốc âm thì % là số bịa. VIC lỗ 581 tỷ ở Q2/2025, lãi 10.003 tỷ ở Q2/2026:
+  //     công thức máy móc ra +1.822%, đặt cạnh một mã tăng 40% thì vô nghĩa.
+  //   · chỉ lưu cái %, không lưu số gốc → ba tháng sau đọc "+25%" không kiểm được.
+  // Nay gõ THẲNG hai con số của hai kỳ, máy chia. Số gốc nằm lại trong sổ.
   _faNumGet() {
-    if (!this._faNum) { try { this._faNum = JSON.parse(localStorage.getItem('tj_fund_num_v1') || '{}') || {}; } catch (e) { this._faNum = {}; } }
-    return this._faNum;
+    if (this._faNum) return this._faNum;
+    let s = null;
+    try { s = JSON.parse(localStorage.getItem('tj_fund_num_v2') || 'null'); } catch (e) {}
+    if (!s || typeof s !== 'object') {
+      s = {};
+      // v1 chỉ có con số %, không dựng ngược ra hai kỳ được. Giữ lại làm ghi chú
+      // dưới ô nhập, đừng im lặng nuốt mất số cũ.
+      try {
+        const o = JSON.parse(localStorage.getItem('tj_fund_num_v1') || '{}') || {};
+        Object.entries(o).forEach(([sym, e]) => {
+          if (e && (e.npat != null || e.rev != null)) s[sym] = { _v1: { npat: e.npat, rev: e.rev } };
+        });
+      } catch (e) {}
+      localStorage.setItem('tj_fund_num_v2', JSON.stringify(s));
+    }
+    return (this._faNum = s);
   }
-  setFANum = (k, v) => {
+
+  // CafeF ghi "Đơn vị: tỷ đồng" nhưng in ra số ĐỒNG đầy đủ (46.312.274.000.000),
+  // dùng dấu chấm phân cách nghìn và ngoặc đơn cho số âm. Cho dán thẳng cả cụm —
+  // bắt người tự bỏ 9 số 0 là chỗ sai vặt nhiều nhất.
+  _faParse(s, unit) {
+    let x = String(s == null ? '' : s).trim().replace(/\s/g, '');
+    if (!x || x === '-') return null;
+    const neg = /^\(.*\)$/.test(x);
+    x = x.replace(/[()%]/g, '');
+    if (x.includes('.') && x.includes(',')) x = x.replace(/\./g, '').replace(',', '.');
+    else if (x.includes(',')) x = x.replace(/,/g, '.');
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(x)) x = x.replace(/\./g, '');
+    let n = parseFloat(x);
+    if (isNaN(n)) return null;
+    if (neg) n = -Math.abs(n);
+    if (unit === 'ty' && Math.abs(n) >= 1e7) n = n / 1e9;   // dán số đồng → đổi ra tỷ
+    return Math.round(n * 100) / 100;
+  }
+
+  setFANum = (step, row, i, v, unit) => {
     const sym = this._faSym; if (!sym) return;
-    const st = this._faNumGet(), e = st[sym] = st[sym] || {};
-    const n = parseFloat(String(v).replace(',', '.'));
-    if (v === '' || isNaN(n)) delete e[k]; else e[k] = n;
-    localStorage.setItem('tj_fund_num_v1', JSON.stringify(st));
+    const st = this._faNumGet();
+    const e = st[sym] = st[sym] || {}, g = e[step] = e[step] || {}, a = g[row] = g[row] || [];
+    a[i] = this._faParse(v, unit);
+    if (!a.filter(x => x != null).length) delete g[row];
+    if (!Object.keys(g).length) delete e[step];
+    localStorage.setItem('tj_fund_num_v2', JSON.stringify(st));
+    const foc = document.activeElement && document.activeElement.id;
+    this._renderFA();
+    // onchange bắn lúc rời ô mà cả bảng vẽ lại → con trỏ rơi mất. Trả nó về chỗ cũ.
+    const el = foc && document.getElementById(foc); if (el) el.focus();
+  }
+
+  // Khôi phục phần đọc cơ bản từ file/Drive. File sao lưu cũ không có hai khoá này
+  // thì bỏ qua, KHÔNG ghi đè bằng object rỗng — mất số đang có trên máy.
+  _faRestore(d) {
+    if (d && d.fund && typeof d.fund === 'object') { this._faSt = d.fund; localStorage.setItem('tj_fund_v1', JSON.stringify(d.fund)); }
+    if (d && d.fundNum && typeof d.fundNum === 'object') { this._faNum = d.fundNum; localStorage.setItem('tj_fund_num_v2', JSON.stringify(d.fundNum)); }
+  }
+
+  clearFANum = (step) => {
+    const sym = this._faSym; if (!sym) return;
+    const st = this._faNumGet(), e = st[sym];
+    if (!e || !e[step]) return;
+    delete e[step];
+    localStorage.setItem('tj_fund_num_v2', JSON.stringify(st));
     this._renderFA();
   }
 
@@ -2429,6 +2490,272 @@ class Component extends DCLogic {
     const d = (this._fundCache && this._fundCache.thresholds) || {};
     return { y_growth: d.y_growth ?? 20, roe: d.roe ?? 15, q_npat: d.q_npat ?? 25,
              q_rev: d.q_rev ?? 20, dilute_ok: d.dilute_ok ?? 5, ocf: d.ocf ?? 0.8 };
+  }
+
+  // ══ MÁY TÍNH HAI KỲ — KHAI BÁO CHO TỪNG BƯỚC ══
+  // Mỗi bước khai: CỘT nào so CỘT nào, DÒNG nào phải gõ, và out() biến số thô thành
+  // kết luận. Người gõ đúng con số nhìn thấy trên CafeF, máy làm phép chia — không
+  // ai phải bấm máy tính rồi gõ lại kết quả nữa, và số gốc thì nằm lại trong sổ.
+  // Ô để trống = dùng số máy (vnstock) đang hiện mờ làm gợi ý; gõ đè khi CafeF khác.
+  _faSpec(k, t) {
+    const f = this._fund(t), T = this._faThr();
+    const q = (f && f.q) || null, y = (f && f.y) || null;
+    const P = (f && f.q_periods) || [], PY = (f && f.y_periods) || [];
+    const back = p => { const m = /^(\d{4})-Q([1-4])$/.exec(String(p || '')); return m ? (+m[1] - 1) + '-Q' + m[2] : ''; };
+    const at = (a, i) => (a && a[i] != null) ? a[i] : null;
+    const sum4 = a => (a && a.some(v => v != null)) ? a.reduce((s, v) => s + (v || 0), 0) : null;
+    const qCols = [`Kỳ đang xét${P[0] ? '<br>' + P[0] : ''}`, `Cùng kỳ năm trước${back(P[0]) ? '<br>' + back(P[0]) : ''}`];
+    const n1 = v => v == null ? '—' : this._fmt(v, 1);
+    const pc = v => (v >= 0 ? '+' : '') + this._fmt(v, 1) + '%';
+
+    // Tăng trưởng khi GỐC CÓ THỂ ÂM — chỗ mà gần như mọi bảng tính đều làm sai.
+    // Gốc ≤ 0 thì tỉ lệ không tồn tại, nên trả về NHÃN CHỮ chứ không trả số bịa.
+    const G = (a, b) => a == null || b == null ? null
+      : (b > 0 ? { p: (a - b) / b * 100 } : (a > 0 ? { turn: 1 } : { turn: -1 }));
+    const gl = (lab, g, thr, sub) => {
+      if (!g) return { lab, txt: 'thiếu số', ok: null, sub };
+      if (g.turn === 1) return { lab, txt: 'lỗ → lãi', ok: 1,
+        sub: 'gốc âm nên KHÔNG có %. O\'Neil coi chuyển lỗ thành lãi là tín hiệu mạnh — nhưng đừng đem con số này so với mã khác' };
+      if (g.turn === -1) return { lab, txt: 'lỗ → lỗ', ok: -1, sub: 'cả hai kỳ đều âm' };
+      return { lab, txt: pc(g.p), ok: thr == null ? 0 : (g.p >= thr ? 1 : -1),
+               sub: thr == null ? sub : `cần ≥ ${thr}%` };
+    };
+
+    if (k === 'vnq') return {
+      unit: 'ty', hint: 'Bảng KQKD quý · dán cả cụm "46.312.274.000.000" cũng được, máy tự đổi ra tỷ',
+      cols: qCols,
+      rows: [
+        { k: 'npat', lab: 'LNST cổ đông mẹ', sub: 'dòng 19', fill: [at(q && q.npat, 0), null] },
+        { k: 'rev', lab: 'Doanh thu thuần', sub: 'dòng 3', fill: [at(q && q.rev, 0), null] },
+        { k: 'npat1', lab: 'LNST quý LIỀN TRƯỚC', fill: [at(q && q.npat, 1), null],
+          sub: `${P[1] || 'quý trước'} so ${back(P[1]) || 'cùng kỳ'} · tuỳ chọn, chỉ để đo GIA TỐC` },
+      ],
+      out: V => {
+        const a = G(V.npat[0], V.npat[1]), b = G(V.rev[0], V.rev[1]), c = G(V.npat1[0], V.npat1[1]);
+        const L = [gl('LNST YoY', a, T.q_npat), gl('Doanh thu YoY', b, T.q_rev)];
+        if (V.npat[0] != null && V.npat[0] < 0)
+          L.push({ lab: '⛔ Quý gần nhất LỖ', txt: 'LOẠI', ok: -1, sub: 'quy tắc bước 1 — không cần xét YoY nữa' });
+        if (c) L.push(a && a.p != null && c.p != null
+          ? { lab: 'Gia tốc', txt: `${pc(c.p)} → ${pc(a.p)}`, ok: a.p >= c.p ? 1 : -1,
+              sub: a.p >= c.p ? 'đang tăng tốc — đúng thứ O\'Neil đòi' : 'đang GIẢM tốc: quý này tăng chậm hơn quý trước' }
+          : { lab: 'Gia tốc', txt: 'không đo được', ok: 0, sub: 'một trong hai quý có gốc âm' });
+        if (a && a.p != null && b && b.p != null && a.p >= T.q_npat && b.p < 5)
+          L.push({ lab: '⚠ Bẫy', txt: 'doanh thu đứng yên mà lợi nhuận tăng vọt', ok: -1,
+                   sub: 'bóc khoản một lần ở khối ngay dưới trước khi bấm ✓' });
+        return L;
+      },
+    };
+
+    if (k === 'vnone') return {
+      unit: 'ty', hint: 'Cùng bảng KQKD — bóc khoản một lần ra rồi so lại tăng trưởng LÕI',
+      cols: qCols,
+      rows: [
+        { k: 'pbt', lab: 'Tổng LNTT', sub: 'dòng 15' },
+        { k: 'fin', lab: 'Doanh thu hoạt động tài chính', sub: 'dòng 6' },
+        { k: 'jv', lab: 'Lãi/lỗ liên doanh, liên kết', sub: 'dòng 8' },
+        { k: 'oth', lab: 'Lợi nhuận khác', sub: 'dòng 14' },
+      ],
+      out: V => {
+        const nc = i => { const v = [V.fin[i], V.jv[i], V.oth[i]].filter(x => x != null); return v.length ? v.reduce((s, x) => s + x, 0) : null; };
+        const core = i => (V.pbt[i] == null || nc(i) == null) ? null : V.pbt[i] - nc(i);
+        const L = [];
+        [0, 1].forEach(i => {
+          const n = nc(i), p = V.pbt[i];
+          const s = (n == null || p == null || p <= 0) ? null : n / p * 100;
+          L.push({ lab: `Ngoài cốt lõi / LNTT · ${i ? 'cùng kỳ' : 'kỳ này'}`,
+                   txt: s == null ? '—' : this._fmt(s, 1) + '%', ok: s == null ? null : (s <= 30 ? 1 : -1),
+                   sub: s == null ? '' : `${n1(n)} / ${n1(p)} tỷ · quá 30% là lợi nhuận không thuộc về hoạt động kinh doanh` });
+        });
+        if (core(0) != null || core(1) != null)
+          L.push({ lab: 'LNTT lõi', txt: `${n1(core(1))} → ${n1(core(0))} tỷ`, ok: null });
+        L.push(gl('Tăng trưởng LÕI thật', G(core(0), core(1)), T.q_npat, 'đây mới là con số để chấm bước 1'));
+        return L;
+      },
+    };
+
+    if (k === 'vnnam') return {
+      unit: 'ty', hint: 'CafeF · bấm "4 năm gần nhất"',
+      cols: [0, 1, 2, 3].map(i => PY[i] || ['Năm gần nhất', 'N-1', 'N-2', 'N-3'][i]),
+      rows: [
+        { k: 'npat', lab: 'LNST cổ đông mẹ', fill: [0, 1, 2, 3].map(i => at(y && y.npat, i)) },
+        { k: 'eq', lab: 'VCSH của cổ đông mẹ', sub: 'để tính ROE — chỉ cần 2 cột đầu', fill: [0, 1, 2, 3].map(i => at(y && y.equity, i)) },
+      ],
+      out: V => {
+        const L = [0, 1, 2].map(i => gl(`${PY[i] || 'N-' + i} so ${PY[i + 1] || 'N-' + (i + 1)}`, G(V.npat[i], V.npat[i + 1]), T.y_growth));
+        const e0 = V.eq[0], e1 = V.eq[1];
+        const base = e0 == null ? null : (e1 == null ? e0 : (e0 + e1) / 2);
+        if (V.npat[0] != null && base && base > 0) {
+          const roe = V.npat[0] / base * 100;
+          L.push({ lab: 'ROE', txt: this._fmt(roe, 1) + '%', ok: roe >= T.roe ? 1 : -1, sub: `cần ≥ ${T.roe}%` });
+        }
+        const rest = [V.npat[1], V.npat[2], V.npat[3]].filter(v => v != null);
+        if (V.npat[0] != null && rest.length && V.npat[0] < Math.max(...rest))
+          L.push({ lab: '⚠ Bẫy phục hồi giả', txt: 'chưa về lại đỉnh cũ', ok: -1,
+                   sub: `đỉnh cũ ${n1(Math.max(...rest))} tỷ — năm gần nhất mới ${n1(V.npat[0])} tỷ, % tăng đẹp chỉ vì năm trước quá tệ` });
+        return L;
+      },
+    };
+
+    // Bước 3 chỉ có phép tính khi là ngân hàng. NPL/LLR nằm trong THUYẾT MINH BCTC,
+    // máy không đọc được — nên đây là chỗ duy nhất trong bảng số hoàn toàn do người gõ.
+    if (k === 'vnsec' && (!f || f.sector === 'bank')) return {
+      unit: 'pct', hint: 'Ngân hàng · đọc trong thuyết minh BCTC (nợ nhóm 3-5), máy không lấy được',
+      cols: ['Quý này', 'Quý trước'],
+      rows: [
+        { k: 'npl', lab: 'Nợ xấu NPL (%)', sub: 'nợ nhóm 3-5 / tổng dư nợ' },
+        { k: 'llr', lab: 'Bao phủ nợ xấu LLR (%)' },
+        { k: 'nim', lab: 'NIM (%)' },
+        { k: 'cir', lab: 'CIR (%)' },
+      ],
+      out: V => {
+        const L = [];
+        const d = (a, b) => (a == null || b == null) ? null : a - b;
+        const dl = x => x == null ? '' : ` · so quý trước ${x >= 0 ? '+' : ''}${this._fmt(x, 2)} điểm %`;
+        if (V.npl[0] != null) { const dn = d(V.npl[0], V.npl[1]);
+          L.push({ lab: 'NPL', txt: this._fmt(V.npl[0], 2) + '%', ok: (V.npl[0] < 2 && !(dn > 0)) ? 1 : -1, sub: 'cần < 2% VÀ không tăng' + dl(dn) }); }
+        if (V.llr[0] != null) { const dr = d(V.llr[0], V.llr[1]);
+          L.push({ lab: 'LLR', txt: this._fmt(V.llr[0], 1) + '%', ok: V.llr[0] > 80 ? 1 : -1, sub: 'cần > 80%' + dl(dr) }); }
+        if (d(V.npl[0], V.npl[1]) > 0 && d(V.llr[0], V.llr[1]) < 0)
+          L.push({ lab: '⛔ Đang giấu nợ xấu', txt: 'NPL tăng mà LLR giảm', ok: -1, sub: 'loại — không cần đọc tiếp' });
+        if (V.nim[0] != null) { const dn = d(V.nim[0], V.nim[1]);
+          L.push({ lab: 'NIM', txt: this._fmt(V.nim[0], 2) + '%', ok: dn == null ? null : (dn >= 0 ? 1 : 0), sub: 'ổn định hoặc mở rộng' + dl(dn) }); }
+        if (V.cir[0] != null) { const dc = d(V.cir[0], V.cir[1]);
+          L.push({ lab: 'CIR', txt: this._fmt(V.cir[0], 1) + '%', ok: dc == null ? null : (dc <= 0 ? 1 : 0), sub: 'càng giảm càng tốt' + dl(dc) }); }
+        return L;
+      },
+    };
+
+    if (k === 'vnbs') return {
+      unit: 'ty', hint: 'Doanh thu ở bảng KQKD, phải thu & tồn kho ở bảng cân đối — lấy CÙNG một quý',
+      cols: qCols,
+      rows: [
+        { k: 'rev', lab: 'Doanh thu thuần', fill: [at(q && q.rev, 0), null] },
+        { k: 'recv', lab: 'Phải thu ngắn hạn', fill: [at(q && q.recv, 0), null] },
+        { k: 'inv', lab: 'Hàng tồn kho', fill: [at(q && q.inv, 0), null] },
+      ],
+      out: V => {
+        const gr = G(V.rev[0], V.rev[1]), ge = G(V.recv[0], V.recv[1]), gi = G(V.inv[0], V.inv[1]);
+        const L = [gl('Doanh thu', gr, null), gl('Phải thu', ge, null), gl('Tồn kho', gi, null)];
+        if (gr && gr.p > 0) {
+          [[ge, 'Phải thu'], [gi, 'Tồn kho']].forEach(([g, n]) => {
+            if (!g || g.p == null) return;
+            const fast2 = g.p > 2 * gr.p;
+            L.push({ lab: n + ' vs doanh thu', ok: g.p <= gr.p ? 1 : (fast2 ? -1 : 0),
+                     txt: g.p <= gr.p ? 'chậm hơn doanh thu' : (fast2 ? 'NHANH GẤP ĐÔI doanh thu' : 'nhanh hơn doanh thu'),
+                     sub: fast2 ? 'ghi nhận doanh thu nhưng tiền chưa về' : '' });
+          });
+          if (ge && gi && ge.p > 2 * gr.p && gi.p > 2 * gr.p)
+            L.push({ lab: '⛔ Cả hai cùng ≥ 2× doanh thu', txt: 'LOẠI', ok: -1, sub: 'trừ khi giải thích được' });
+        }
+        return L;
+      },
+    };
+
+    if (k === 'vncf') return {
+      unit: 'ty', hint: 'Cộng 4 quý gần nhất, hoặc lấy thẳng số cả năm',
+      cols: ['Cộng dồn 4 quý'],
+      rows: [
+        { k: 'ocf', lab: 'Lưu chuyển tiền thuần từ HĐKD (OCF)', fill: [sum4(q && q.ocf)] },
+        { k: 'npat', lab: 'Lợi nhuận sau thuế', fill: [sum4(q && q.npat)] },
+      ],
+      out: V => {
+        const a = V.ocf[0], b = V.npat[0];
+        if (a == null || b == null) return [{ lab: 'OCF / LNST', txt: 'thiếu số', ok: null }];
+        if (b <= 0) return [{ lab: 'OCF / LNST', txt: 'không tính được', ok: 0,
+                              sub: `LNST âm — nhìn thẳng dấu của OCF: ${a >= 0 ? 'dương, còn đỡ' : 'ÂM, lỗ cả trên giấy lẫn trong két'}` }];
+        const L = [{ lab: 'OCF / LNST', txt: this._fmt(a / b, 2) + '×', ok: a / b >= T.ocf ? 1 : -1, sub: `cần ≥ ${this._fmt(T.ocf, 1)}×` }];
+        if (a < 0) L.push({ lab: '⛔ OCF ÂM', txt: 'lãi trên giấy', ok: -1, sub: 'lãi nhiều mà tiền không về — ghép với phải thu phình ở bước 4' });
+        return L;
+      },
+    };
+
+    if (k === 'vndil') return {
+      unit: 'raw', hint: 'Vietstock · đơn vị TRIỆU cổ phiếu',
+      cols: ['Hiện tại', '1 năm trước'],
+      rows: [
+        { k: 'sh', lab: 'Số CP lưu hành (triệu)', fill: [at(y && y.shares_m, 0), at(y && y.shares_m, 1)] },
+        { k: 'plan', lab: 'CP đã duyệt nhưng CHƯA phát hành (triệu)', n: 1,
+          sub: 'nghị quyết ĐHCĐ: riêng lẻ, ESOP, cổ tức bằng cổ phiếu' },
+      ],
+      out: V => {
+        const g = G(V.sh[0], V.sh[1]);
+        const L = [g && g.p != null
+          ? { lab: 'Pha loãng 1 năm', txt: pc(g.p), ok: g.p <= T.dilute_ok ? 1 : -1,
+              sub: `ổn định = ≤ ${T.dilute_ok}%${g.p < 0 ? ' · đang GIẢM số CP, điểm cộng lớn' : ''}` }
+          : gl('Pha loãng 1 năm', g, null)];
+        if (V.plan[0] != null && V.sh[0]) {
+          const p = V.plan[0] / V.sh[0] * 100;
+          L.push({ lab: '💣 Pha loãng sắp tới', txt: '+' + this._fmt(p, 1) + '%', ok: p <= T.dilute_ok ? 1 : -1,
+                   sub: 'quả bom hẹn giờ — báo cáo hiện tại đẹp không cứu được' });
+        }
+        return L;
+      },
+    };
+
+    if (k === 'vnbase') return {
+      unit: 'raw', hint: 'Đếm trên đồ thị TUẦN',
+      cols: ['Giá trị'],
+      rows: [
+        { k: 'n', lab: 'Đang mua ở nền thứ mấy?', n: 1 },
+        { k: 'pe', lab: 'P/E hiện tại', n: 1 },
+        { k: 'pe0', lab: 'P/E lúc xu hướng bắt đầu', n: 1 },
+      ],
+      out: V => {
+        const L = [], n = V.n[0];
+        if (n != null) L.push({ lab: `Nền thứ ${this._fmt(n, 0)}`, ok: n <= 2 ? 1 : (n <= 4 ? 0 : -1),
+          txt: n <= 2 ? 'vùng tốt nhất' : (n <= 4 ? 'cuối chu kỳ — nhỏ vị thế lại' : 'RỦI RO CAO — cân nhắc BÁN thay vì mua'),
+          sub: n <= 2 ? 'hơn 90% sóng tăng mạnh xuất hiện ở nền 1–2' : 'cơ bản đẹp KHÔNG cứu được bước này' });
+        if (V.pe[0] != null && V.pe0[0])
+          L.push({ lab: 'P/E đã nở', txt: this._fmt(V.pe[0] / V.pe0[0], 2) + '×', ok: V.pe[0] / V.pe0[0] < 2 ? 1 : -1,
+                   sub: 'gấp đôi = giá đã chạy trước lợi nhuận quá xa (Minervini)' });
+        return L;
+      },
+    };
+
+    return null;
+  }
+
+  // Vẽ khối máy tính. Ô trống thì lấy số máy đang hiện mờ làm giá trị — nên mở lên
+  // là đã có sẵn cột "kỳ đang xét", chỉ còn phải gõ cột cùng kỳ năm trước.
+  _faCalcBox(k, t) {
+    const sp = this._faSpec(k, t); if (!sp) return '';
+    const store = ((this._faNumGet()[t] || {})[k]) || {};
+    const raw = (r, i) => { const a = store[r.k]; return (a && a[i] != null) ? a[i] : null; };
+    const show = v => v == null ? '' : this._fmt(v, 2).replace(/,00$/, '').replace(/(,\d)0$/, '$1');
+    const V = {};
+    sp.rows.forEach(r => { V[r.k] = sp.cols.map((_, i) => { const u = raw(r, i); return u != null ? u : ((r.fill || [])[i] ?? null); }); });
+    const res = (sp.out(V) || []).filter(Boolean);
+    const col = v => v == null ? 'var(--text3)' : v > 0 ? 'var(--green)' : v < 0 ? 'var(--red)' : 'var(--amber)';
+    const gt = `grid-template-columns:minmax(0,1.5fr) repeat(${sp.cols.length},minmax(0,1fr));gap:5px`;
+    const head = `<div style="display:grid;${gt};align-items:end;font-size:10px;color:var(--text3);font-family:inherit">
+      <div></div>${sp.cols.map(c => `<div style="text-align:center;line-height:1.25">${c}</div>`).join('')}</div>`;
+    const rows = sp.rows.map(r => {
+      const n = r.n || sp.cols.length;
+      const cells = sp.cols.map((_, i) => {
+        if (i >= n) return '<div></div>';
+        const u = raw(r, i), a = (r.fill || [])[i] ?? null;
+        return `<input id="fn_${k}_${r.k}_${i}" type="text" inputmode="decimal" autocomplete="off"
+          value="${show(u)}" placeholder="${show(a)}"
+          onchange="window._tj.setFANum('${k}','${r.k}',${i},this.value,'${sp.unit}')"
+          title="${a == null ? '' : 'số máy lấy từ vnstock — để trống là dùng số này, gõ đè nếu CafeF khác'}"
+          style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid ${u == null ? 'var(--border)' : 'var(--accent)'};border-radius:6px;padding:4px 6px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--text)">`;
+      }).join('');
+      return `<div style="display:grid;${gt};align-items:center;margin-top:4px">
+        <div style="font-family:inherit;font-size:11.5px;line-height:1.3">${r.lab}${r.sub ? `<br><span style="color:var(--text3);font-size:10px">${r.sub}</span>` : ''}</div>${cells}</div>`;
+    }).join('');
+    const out = res.map(x => `<div style="margin-top:3px">${x.lab}: <b style="color:${col(x.ok)}">${x.txt}</b>${x.sub ? `<br><span style="color:var(--text3);font-family:inherit;font-size:11px">${x.sub}</span>` : ''}</div>`).join('');
+    const v1 = (this._faNumGet()[t] || {})._v1;
+    const old = (k === 'vnq' && v1 && (v1.npat != null || v1.rev != null))
+      ? `<div style="font-size:10px;color:var(--text3);font-family:inherit;margin-top:6px">% bạn từng gõ tay ở bản cũ: LNST ${v1.npat ?? '—'} · D.thu ${v1.rev ?? '—'}</div>` : '';
+    return `<div style="background:var(--border2);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:12.5px;line-height:1.6;font-family:'JetBrains Mono',monospace;overflow-x:auto">
+      <div style="display:flex;gap:6px;align-items:center;font-family:inherit;font-size:11px;font-weight:700;color:var(--accent);margin-bottom:3px">
+        <span style="flex:1;min-width:0">✎ Gõ số của hai kỳ — máy tính %</span>
+        ${Object.keys(store).length ? `<button onclick="window._tj.clearFANum('${k}')" style="background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:5px;padding:2px 6px;font-size:10px;cursor:pointer">xoá số</button>` : ''}
+      </div>
+      ${sp.hint ? `<div style="font-family:inherit;font-size:10px;color:var(--text3);margin-bottom:5px">${sp.hint}</div>` : ''}
+      ${head}${rows}
+      <hr style="border:0;border-top:1px dashed var(--border);margin:7px 0">
+      ${out || '<span style="color:var(--text3)">chưa đủ số để tính</span>'}${old}</div>`;
   }
 
   // ══ KHỐI SỐ CỦA MỘT BƯỚC ══
@@ -2451,24 +2778,17 @@ class Component extends DCLogic {
     };
     const stamp = f ? `<div style="font-size:11.5px;color:var(--text3);font-family:inherit;margin-top:3px">📊 ${(this._fundCache || {}).checked_at || ''} · vnstock</div>` : '';
 
-    // Bước 1 luôn có ô nhập tay, kể cả khi máy đã tự tính được — để đối chiếu
+    // Bước 1: khối này chỉ TRÌNH BÀY số máy. Phép chia nằm ở _faCalcBox ngay dưới,
+    // vì bước nào cũng cần cùng một cái máy tính hai kỳ.
     if (k === 'vnq') {
-      const num = (this._faNumGet()[t]) || {};
       const auto = f && f.calc && f.calc.npat_yoy_q != null;
       const q = f && f.q ? f.q : null;
-      const series = q ? `LNST 4 quý: ${q.npat.map(n1).join(' · ')} tỷ<br>D.thu 4 quý: ${q.rev.map(n0).join(' · ')} tỷ<br><span style="color:var(--text3)">${(f.q_periods || []).join(' · ')}</span>` : '';
+      if (!q) return '';
+      const series = `LNST 4 quý: ${q.npat.map(n1).join(' · ')} tỷ<br>D.thu 4 quý: ${q.rev.map(n0).join(' · ')} tỷ<br><span style="color:var(--text3)">${(f.q_periods || []).join(' · ')}</span>`;
       const machine = auto
         ? `<div style="color:var(--green)">Máy tính được YoY: LNST ${pc(f.calc.npat_yoy_q)} · D.thu ${pc(f.calc.rev_yoy_q)}</div>`
-        : `<div style="color:var(--amber)">Chưa đủ lịch sử để máy so cùng kỳ — đọc trên CafeF rồi gõ vào đây</div>`;
-      const inp = (key, lab, thr) => {
-        const v = num[key], ok = v == null ? null : v >= thr;
-        return `<label style="display:inline-flex;align-items:center;gap:5px;margin-right:12px;font-family:inherit;font-size:13.5px">${lab}
-          <input type="number" step="any" value="${v == null ? '' : v}" onchange="window._tj.setFANum('${key}',this.value)"
-            style="width:74px;background:var(--bg);border:1px solid ${v == null ? 'var(--border)' : col(ok)};border-radius:6px;padding:4px 7px;font-family:'JetBrains Mono',monospace;font-size:13.5px;color:var(--text)">%
-          <span style="color:${col(ok)};font-weight:700">${v == null ? '' : ok ? '≥' + thr : '<' + thr}</span></label>`;
-      };
-      return box(`${series}${series ? '<hr style="border:0;border-top:1px dashed var(--border);margin:6px 0">' : ''}${machine}
-        <div style="margin-top:5px;font-family:inherit">${inp('npat', 'LNST YoY', T.q_npat)}${inp('rev', 'D.thu YoY', T.q_rev)}</div>${verdict()}${stamp}`);
+        : `<div style="color:var(--amber)">Máy chỉ lấy được 4 quý gần nhất nên chưa có cùng kỳ năm trước — gõ số ở khối dưới</div>`;
+      return box(`${series}<hr style="border:0;border-top:1px dashed var(--border);margin:6px 0">${machine}${verdict()}${stamp}`);
     }
 
     if (!f || !f.calc) return '';
@@ -2478,12 +2798,11 @@ class Component extends DCLogic {
       return box(`Lãi ngoài cốt lõi / LNTT quý gần nhất: <b style="color:${c.noncore_pct > 30 ? 'var(--red)' : 'var(--green)'}">${n1(c.noncore_pct)}%</b>
         <br><span style="color:var(--text3);font-family:inherit;font-size:12.5px">gồm doanh thu tài chính + thu nhập khác + lãi từ liên doanh</span>${verdict()}${stamp}`);
 
+    // Chỉ còn DÃY SỐ ở đây. Ba kết luận (tăng trưởng, ROE, bẫy phục hồi giả) đã
+    // chuyển xuống khối máy tính bên dưới — in hai lần thì lần nào cũng bị lướt qua.
     if (k === 'vnnam' && f.y)
       return box(`LNST năm: ${f.y.npat.slice().reverse().map(n0).join(' → ')} tỷ
-        <br><span style="color:var(--text3)">${(f.y_periods || []).slice().reverse().join(' → ')}</span>
-        <br>Tăng: ${(c.y_growth || []).slice().reverse().map(g => `<b style="color:${col(g != null && g >= T.y_growth)}">${pc(g)}</b>`).join(' · ')} <span style="color:var(--text3)">(cần cả 3 ≥ ${T.y_growth}%)</span>
-        <br>ROE: <b style="color:${col(c.roe != null && c.roe >= T.roe)}">${n1(c.roe)}%</b> <span style="color:var(--text3)">(cần ≥ ${T.roe}%)</span>
-        ${c.below_peak ? '<br><b style="color:var(--red)">⚠ Bẫy phục hồi giả: LNST năm mới nhất vẫn THẤP HƠN đỉnh cũ</b>' : ''}${verdict()}${stamp}`);
+        <br><span style="color:var(--text3)">${(f.y_periods || []).slice().reverse().join(' → ')}</span>${verdict()}${stamp}`);
 
     if (k === 'vnsec' && c.bank)
       return box(`Tăng trưởng cho vay: <b>${pc(c.bank.loans_growth)}</b> · tiền gửi: <b>${pc(c.bank.deposit_growth)}</b>
@@ -2503,14 +2822,12 @@ class Component extends DCLogic {
       if (f.sector === 'bank') return box(`<span style="color:var(--text3);font-family:inherit">Ngân hàng: OCF bị chi phối bởi dòng tiền gửi và giải ngân cho vay, không phản ánh chất lượng lợi nhuận — máy không chấm bước này.</span>`);
       if (!f.q) return '';
       return box(`OCF 4 quý: ${f.q.ocf.map(n0).join(' · ')} tỷ
-        <br>LNST 4 quý: ${f.q.npat.map(n0).join(' · ')} tỷ
-        <br>Tổng OCF / tổng LNST: <b style="color:${col(c.ocf_ratio != null && c.ocf_ratio >= T.ocf)}">${c.ocf_ratio == null ? '—' : this._fmt(c.ocf_ratio, 2) + '×'}</b> <span style="color:var(--text3)">(cần ≥ ${T.ocf}×)</span>${verdict()}${stamp}`);
+        <br>LNST 4 quý: ${f.q.npat.map(n0).join(' · ')} tỷ${verdict()}${stamp}`);
     }
 
     if (k === 'vndil' && f.y)
       return box(`Số CP lưu hành: ${f.y.shares_m.slice().reverse().map(n1).join(' → ')} triệu
-        <br><span style="color:var(--text3)">${(f.y_periods || []).slice().reverse().join(' → ')} · suy từ vốn góp, mệnh giá 10.000đ</span>
-        <br>Năm gần nhất: <b style="color:${col(c.share_yoy != null && c.share_yoy <= T.dilute_ok)}">${pc(c.share_yoy)}</b> <span style="color:var(--text3)">(ổn định = ≤ ${T.dilute_ok}%)</span>${verdict()}${stamp}`);
+        <br><span style="color:var(--text3)">${(f.y_periods || []).slice().reverse().join(' → ')} · suy từ vốn góp, mệnh giá 10.000đ</span>${verdict()}${stamp}`);
 
     return '';
   }
@@ -2617,7 +2934,7 @@ class Component extends DCLogic {
           ${s.must ? '<span style="font-size:9.5px;font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:5px;padding:1px 5px;flex-shrink:0">BẮT BUỘC</span>' : ''}
           <span style="display:flex;gap:4px;flex-shrink:0">${btn(1, '✓', 'var(--green)')}${btn(-1, '✕', 'var(--red)')}</span>
         </div>
-        ${t ? this._faData(s.k, t) : ''}
+        ${t ? this._faData(s.k, t) + this._faCalcBox(s.k, t) : ''}
         <div style="font-size:12.5px;color:var(--text2);line-height:1.65;margin-top:4px">👁 ${txt(s.w)}</div>
         <div style="font-size:12.5px;color:var(--green);line-height:1.65;margin-top:3px">✓ ${txt(s.p)}</div>
         ${s.f ? `<div style="font-size:12.5px;color:var(--red);line-height:1.65;margin-top:3px">✕ ${txt(s.f)}</div>` : ''}
@@ -3401,7 +3718,7 @@ class Component extends DCLogic {
             const d=JSON.parse(r.result);
             this._cache=null;
             if (Array.isArray(d)) this.setState({trades:TJ_NORM(d)},()=>{this._persist();this._toast(tr.toastRestoredN+' '+d.length+tr.tradesSuffix);});
-            else if (d?.trades) this.setState({trades:TJ_NORM(d.trades),deposits:d.deposits||this.state.deposits,notes:d.notes||this.state.notes,watchlist:d.watchlist||this.state.watchlist},()=>{this._persist();this._persistD();this._persistWl();localStorage.setItem('tj_notes_v1', JSON.stringify(this.state.notes));if(d.setups) localStorage.setItem('tj_setups_v1', JSON.stringify(d.setups));this._toast(tr.toastRestored);});
+            else if (d?.trades) this.setState({trades:TJ_NORM(d.trades),deposits:d.deposits||this.state.deposits,notes:d.notes||this.state.notes,watchlist:d.watchlist||this.state.watchlist},()=>{this._persist();this._persistD();this._persistWl();localStorage.setItem('tj_notes_v1', JSON.stringify(this.state.notes));if(d.setups) localStorage.setItem('tj_setups_v1', JSON.stringify(d.setups));this._faRestore(d);this._toast(tr.toastRestored);});
             else alert(tr.invalidFile);
           } catch { alert(tr.cantReadFile); }
         };
@@ -3443,7 +3760,7 @@ class Component extends DCLogic {
       reloadScan: ()=>this.reloadScan(), setScanMarket: m=>this.setScanMarket(m),
       openFA: s=>this.openFA(s), closeFA: ()=>this.closeFA(), setFASym: v=>this.setFASym(v),
       markFA: (k,v)=>this.markFA(k,v), openAllFA: ()=>this.openAllFA(), faToNote: ()=>this.faToNote(),
-      setFANum: (k,v)=>this.setFANum(k,v), applyFAAuto: ()=>this.applyFAAuto(),
+      setFANum: (s,r,i,v,u)=>this.setFANum(s,r,i,v,u), clearFANum: s=>this.clearFANum(s), applyFAAuto: ()=>this.applyFAAuto(),
       setPeriod: p=>{ localStorage.setItem('tj_period',p); this.setState({period:p}); },
       addSetup: ()=>this.addSetup(),
       calPrev: ()=>this.setState(s=>{let m=s.calMonth-1,y=s.calYear;if(m<0){m=11;y--;}return{calMonth:m,calYear:y};}),
