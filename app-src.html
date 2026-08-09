@@ -729,7 +729,11 @@ details summary::-webkit-details-marker{display:none}
     <div style="background:var(--card);border:1px solid var(--border2);border-radius:12px;margin-bottom:14px;display:flex;align-items:stretch;overflow:hidden">
       <div style="flex:1;padding:12px 16px;border-right:1px solid var(--border)">
         <div style="font-size:8.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px">{{ lbOneR }}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--amber);line-height:1.1">{{ onePercent }}</div>
+        <div style="display:flex;align-items:baseline;gap:4px;flex-wrap:wrap">
+          <input id="riskPctInput" type="number" min="0.05" max="10" step="0.05" onchange="{{ onRiskPct }}" title="Phần trăm tổng tài sản bạn chấp nhận mất nếu lệnh này chạm cắt lỗ. Tài liệu SEPA bản Việt hoá khuyến nghị 0,5-0,75% cho TTCK Việt Nam (mới bắt đầu: 0,5%)." style="width:48px;border:1px solid var(--border2);border-radius:7px;padding:3px 5px;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--amber);text-align:center;background:var(--panel)">
+          <span style="font-size:11px;color:var(--text3);font-weight:700">% NAV =</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--amber);line-height:1.1">{{ onePercent }}</span>
+        </div>
         <div style="font-size:9.5px;color:var(--text3);margin-top:3px">{{ lbMaxRiskSub }}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 12px;flex-shrink:0;gap:3px">
@@ -752,7 +756,13 @@ details summary::-webkit-details-marker{display:none}
          đó có thật vì T+2 — hàng chưa về thì không bán được, dù đã biết mình sai từ
          phiên đầu. Chuỗi sàn xảy ra vài lần mỗi chu kỳ, thường do giải chấp dây chuyền.
          Ngưỡng 2% NAV lấy từ tài liệu SEPA bản Việt hoá mục 4.1. -->
-    <div id="tjFloorBox" style="margin:-8px 0 14px"></div>
+    <div id="tjFloorBox" style="margin:-8px 0 8px"></div>
+    <!-- THOÁT KHI NÀO — thêm 2026-08-09.
+         Thẻ định cỡ trả lời "vào bao nhiêu". Không chỗ nào trong journal trả lời câu
+         đi cùng nó: "ra lúc nào, và SL là khoảng cách tính từ đâu tới đâu". Quy tắc bán
+         nằm rải trong bảng kỹ thuật (bước 9), nhưng lúc đang cầm một lệnh thì không ai
+         mở checklist ra đọc — nó phải đứng ngay cạnh con số định cỡ. -->
+    <div id="tjExitBox" style="margin:0 0 14px"></div>
 
     <!-- FORM CARD — second -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;animation:fadeUp .3s ease">
@@ -1021,7 +1031,7 @@ const TJ_TR = {
   vi: {
     subtitle:'2026–2036 · 1R = 1% tài sản',
     assets:'Tài sản',totalPL:'Tổng P/L',winrate:'Winrate',totalR:'Total R',capital:'Vốn nạp',
-    oneR:'🎯 1% Tài sản · 1R hiện tại',maxRiskSub:'Rủi ro tối đa 1 lệnh',divSL:'÷ SL%',
+    oneR:'🎯 Rủi ro mỗi lệnh · 1R',maxRiskSub:'Mất bấy nhiêu TIỀN nếu chạm cắt lỗ',divSL:'÷ CẮT LỖ %',
     maxPos:'💰 Giải ngân tối đa / lệnh',maxPosSub:'Quy mô vị thế tối đa',
     formSub:'Tự tính All Profit · P/L% · Tài sản sau lệnh',collapse:'▾ Thu gọn',expand:'▸ Mở rộng',
     fNewTrade:'✍ Ghi lệnh mới',fEditTrade:'✏ Sửa lệnh',
@@ -1118,7 +1128,7 @@ const TJ_TR = {
   en: {
     subtitle:'2026–2036 · 1R = 1% of Capital',
     assets:'Assets',totalPL:'Total P/L',winrate:'Winrate',totalR:'Total R',capital:'Capital',
-    oneR:'🎯 1% Capital · Current 1R',maxRiskSub:'Max risk per trade',divSL:'÷ SL%',
+    oneR:'🎯 Risk per trade · 1R',maxRiskSub:'Cash lost if the stop is hit',divSL:'÷ STOP %',
     maxPos:'💰 Max Position Size',maxPosSub:'Maximum position size',
     formSub:'Auto-calc All Profit · P/L% · Assets after trade',collapse:'▾ Collapse',expand:'▸ Expand',
     fNewTrade:'✍ New Trade',fEditTrade:'✏ Edit Trade',
@@ -1222,6 +1232,12 @@ class Component extends DCLogic {
 
   state = {
     slPct: parseFloat(localStorage.getItem('tj_slpct') || '6'),
+    // % NAV chịu mất nếu lệnh chạm cắt lỗ. Trước 09/08/2026 con số này bị đóng cứng ở
+    // 1% ngay trong công thức, nên muốn giảm cỡ vị thế thì cách duy nhất là khai khống
+    // ô SL — và làm thế thì mọi con số R trong nhật ký lệch theo. Nay tách riêng: ô SL
+    // nói ĐÚNG chỗ cắt lỗ, ô này nói chịu mất bao nhiêu. Mặc định giữ 1% để không tự ý
+    // đổi hành vi cũ; tài liệu SEPA bản Việt hoá khuyến nghị 0,5-0,75% cho TTCK VN.
+    riskPct: parseFloat(localStorage.getItem('tj_riskpct') || '1'),
     trades: TJ_NORM(JSON.parse(localStorage.getItem(TJ_KEY) || 'null') || []),
     deposits: JSON.parse(localStorage.getItem(TJ_DKEY) || 'null') || [],
     notes: JSON.parse(localStorage.getItem('tj_notes_v1') || '{}'),
@@ -1743,11 +1759,11 @@ class Component extends DCLogic {
     //    sàn thì không thoát được vì T+2. Đây đúng là cái bẫy tài liệu cảnh báo:
     //    nguy hiểm không nằm ở mã chọn sai, mà ở cỡ vị thế quen tay theo thị trường Mỹ.
     if (wl && wl.stop != null && wl.stop > 0 && entry > wl.stop) {
-      const slPct = (entry - wl.stop) / entry * 100;
-      if (slPct > 0) {
-        const posPct = 1 / slPct * 100;             // %NAV, từ quy tắc 1R = 1% NAV
+      const slPct = (entry - wl.stop) / entry * 100, rk = this.state.riskPct;
+      if (slPct > 0 && rk > 0) {
+        const posPct = rk / slPct * 100;            // %NAV = %rủi ro ÷ %cắt lỗ
         const floorPct = posPct * 0.196;            // 3 phiên sàn liên tiếp
-        if (floorPct > 2) w.push(`• Kịch bản 3 phiên sàn: stop cách giá vào ${this._fmt(slPct, 1)}% ⇒ vị thế đúng quy tắc là ${this._fmt(posPct, 1)}% NAV ⇒ 3 phiên sàn (−19,6%) làm mất ${this._fmt(floorPct, 2)}% NAV, vượt ngưỡng 2%. T+2 không cho bán sớm hơn.`);
+        if (floorPct > 2) w.push(`• Kịch bản 3 phiên sàn: stop cách giá vào ${this._fmt(slPct, 1)}% ⇒ với rủi ro ${this._fmt(rk, 2)}% NAV/lệnh, vị thế đúng quy tắc là ${this._fmt(posPct, 1)}% NAV ⇒ 3 phiên sàn (−19,6%) làm mất ${this._fmt(floorPct, 2)}% NAV, vượt ngưỡng 2%. T+2 không cho bán sớm hơn.`);
       }
     }
   }
@@ -2632,15 +2648,15 @@ class Component extends DCLogic {
         + (w.stop != null ? `<br>Cắt lỗ đã đặt: <b style="color:var(--red)">${this._px(w.stop, w)}</b> (cách pivot ${this._fmt((w.pivot - w.stop) / w.pivot * 100, 1)}%)` : '<br><span style="color:var(--amber)">Chưa đặt giá cắt lỗ trong watchlist</span>'));
     }
     if (k === 'taexit') {
-      const eq = this._stats().eq, sl = this.state.slPct;
-      if (!(eq > 0) || !(sl > 0)) return '';
-      const maxPos = eq * 0.01 / (sl / 100);
+      const eq = this._stats().eq, sl = this.state.slPct, rk = this.state.riskPct;
+      if (!(eq > 0) || !(sl > 0) || !(rk > 0)) return '';
+      const maxPos = eq * (rk / 100) / (sl / 100);
       const posPct = maxPos / eq * 100, floorPct = posPct * 0.196;
       const bad = floorPct > 2;
       return box(bad ? 'var(--amber)' : 'var(--green)',
-        `Với SL <b>${this._fmt(sl, 1)}%</b> đang đặt: trần vị thế <b>${this._m(maxPos, 0)}</b> = <b>${this._fmt(posPct, 1)}% NAV</b>`
+        `Rủi ro <b>${this._fmt(rk, 2)}% NAV</b> ÷ cắt lỗ <b>${this._fmt(sl, 1)}%</b> ⇒ trần vị thế <b>${this._m(maxPos, 0)}</b> = <b>${this._fmt(posPct, 1)}% NAV</b> · 1R = <b>${this._m(eq * rk / 100, 0)}</b>`
         + `<br>3 phiên sàn (−19,6%) trên vị thế đó ⇒ mất <b style="color:${bad ? 'var(--amber)' : 'var(--green)'}">${this._fmt(floorPct, 2)}% NAV</b>`
-        + (bad ? ` — vượt ngưỡng 2% NAV của kịch bản xấu nhất. Vào nhỏ hơn trần, hoặc chấp nhận có ý thức.` : ` — nằm trong ngưỡng 2% NAV.`));
+        + (bad ? ` — vượt ngưỡng 2% NAV của kịch bản xấu nhất. Hạ ô rủi ro %NAV, hoặc vào nhỏ hơn trần.` : ` — nằm trong ngưỡng 2% NAV.`));
     }
     return '';
   }
@@ -3517,18 +3533,47 @@ class Component extends DCLogic {
   // vị thế quen tay của thị trường Mỹ sang một thị trường không cho thoát.
   _renderFloorBox(s) {
     const el = document.getElementById('tjFloorBox'); if (!el) return;
-    const sl = this.state.slPct, eq = s.eq;
-    if (!(sl > 0) || !(eq > 0)) { el.innerHTML = ''; return; }
-    const posPct = 1 / sl * 100;            // trần vị thế theo quy tắc 1R = 1% NAV
+    const sl = this.state.slPct, rk = this.state.riskPct, eq = s.eq;
+    if (!(sl > 0) || !(rk > 0) || !(eq > 0)) { el.innerHTML = ''; this._renderExitBox(); return; }
+    const posPct = rk / sl * 100;           // trần vị thế = %rủi ro ÷ %cắt lỗ
     const floorPct = posPct * 0.196;
     const bad = floorPct > 2;
     const col = bad ? 'var(--amber)' : 'var(--green)';
-    const safeSl = 0.196 / 0.02;            // SL% tối thiểu để kịch bản này ≤ 2% NAV
+    const safeRisk = 0.02 * sl / 0.196;     // %rủi ro tối đa để kịch bản này ≤ 2% NAV
     el.innerHTML = `<div style="background:${bad ? 'var(--amber-soft)' : 'transparent'};border:1px solid ${bad ? 'var(--amber)' : 'var(--border)'};border-radius:11px;padding:8px 12px;font-size:10px;color:var(--text2);line-height:1.6"
         title="Ba phiên sàn HOSE liên tiếp = 0,93³ − 1 = −19,6%. Vì T+2, phiên đầu tiên thực sự bán được là T+2 chiều — nếu T+2 cũng nằm sàn thì không khớp, phải chờ T+3. Nó xảy ra vài lần mỗi chu kỳ ở VN, thường do giải chấp margin dây chuyền.">
       <b style="color:${col}">🩸 Kịch bản 3 phiên sàn:</b> vị thế đầy ${this._fmt(posPct, 1)}% NAV × (−19,6%) = <b style="color:${col}">−${this._fmt(floorPct, 2)}% NAV</b>
-      ${bad ? `— vượt ngưỡng 2% NAV. Muốn về dưới 2% thì SL phải ≥ ${this._fmt(safeSl, 1)}%, hoặc vào <b>nhỏ hơn trần</b> (tài liệu khuyến nghị 5-9% NAV/mã, tối đa 15% cho mã dẫn dắt tốt nhất).` : '— trong ngưỡng 2% NAV của kịch bản xấu nhất.'}
-      <div style="font-size:9.5px;color:var(--text3);margin-top:3px">SL ${this._fmt(sl, 1)}% là con số của <b>backtest_vn_params.py</b> (HOSE 2018-2026: stop 6% → CAGR 10,1% / sụt giảm −19,1%, tốt hơn stop 8% và 10%). Tài liệu SEPA bản Việt hoá khuyến nghị 8-10% theo giá đóng cửa — <b>giữ 6% vì backtest chạy trên đúng dữ liệu sàn này</b>, đổi lại phải vào nhỏ hơn trần.</div>
+      ${bad ? `— vượt ngưỡng 2% NAV. Muốn về dưới 2% thì <b>hạ rủi ro/lệnh xuống ≤ ${this._fmt(safeRisk, 2)}%</b> (đừng nới ô cắt lỗ — nó phải nói đúng chỗ bạn thật sự cắt).` : '— trong ngưỡng 2% NAV của kịch bản xấu nhất.'}
+      <div style="font-size:9.5px;color:var(--text3);margin-top:3px">Cắt lỗ ${this._fmt(sl, 1)}% là con số của <b>backtest_vn_params.py</b> (HOSE 2018-2026: stop 6% → CAGR 10,1% / sụt giảm −19,1%, tốt hơn stop 8% và 10%). Tài liệu SEPA bản Việt hoá khuyến nghị 8-10% theo giá đóng cửa và rủi ro 0,5-0,75% NAV/lệnh — <b>giữ cắt lỗ theo backtest vì nó chạy trên đúng dữ liệu sàn này</b>, thu nhỏ vị thế bằng ô rủi ro.</div>
+    </div>`;
+    this._renderExitBox();
+  }
+
+  // ══ THOÁT KHI NÀO ══
+  // Năm cửa thoát, xếp theo thứ tự thực tế gặp phải chứ không theo thứ tự trong sách.
+  // Ba cửa đầu là BẮT BUỘC bán; hai cửa sau là chủ động. Con số trong đây bám thẳng
+  // vào ô cắt lỗ đang đặt, để không phải nhẩm lại mỗi lần.
+  _renderExitBox() {
+    const el = document.getElementById('tjExitBox'); if (!el) return;
+    const sl = this.state.slPct;
+    if (!(sl > 0)) { el.innerHTML = ''; return; }
+    const row = (n, col, head, body) => `<div style="display:flex;gap:6px;padding:3px 0;line-height:1.55">
+      <span style="color:${col};font-weight:700;flex-shrink:0">${n}</span>
+      <span><b style="color:${col}">${head}</b> ${body}</span></div>`;
+    el.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:9px 12px;font-size:10px;color:var(--text2)">
+      <div style="font-size:8.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px">🚪 Thoát khi nào · 1R = ${this._fmt(sl, 1)}% giá</div>
+      <div style="font-size:9.5px;color:var(--text3);line-height:1.55;margin-bottom:5px">
+        <b>Ô "cắt lỗ ${this._fmt(sl, 1)}%" ở trên là khoảng cách từ GIÁ VÀO tới GIÁ CẮT LỖ</b>, không phải % tài sản. Vào 100.000₫ thì cắt ở <b>${this._fmt(100000 * (1 - sl / 100), 0)}₫</b>. Mất bấy nhiêu tiền = đúng ô rủi ro %NAV bên trái.
+      </div>
+      ${row('①', 'var(--red)', 'Chạm cắt lỗ —', `giá <b>ĐÓNG CỬA</b> dưới −${this._fmt(sl, 1)}% so với giá vào → bán, không đàm phán. Cắt theo giá đóng cửa vì biên độ ±7% + sổ lệnh mỏng làm giá quét stop trong phiên rồi hồi là chuyện thường.`)}
+      ${row('②', 'var(--red)', 'Breakout hỏng —', `đóng cửa tụt lại <b>dưới pivot</b> trong 1-3 phiên → bán ngay, <b>không chờ đủ −${this._fmt(sl, 1)}%</b>. Đây là loại lệnh sai rẻ nhất, đừng để nó đắt lên.`)}
+      ${row('③', 'var(--red)', 'Gãy cấu trúc —', `đóng cửa thủng <b>đáy nền</b>, hoặc thủng <b>MA20/MA50</b> kèm khối lượng lớn, hoặc 3 đáy thấp dần → bán dù chưa tới −${this._fmt(sl, 1)}%. Tín hiệu cấu trúc <b>ưu tiên hơn</b> ngưỡng %.`)}
+      ${row('④', 'var(--amber)', 'Dời stop —', `lãi ≥ <b>2R (+${this._fmt(sl * 2, 1)}% giá)</b> → kéo stop lên hoà vốn. <b>Không bao giờ để lệnh đã lãi 15-20% quay lại thành lỗ.</b>`)}
+      ${row('⑤', 'var(--green)', 'Chốt lời —', `bán vào lúc cổ phiếu đang MẠNH, không chờ nó yếu. Dấu hiệu đỉnh cao trào: 6-10 phiên tăng liên tiếp · khoảng trống kiệt sức · phiên khối lượng lớn nhất mà giá không tiến. Hoặc: EPS giảm tốc 2 quý liên tiếp · tin tốt tràn ngập mà giá không tăng nữa.`)}
+      <div style="font-size:9.5px;color:var(--text3);line-height:1.55;margin-top:5px;border-top:1px dashed var(--border);padding-top:5px">
+        <b>Không có mục tiêu giá cứng.</b> Tỉ lệ 2:1 là chuẩn của <b>cả chuỗi lệnh</b> (lãi TB ≥ 2× lỗ TB), không phải của từng lệnh — không cần ôm tới +${this._fmt(sl * 2, 1)}% mới được chốt. Backtest VCP của dự án: thắng 38,6%, lãi TB +25,9% / lỗ TB −6,9% = 3,75:1 — vài lệnh chạy xa kéo trung bình lên, phần lớn đóng sớm hơn.<br>
+        <b>Ở VN không có stop đặt sẵn</b>: lệnh điều kiện của CTCK không đảm bảo khớp. Mọi stop là <b>stop tinh thần + tự bấm lệnh</b> — phải xem bảng ít nhất 1 lần/ngày vào phiên ATC.
+      </div>
     </div>`;
   }
 
@@ -4186,6 +4231,7 @@ class Component extends DCLogic {
       setDonutEmo: ()=>this.setState({donutMode:'emo'},()=>{this._renderChartControls();this._drawDonutChart();}),
     };
     const slEl = document.getElementById('slPctInput'); if (slEl) slEl.value = this.state.slPct;
+    const rkEl = document.getElementById('riskPctInput'); if (rkEl) rkEl.value = this.state.riskPct;
     this._initAll();
   }
 
@@ -4332,9 +4378,10 @@ class Component extends DCLogic {
       // Position sizing labels
       lbOneR: tr.oneR, lbMaxRiskSub: tr.maxRiskSub, lbDivSL: tr.divSL, lbMaxPos: tr.maxPos, lbMaxPosSub: tr.maxPosSub,
       // Position sizing values
-      onePercent: this._m(st.eq*0.01, this.state.ccy==='VND'?0:2),
-      maxDisburse: this._m(s.slPct>0?(st.eq*0.01/(s.slPct/100)):0, this.state.ccy==='VND'?0:2),
+      onePercent: this._m(st.eq*(s.riskPct>0?s.riskPct:1)/100, this.state.ccy==='VND'?0:2),
+      maxDisburse: this._m((s.slPct>0&&s.riskPct>0)?(st.eq*(s.riskPct/100)/(s.slPct/100)):0, this.state.ccy==='VND'?0:2),
       onSlPct: e => { const v=parseFloat(e.target.value); if(v>0&&v<=100){localStorage.setItem('tj_slpct',v);this.setState({slPct:v});} },
+      onRiskPct: e => { const v=parseFloat(e.target.value); if(v>0&&v<=10){localStorage.setItem('tj_riskpct',v);this.setState({riskPct:v});} },
       // Form labels
       lbFormSub: tr.formSub,
       lbFEntryDate: tr.fEntryDate, lbFSymbol: tr.fSymbol, lbFAction: tr.fAction, lbFSetup: tr.fSetup,
