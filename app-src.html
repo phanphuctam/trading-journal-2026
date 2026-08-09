@@ -626,6 +626,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)!
 @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 details summary{cursor:pointer;list-style:none;user-select:none}
 details summary::-webkit-details-marker{display:none}
+/* Hop gap lai duoc (kich ban 3 phien san / thoat khi nao). Marker mac dinh da bi tat
+   o dong tren nen phai tu ve mui ten, khong thi nhin nhu mot dong chu chet. */
+details.tjfold>summary::before{content:'\25B8';display:inline-block;width:11px;margin-right:5px;color:var(--text3);transition:transform .15s}
+details.tjfold[open]>summary::before{transform:rotate(90deg)}
+details.tjfold>summary:hover::before{color:var(--accent)}
 .tj-actions-break{display:none}
 .tj-actions-toggle{display:none}
 .tj-tabbar{position:sticky;top:0;z-index:40;margin:0 -14px 14px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--border)}
@@ -3540,14 +3545,36 @@ class Component extends DCLogic {
     const bad = floorPct > 2;
     const col = bad ? 'var(--amber)' : 'var(--green)';
     const safeRisk = 0.02 * sl / 0.196;     // %rủi ro tối đa để kịch bản này ≤ 2% NAV
-    el.innerHTML = `<div style="background:${bad ? 'var(--amber-soft)' : 'transparent'};border:1px solid ${bad ? 'var(--amber)' : 'var(--border)'};border-radius:11px;padding:9px 13px;font-size:12.5px;color:var(--text2);line-height:1.65"
-        title="Ba phiên sàn HOSE liên tiếp = 0,93³ − 1 = −19,6%. Vì T+2, phiên đầu tiên thực sự bán được là T+2 chiều — nếu T+2 cũng nằm sàn thì không khớp, phải chờ T+3. Nó xảy ra vài lần mỗi chu kỳ ở VN, thường do giải chấp margin dây chuyền.">
-      <b style="color:${col}">🩸 Kịch bản 3 phiên sàn:</b> vị thế đầy ${this._fmt(posPct, 1)}% NAV × (−19,6%) = <b style="color:${col}">−${this._fmt(floorPct, 2)}% NAV</b>
+    el.innerHTML = this._foldBox('floor',
+      `background:${bad ? 'var(--amber-soft)' : 'transparent'};border:1px solid ${bad ? 'var(--amber)' : 'var(--border)'}`,
+      `Ba phiên sàn HOSE liên tiếp = 0,93³ − 1 = −19,6%. Vì T+2, phiên đầu tiên thực sự bán được là T+2 chiều — nếu T+2 cũng nằm sàn thì không khớp, phải chờ T+3. Nó xảy ra vài lần mỗi chu kỳ ở VN, thường do giải chấp margin dây chuyền.`,
+      // Tiêu đề gấp lại vẫn phải mang con số — nếu gấp xong không còn thông tin nào thì
+      // nó thành một cái nút không ai bấm, và cảnh báo coi như không tồn tại.
+      `<b style="color:${col}">🩸 Kịch bản 3 phiên sàn: −${this._fmt(floorPct, 2)}% NAV</b>
+       <span style="color:var(--text3)">— ${bad ? 'vượt ngưỡng 2%' : 'trong ngưỡng 2%'}</span>`,
+      `vị thế đầy ${this._fmt(posPct, 1)}% NAV × (−19,6%) = <b style="color:${col}">−${this._fmt(floorPct, 2)}% NAV</b>
       ${bad ? `— vượt ngưỡng 2% NAV. Muốn về dưới 2% thì <b>hạ rủi ro/lệnh xuống ≤ ${this._fmt(safeRisk, 2)}%</b> (đừng nới ô cắt lỗ — nó phải nói đúng chỗ bạn thật sự cắt).` : '— trong ngưỡng 2% NAV của kịch bản xấu nhất.'}
-      <div style="font-size:11.5px;color:var(--text3);margin-top:4px;line-height:1.6">Cắt lỗ ${this._fmt(sl, 1)}% là con số của <b>backtest_vn_params.py</b> (HOSE 2018-2026: stop 6% → CAGR 10,1% / sụt giảm −19,1%, tốt hơn stop 8% và 10%). Tài liệu SEPA bản Việt hoá khuyến nghị 8-10% theo giá đóng cửa và rủi ro 0,5-0,75% NAV/lệnh — <b>giữ cắt lỗ theo backtest vì nó chạy trên đúng dữ liệu sàn này</b>, thu nhỏ vị thế bằng ô rủi ro.</div>
-    </div>`;
+      <div style="font-size:11.5px;color:var(--text3);margin-top:4px;line-height:1.6">Cắt lỗ ${this._fmt(sl, 1)}% là con số của <b>backtest_vn_params.py</b> (HOSE 2018-2026: stop 6% → CAGR 10,1% / sụt giảm −19,1%, tốt hơn stop 8% và 10%). Tài liệu SEPA bản Việt hoá khuyến nghị 8-10% theo giá đóng cửa và rủi ro 0,5-0,75% NAV/lệnh — <b>giữ cắt lỗ theo backtest vì nó chạy trên đúng dữ liệu sàn này</b>, thu nhỏ vị thế bằng ô rủi ro.</div>`);
     this._renderExitBox();
   }
+
+  // ══ HỘP GẤP LẠI ĐƯỢC ══
+  // Hai hộp này là tài liệu tham chiếu: đọc kỹ một lần, sau đó chỉ mở khi cần tra lại.
+  // Để mở sẵn thì chúng đẩy nhật ký lệnh xuống dưới màn hình mỗi lần vào app.
+  // Dùng <details> gốc của trình duyệt thay vì tự viết: nó có sẵn phím tắt, đọc màn
+  // hình hiểu được, và không cần state trong React. Chỉ cần nhớ trạng thái đóng/mở
+  // vào localStorage, vì mỗi lần vẽ lại là innerHTML bị ghi đè.
+  _foldBox(key, boxStyle, title, summaryHtml, bodyHtml) {
+    const open = localStorage.getItem('tj_fold_' + key) === '1';
+    const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    return `<details class="tjfold" ${open ? 'open' : ''} ontoggle="window._tj.saveFold('${key}',this.open)"
+        style="${boxStyle};border-radius:11px;padding:9px 13px;font-size:12.5px;color:var(--text2);line-height:1.65"
+        title="${esc(title)}">
+      <summary style="cursor:pointer;outline:none;user-select:none">${summaryHtml}</summary>
+      <div style="margin-top:5px">${bodyHtml}</div>
+    </details>`;
+  }
+  saveFold = (k, v) => { try { localStorage.setItem('tj_fold_' + k, v ? '1' : '0'); } catch (e) {} }
 
   // ══ THOÁT KHI NÀO ══
   // Năm cửa thoát, xếp theo thứ tự thực tế gặp phải chứ không theo thứ tự trong sách.
@@ -3560,9 +3587,10 @@ class Component extends DCLogic {
     const row = (n, col, head, body) => `<div style="display:flex;gap:7px;padding:4px 0;line-height:1.65">
       <span style="color:${col};font-weight:700;flex-shrink:0">${n}</span>
       <span><b style="color:${col}">${head}</b> ${body}</span></div>`;
-    el.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:11px 13px;font-size:12.5px;color:var(--text2)">
-      <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:6px">🚪 Thoát khi nào · 1R = ${this._fmt(sl, 1)}% giá</div>
-      <div style="font-size:11.5px;color:var(--text3);line-height:1.65;margin-bottom:6px">
+    el.innerHTML = this._foldBox('exit', 'background:var(--card);border:1px solid var(--border)',
+      'Năm cửa thoát, ba cửa đầu là bắt buộc bán. Con số bám theo ô cắt lỗ đang đặt.',
+      `<b>🚪 Thoát khi nào</b> <span style="color:var(--text3)">· 1R = ${this._fmt(sl, 1)}% giá · 2R = +${this._fmt(sl * 2, 1)}%</span>`,
+      `<div style="font-size:11.5px;color:var(--text3);line-height:1.65;margin-bottom:6px">
         <b>Ô "cắt lỗ ${this._fmt(sl, 1)}%" ở trên là khoảng cách từ GIÁ VÀO tới GIÁ CẮT LỖ</b>, không phải % tài sản. Vào 100.000₫ thì cắt ở <b>${this._fmt(100000 * (1 - sl / 100), 0)}₫</b>. Mất bấy nhiêu tiền = đúng ô rủi ro %NAV bên trái.
       </div>
       ${row('①', 'var(--red)', 'Chạm cắt lỗ —', `giá <b>ĐÓNG CỬA</b> dưới −${this._fmt(sl, 1)}% so với giá vào → bán, không đàm phán. Cắt theo giá đóng cửa vì biên độ ±7% + sổ lệnh mỏng làm giá quét stop trong phiên rồi hồi là chuyện thường.`)}
@@ -3574,8 +3602,7 @@ class Component extends DCLogic {
         <b>Không có mục tiêu giá cứng.</b> Tỉ lệ 2:1 là chuẩn của <b>cả chuỗi lệnh</b> (lãi TB ≥ 2× lỗ TB), không phải của từng lệnh — không cần ôm tới +${this._fmt(sl * 2, 1)}% mới được chốt. Backtest VCP của dự án: thắng 38,6%, lãi TB +25,9% / lỗ TB −6,9% = 3,75:1 — vài lệnh chạy xa kéo trung bình lên, phần lớn đóng sớm hơn.<br>
         <b>Stop tự động — dùng được, nhưng biết ba giới hạn.</b> VPS SmartOne có lệnh điều kiện (Stop Order · Stoploss/Take profit · Trailing Stop). Nhưng: ① chỉ đặt được cho <b>cổ phiếu đã về tài khoản</b> — 2,5 phiên đầu sau khi mua vẫn là stop tinh thần, không có cách nào khác; ② lệnh nằm ở <b>hệ thống CTCK, không phải ở sở</b> — chạm ngưỡng nó mới đẩy một lệnh thường vào sàn, nên <b>kích hoạt không có nghĩa là khớp</b>: mã nằm sàn trắng bên mua thì lệnh bán treo nguyên; ③ nó kích hoạt <b>trong phiên</b>, ngược với quy tắc ① cắt theo giá đóng cửa — đặt đúng −${this._fmt(sl, 1)}% thì một cú quét trong phiên là bị bán oan.<br>
         <b>Cách dùng:</b> đặt lệnh điều kiện <b>thấp hơn</b> mức cắt tinh thần một chút, coi nó là lưới an toàn cho những phiên không ngồi trước bảng. Quyết định cắt chính vẫn ra ở <b>ATC</b> theo giá đóng cửa.
-      </div>
-    </div>`;
+      </div>`);
   }
 
   _advStripHTML(s, tr) {
@@ -4218,6 +4245,7 @@ class Component extends DCLogic {
       openFA: s=>this.openFA(s), closeFA: ()=>this.closeFA(), setFASym: v=>this.setFASym(v),
       markFA: (k,v)=>this.markFA(k,v), openAllFA: ()=>this.openAllFA(), faToNote: ()=>this.faToNote(),
       setFANum: (s,r,i,v,u)=>this.setFANum(s,r,i,v,u), clearFANum: s=>this.clearFANum(s), applyFAAuto: ()=>this.applyFAAuto(),
+      saveFold: (k,v)=>this.saveFold(k,v),
       openTA: s=>this.openTA(s), setTASym: v=>this.setTASym(v), markTA: (k,v)=>this.markTA(k,v),
       openAllTA: ()=>this.openAllTA(), resetTA: ()=>this.resetTA(),
       setPeriod: p=>{ localStorage.setItem('tj_period',p); this.setState({period:p}); },
