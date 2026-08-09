@@ -2926,9 +2926,14 @@ class Component extends DCLogic {
     const rows = this._faList().map(s => {
       const v = st[s.k] || 0, dis = !t;
       const btn = (val, icon, col) => `<span onclick="${dis ? '' : `window._tj.markFA('${s.k}',${val})`}" title="${val === 1 ? 'Đạt' : 'Không đạt'}" style="cursor:${dis ? 'default' : 'pointer'};font-size:16px;font-weight:700;line-height:1;padding:5px 11px;border-radius:6px;border:1px solid ${v === val ? col : 'var(--border)'};background:${v === val ? col : 'transparent'};color:${v === val ? 'var(--btn-fg)' : 'var(--text3)'}">${icon}</span>`;
+      // Mục đánh ✕ trước đây bị làm mờ (opacity .55). Sai: mục HỎNG lại đúng là mục
+      // cần đọc kỹ nhất — mờ đi thì không đọc nổi hỏng ở chỗ nào. Nay giữ nguyên độ
+      // tương phản chữ, phân biệt bằng vạch màu bên trái + nền nhạt.
+      const mk = v === -1 ? { c: 'var(--red)', bg: 'var(--red-soft)' }
+               : v === 1 ? { c: 'var(--green)', bg: 'transparent' } : null;
       return `
       ${s.g ? `<div style="font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.04em;margin:14px 0 5px">${s.g.toUpperCase()}</div>` : ''}
-      <div style="padding:8px 0;border-bottom:1px dashed var(--border);opacity:${v === -1 ? '.55' : '1'}">
+      <div style="padding:8px 0 8px ${mk ? '9px' : '0'};border-bottom:1px dashed var(--border);border-left:${mk ? '3px solid ' + mk.c : '0'};background:${mk ? mk.bg : 'transparent'};border-radius:${mk ? '0 8px 8px 0' : '0'}">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <a href="${t ? s.u(t) : '#'}" target="_blank" rel="noopener" onclick="${t ? '' : 'return false'}" style="font-size:13px;font-weight:700;color:${t ? 'var(--accent)' : 'var(--text3)'};text-decoration:none;flex:1;min-width:120px">${s.s} ↗</a>
           ${s.must ? '<span style="font-size:9.5px;font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:5px;padding:1px 5px;flex-shrink:0">BẮT BUỘC</span>' : ''}
