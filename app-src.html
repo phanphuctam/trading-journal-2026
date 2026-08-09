@@ -829,8 +829,11 @@ details.tjfold>summary:hover::before{color:var(--accent)}
               <input id="f_r" type="number" step="any" placeholder="" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;width:100%">
             </div>
           </div>
-          <details style="margin-top:10px">
-            <summary style="font-size:10.5px;color:var(--text3);font-weight:600;padding:5px 0">{{ lbFAdvanced }}</summary>
+          <!-- Trạng thái đóng/mở gắn ở componentDidUpdate (id tjAdv), không đặt thuộc
+               tính open ở đây: template chỉ nội suy được giá trị, không bật/tắt được
+               một thuộc tính boolean. -->
+          <details id="tjAdv" class="tjfold" style="margin-top:10px">
+            <summary style="font-size:10.5px;color:var(--text3);font-weight:600;padding:5px 0;cursor:pointer;outline:none;user-select:none">{{ lbFAdvanced }}</summary>
             <div class="tj-formgrid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px">
               <div style="display:flex;flex-direction:column;gap:4px">
                 <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFEntryPrice }}</label>
@@ -1034,7 +1037,7 @@ const TJ_MILES = [900,1800,5000,10000,50000];
 const TJ_PAL = ['#D1BEFF','#BEFFCB','#FF6B6D','#7A5AD9','#1E8743','#FFB49B','#85806D','#C4ADFF','#969696'];
 const TJ_TR = {
   vi: {
-    subtitle:'2026–2036 · 1R = 1% tài sản',
+    subtitle:'2026–2036 · 1R = {r}% tài sản',
     assets:'Tài sản',totalPL:'Tổng P/L',winrate:'Winrate',totalR:'Total R',capital:'Vốn nạp',
     oneR:'🎯 Rủi ro mỗi lệnh · 1R',maxRiskSub:'Mất bấy nhiêu TIỀN nếu chạm cắt lỗ',divSL:'÷ CẮT LỖ %',
     maxPos:'💰 Giải ngân tối đa / lệnh',maxPosSub:'Quy mô vị thế tối đa',
@@ -1043,7 +1046,7 @@ const TJ_TR = {
     fEntryDate:'Ngày vào',fSymbol:'Mã (Symbol)',fAction:'Action',fSetup:'Setup',
     fEntry:'Entry (cách vào)',fEntryPh:'Mô tả cách vào lệnh...',fCloseDate:'Ngày đóng',
     fPeriod:'Period (ngày)',fExit:'Exit',fEmotion:'Cảm xúc',fNetPL:'Net P/L',fR:'R-Multiple',
-    fAdvanced:'▸ Nâng cao — Giá · Commission · Ảnh · Ghi chú',
+    fAdvanced:'Nâng cao — Giá · Commission · Ảnh · Ghi chú',
     fEntryPrice:'Giá vào',fExitPrice:'Giá ra',fComm:'Commission',fDisplayDay:'Day (hiển thị)',
     fImgEntry:'Link ảnh vào (TradingView)',fImgExit:'Link ảnh ra (TradingView)',
     fDetail:'Detail emotion / Bài học rút ra',fDetailPh:'Lý do vào lệnh, cảm xúc, bài học...',
@@ -1131,7 +1134,7 @@ const TJ_TR = {
     dDis:'Kỷ luật:',dMae:'MAE:',dMfe:'MFE:',
   },
   en: {
-    subtitle:'2026–2036 · 1R = 1% of Capital',
+    subtitle:'2026–2036 · 1R = {r}% of Capital',
     assets:'Assets',totalPL:'Total P/L',winrate:'Winrate',totalR:'Total R',capital:'Capital',
     oneR:'🎯 Risk per trade · 1R',maxRiskSub:'Cash lost if the stop is hit',divSL:'÷ STOP %',
     maxPos:'💰 Max Position Size',maxPosSub:'Maximum position size',
@@ -1140,7 +1143,7 @@ const TJ_TR = {
     fEntryDate:'Entry Date',fSymbol:'Symbol',fAction:'Action',fSetup:'Setup',
     fEntry:'Entry (how)',fEntryPh:'Describe your entry...',fCloseDate:'Close Date',
     fPeriod:'Period (days)',fExit:'Exit',fEmotion:'Emotion',fNetPL:'Net P/L',fR:'R-Multiple',
-    fAdvanced:'▸ Advanced — Price · Commission · Charts · Notes',
+    fAdvanced:'Advanced — Price · Commission · Charts · Notes',
     fEntryPrice:'Entry Price',fExitPrice:'Exit Price',fComm:'Commission',fDisplayDay:'Display Date',
     fImgEntry:'Entry chart (TradingView)',fImgExit:'Exit chart (TradingView)',
     fDetail:'Detail emotion / Lesson learned',fDetailPh:'Reason, emotion, lesson learned...',
@@ -1255,7 +1258,10 @@ class Component extends DCLogic {
     ccy: localStorage.getItem(TJ_CCY_KEY) === 'VND' ? 'VND' : 'USD',
     fx: +localStorage.getItem(TJ_FX_KEY) > 0 ? +localStorage.getItem(TJ_FX_KEY) : TJ_FX_FALLBACK,
     fxSrc: localStorage.getItem(TJ_FX_MANUAL_KEY) ? 'tay' : '',
-    formOpen: true,
+    // Mặc định GẤP LẠI (đổi 2026-08-09). Form chiếm gần trọn màn hình đầu tiên, đẩy
+    // nhật ký lệnh và các cảnh báo xuống dưới — trong khi phần lớn lần mở app là để
+    // XEM, không phải để ghi. Sửa lệnh cũ vẫn tự bung ra (editTrade).
+    formOpen: localStorage.getItem('tj_fold_form') === '1',
     actionsOpen: false,
     search: '',
     filterType: 'all',
@@ -1839,6 +1845,7 @@ class Component extends DCLogic {
       this._setCcy(rc, true);
       this._toast(`Đã chuyển hiển thị sang ${rc} — lệnh này ghi bằng ${rc}`, 'var(--accent)');
     }
+    this.saveFold('form', true);
     this.setState({ editIdx: i, formOpen: true }, () => {
       const t = this.state.trades[i];
       const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
@@ -4261,13 +4268,27 @@ class Component extends DCLogic {
     };
     const slEl = document.getElementById('slPctInput'); if (slEl) slEl.value = this.state.slPct;
     const rkEl = document.getElementById('riskPctInput'); if (rkEl) rkEl.value = this.state.riskPct;
+    this._bindAdvFold();
     this._initAll();
+  }
+
+  // Mục "Nâng cao" trong form: nhớ đóng/mở như hai hộp gấp ở trên.
+  // Phải gọi ở CẢ componentDidMount lẫn componentDidUpdate: form mặc định gấp lại nên
+  // lúc mount phần tử này chưa tồn tại, chỉ có mặt sau khi người dùng bung form ra.
+  // Cờ đánh thẳng lên phần tử — form nằm trong sc-if nên mỗi lần bung lại là một phần
+  // tử mới, cờ mất theo và listener được gắn lại đúng một lần cho phần tử đó.
+  _bindAdvFold() {
+    const el = document.getElementById('tjAdv');
+    if (!el || el._tjFold) return;
+    el._tjFold = true;
+    el.open = localStorage.getItem('tj_fold_adv') === '1';
+    el.addEventListener('toggle', () => this.saveFold('adv', el.open));
   }
 
   componentDidUpdate(pp, ps) {
     ps = ps || {};
     this._cache = null;
-    this._applyTheme(); this._fillSelects(); this._setupPreviewListeners();
+    this._applyTheme(); this._fillSelects(); this._setupPreviewListeners(); this._bindAdvFold();
     this._renderKPI(); this._renderTable();
     const langChanged = ps.lang !== this.state.lang;
     if (this.state.rightTab==='overview') { this._renderFund(); this._renderNotes(); this._renderChartControls(); }
@@ -4388,7 +4409,10 @@ class Component extends DCLogic {
         + (s.fxSrc === 'tay' ? ' (đặt tay)' : s.fxSrc ? ` (tự động, ${s.fxSrc})` : ' (mặc định — chưa tải được tỉ giá)')
         + '\nBấm để sửa. Tỉ giá này chỉ dùng cho lệnh ghi MỚI — lệnh cũ giữ tỉ giá lúc ghi nên lịch sử không đổi.',
       // Topbar labels
-      lbSubtitle: tr.subtitle,
+      // Phụ đề header trước đây ghi cứng "1R = 1% tài sản". Từ khi ô rủi ro chỉnh được
+      // thì câu đó sai ngay khi người dùng đổi số — và nó là dòng chữ đầu tiên đập vào
+      // mắt mỗi lần mở app, sai ở đây thì mọi con số R phía dưới bị hiểu nhầm theo.
+      lbSubtitle: tr.subtitle.replace('{r}', this._fmt(s.riskPct > 0 ? s.riskPct : 1, s.riskPct % 1 ? 2 : 0)),
       lbAssets: tr.assets, lbTotalPL: tr.totalPL, lbWinrate: tr.winrate, lbTotalR: tr.totalR, lbCapital: tr.capital,
       // Topbar values
       topBal: this._m(st.eq,0),
@@ -4459,7 +4483,7 @@ class Component extends DCLogic {
       tabEmotionsStyle: tabSt('emotions'), tabCalendarStyle: tabSt('calendar'), tabHeatmapStyle: tabSt('heatmap'),
       tabWatchBtnStyle: tabSt('watchlist'), tabFundBtnStyle: tabSt('fund'), tabTechBtnStyle: tabSt('tech'),
       // Handlers
-      toggleForm: () => this.setState(s=>({formOpen:!s.formOpen})),
+      toggleForm: () => this.setState(s=>{ const v=!s.formOpen; this.saveFold('form',v); return {formOpen:v}; }),
       toggleActions: () => this.setState(s=>({actionsOpen:!s.actionsOpen})),
       toggleTheme: () => { const t=s.theme==='dark'?'light':'dark'; localStorage.setItem('tj_theme',t); this.setState({theme:t}); },
       saveTrade: this.saveTrade, cancelEdit: this.cancelEdit,
