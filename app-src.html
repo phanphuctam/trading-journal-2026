@@ -634,6 +634,9 @@ details.tjfold>summary:hover::before{color:var(--accent)}
 .tj-actions-break{display:none}
 .tj-actions-toggle{display:none}
 .tj-tabbar{position:sticky;top:0;z-index:40;margin:0 -14px 14px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--border)}
+/* Tab khong xuong dong nen khi cot phai hep thi cho cuon ngang, khong cho tran */
+.tj-tabbar>div{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tj-tabbar>div::-webkit-scrollbar{display:none}
 .tj-abtn{height:30px;padding:0 11px;border:1px solid var(--border);border-radius:8px;background:var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s,background .15s}
 .tj-abtn:hover{color:var(--accent);border-color:var(--accent)}
 .tj-abtn-accent{background:var(--accent-soft);border:1.5px solid var(--accent);color:var(--accent);font-weight:700;letter-spacing:.06em}
@@ -678,6 +681,64 @@ details.tjfold>summary:hover::before{color:var(--accent)}
   .tj-formgrid{grid-template-columns:minmax(0,1fr)!important}
   .tj-deprow{grid-template-columns:minmax(0,1fr)!important}
 }
+/* ══ ICON ĐƠN SẮC ══
+   Emoji màu của hệ điều hành mỗi máy vẽ một kiểu và lạc khỏi bảng màu throxy.
+   Thay bằng nét line 24px nạp qua mask-image: hình lấy màu từ `currentColor`,
+   nên icon luôn đúng màu chữ đứng cạnh nó và tự đổi theo dark/light.
+   KHÔNG dùng viewBox trong các SVG dưới đây: framework DC quét cả thẻ <style> và
+   đổi tên thuộc tính camelCase sang kebab (viewBox → sc-camel-view-box). Mất viewBox
+   thì SVG hết tỉ lệ, mask-size:contain không co lại được nữa và icon bị cắt còn một
+   góc. Dùng width/height (chữ thường) — toạ độ path vốn đã nằm trong 0..24. */
+.ti{display:inline-block;width:1.05em;height:1.05em;vertical-align:-.16em;flex-shrink:0;background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
+/* Icon tieu de muc: xam trung tinh, khong tranh chu y voi con so ben canh */
+.ti-h{color:var(--text3);margin-right:5px}
+.ti-lg{width:1.15em;height:1.15em}
+.ti-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Ccircle cx='12' cy='12' r='1.4' fill='%23000' stroke='none'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Ccircle cx='12' cy='12' r='1.4' fill='%23000' stroke='none'/%3E%3C/svg%3E")}
+.ti-coin{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v10M14.6 9.3A2.6 2.6 0 0 0 12.2 8h-.9a1.9 1.9 0 0 0 0 3.8h1.4a1.9 1.9 0 0 1 0 3.8h-.9a2.6 2.6 0 0 1-2.4-1.3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v10M14.6 9.3A2.6 2.6 0 0 0 12.2 8h-.9a1.9 1.9 0 0 0 0 3.8h1.4a1.9 1.9 0 0 1 0 3.8h-.9a2.6 2.6 0 0 1-2.4-1.3'/%3E%3C/svg%3E")}
+.ti-cash{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='6' width='19' height='12' rx='2.5'/%3E%3Ccircle cx='12' cy='12' r='2.6'/%3E%3Cpath d='M6 12h.01M18 12h.01'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='6' width='19' height='12' rx='2.5'/%3E%3Ccircle cx='12' cy='12' r='2.6'/%3E%3Cpath d='M6 12h.01M18 12h.01'/%3E%3C/svg%3E")}
+.ti-pencil{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L20 8a2.5 2.5 0 0 0-3.5-3.5L4.5 16.5z'/%3E%3Cpath d='M14.5 6.5 17.5 9.5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L20 8a2.5 2.5 0 0 0-3.5-3.5L4.5 16.5z'/%3E%3Cpath d='M14.5 6.5 17.5 9.5'/%3E%3C/svg%3E")}
+.ti-book{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 4.5A2.5 2.5 0 0 1 7 2h12.5v15H7a2.5 2.5 0 0 0-2.5 2.5z'/%3E%3Cpath d='M4.5 19.5A2.5 2.5 0 0 0 7 22h12.5v-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 4.5A2.5 2.5 0 0 1 7 2h12.5v15H7a2.5 2.5 0 0 0-2.5 2.5z'/%3E%3Cpath d='M4.5 19.5A2.5 2.5 0 0 0 7 22h12.5v-5'/%3E%3C/svg%3E")}
+.ti-search{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20.5 20.5-4.2-4.2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20.5 20.5-4.2-4.2'/%3E%3C/svg%3E")}
+.ti-flask{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.5 2.5h5M10.5 2.5v6.2L5.2 18.2A2 2 0 0 0 7 21.2h10a2 2 0 0 0 1.8-3L13.5 8.7V2.5'/%3E%3Cpath d='M8 15h8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9.5 2.5h5M10.5 2.5v6.2L5.2 18.2A2 2 0 0 0 7 21.2h10a2 2 0 0 0 1.8-3L13.5 8.7V2.5'/%3E%3Cpath d='M8 15h8'/%3E%3C/svg%3E")}
+.ti-trend-up{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.5 7 13.5 15 9.5 11 2.5 18'/%3E%3Cpath d='M15.5 7h6v6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.5 7 13.5 15 9.5 11 2.5 18'/%3E%3Cpath d='M15.5 7h6v6'/%3E%3C/svg%3E")}
+.ti-trend-dn{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.5 17 13.5 9l-4 4-7-7'/%3E%3Cpath d='M15.5 17h6v-6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.5 17 13.5 9l-4 4-7-7'/%3E%3Cpath d='M15.5 17h6v-6'/%3E%3C/svg%3E")}
+.ti-eye{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.2 12S6 5.5 12 5.5 21.8 12 21.8 12 18 18.5 12 18.5 2.2 12 2.2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.2 12S6 5.5 12 5.5 21.8 12 21.8 12 18 18.5 12 18.5 2.2 12 2.2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E")}
+.ti-bars{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 3.5v17h17'/%3E%3Cpath d='M7.5 17v-4.5M12 17V8M16.5 17V5.5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 3.5v17h17'/%3E%3Cpath d='M7.5 17v-4.5M12 17V8M16.5 17V5.5'/%3E%3C/svg%3E")}
+.ti-pie{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.4 15.6A10 10 0 1 1 8.4 2.6'/%3E%3Cpath d='M22 12A10 10 0 0 0 12 2v10z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21.4 15.6A10 10 0 1 1 8.4 2.6'/%3E%3Cpath d='M22 12A10 10 0 0 0 12 2v10z'/%3E%3C/svg%3E")}
+.ti-note{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13.5 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8.5z'/%3E%3Cpath d='M13.5 2.5v6h6'/%3E%3Cpath d='M8.5 13.5h7M8.5 17h4.5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13.5 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8.5z'/%3E%3Cpath d='M13.5 2.5v6h6'/%3E%3Cpath d='M8.5 13.5h7M8.5 17h4.5'/%3E%3C/svg%3E")}
+.ti-calendar{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5' width='17' height='16' rx='2.5'/%3E%3Cpath d='M16 2.8v4.4M8 2.8v4.4M3.5 10.5h17'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5' width='17' height='16' rx='2.5'/%3E%3Cpath d='M16 2.8v4.4M8 2.8v4.4M3.5 10.5h17'/%3E%3C/svg%3E")}
+.ti-sliders{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 21v-6.5M5 10.5V3M12 21v-9M12 8V3M19 21v-4.5M19 12.5V3'/%3E%3Cpath d='M2.5 13.5h5M9.5 5.5h5M16.5 15.5h5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 21v-6.5M5 10.5V3M12 21v-9M12 8V3M19 21v-4.5M19 12.5V3'/%3E%3Cpath d='M2.5 13.5h5M9.5 5.5h5M16.5 15.5h5'/%3E%3C/svg%3E")}
+.ti-gauge{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9 15 15 9M15 14V9h-5'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9 15 15 9M15 14V9h-5'/%3E%3C/svg%3E")}
+.ti-save{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 3.5h11L20.5 8.5v12h-16z'/%3E%3Cpath d='M8 20.5v-7h8v7M8 3.5v4.5h6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 3.5h11L20.5 8.5v12h-16z'/%3E%3Cpath d='M8 20.5v-7h8v7M8 3.5v4.5h6'/%3E%3C/svg%3E")}
+.ti-cloud-up{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 16.7A4.6 4.6 0 0 0 17.5 8h-1.3A7.4 7.4 0 1 0 4.5 15'/%3E%3Cpath d='M12 21v-8M8.8 16.2 12 13l3.2 3.2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 16.7A4.6 4.6 0 0 0 17.5 8h-1.3A7.4 7.4 0 1 0 4.5 15'/%3E%3Cpath d='M12 21v-8M8.8 16.2 12 13l3.2 3.2'/%3E%3C/svg%3E")}
+.ti-cloud-dn{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 16.7A4.6 4.6 0 0 0 17.5 8h-1.3A7.4 7.4 0 1 0 4.5 15'/%3E%3Cpath d='M12 13v8M8.8 17.8 12 21l3.2-3.2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19.5 16.7A4.6 4.6 0 0 0 17.5 8h-1.3A7.4 7.4 0 1 0 4.5 15'/%3E%3Cpath d='M12 13v8M8.8 17.8 12 21l3.2-3.2'/%3E%3C/svg%3E")}
+.ti-cloud{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.5 19.5a4.6 4.6 0 0 0 0-9.2h-1.3a7.4 7.4 0 1 0-9.4 9.2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17.5 19.5a4.6 4.6 0 0 0 0-9.2h-1.3a7.4 7.4 0 1 0-9.4 9.2z'/%3E%3C/svg%3E")}
+.ti-download{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12M7 10.5l5 5 5-5'/%3E%3Cpath d='M4 20.5h16'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v12M7 10.5l5 5 5-5'/%3E%3Cpath d='M4 20.5h16'/%3E%3C/svg%3E")}
+.ti-upload{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20.5V8.5M7 13.5l5-5 5 5'/%3E%3Cpath d='M4 3.5h16'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20.5V8.5M7 13.5l5-5 5 5'/%3E%3Cpath d='M4 3.5h16'/%3E%3C/svg%3E")}
+.ti-trash{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 6h17M9 6V3.5h6V6'/%3E%3Cpath d='M5.8 6l1 14.5h10.4L18.2 6'/%3E%3Cpath d='M10 10v7M14 10v7'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 6h17M9 6V3.5h6V6'/%3E%3Cpath d='M5.8 6l1 14.5h10.4L18.2 6'/%3E%3Cpath d='M10 10v7M14 10v7'/%3E%3C/svg%3E")}
+.ti-lock{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='10' width='16' height='11' rx='2.5'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='10' width='16' height='11' rx='2.5'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E")}
+.ti-droplet{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2.6 6.4 8.6a7.9 7.9 0 1 0 11.2 0z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2.6 6.4 8.6a7.9 7.9 0 1 0 11.2 0z'/%3E%3C/svg%3E")}
+.ti-flag{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 22V2.5'/%3E%3Cpath d='M4.5 3.5h13L14.8 8l2.7 4.5h-13'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 22V2.5'/%3E%3Cpath d='M4.5 3.5h13L14.8 8l2.7 4.5h-13'/%3E%3C/svg%3E")}
+.ti-bulb{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2.5a6.2 6.2 0 0 0-3.6 11.3c.7.5 1.1 1.3 1.1 2.2h5a2.8 2.8 0 0 1 1.1-2.2A6.2 6.2 0 0 0 12 2.5z'/%3E%3Cpath d='M9.5 19h5M10.5 21.8h3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2.5a6.2 6.2 0 0 0-3.6 11.3c.7.5 1.1 1.3 1.1 2.2h5a2.8 2.8 0 0 1 1.1-2.2A6.2 6.2 0 0 0 12 2.5z'/%3E%3Cpath d='M9.5 19h5M10.5 21.8h3'/%3E%3C/svg%3E")}
+.ti-rotate{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 12a8.5 8.5 0 1 0 2.9-6.4L3 8.5'/%3E%3Cpath d='M2.6 3.4v5.3h5.3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 12a8.5 8.5 0 1 0 2.9-6.4L3 8.5'/%3E%3Cpath d='M2.6 3.4v5.3h5.3'/%3E%3C/svg%3E")}
+.ti-sun{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Cpath d='M12 2v2.6M12 19.4V22M4.2 4.2 6 6M18 18l1.8 1.8M2 12h2.6M19.4 12H22M4.2 19.8 6 18M18 6l1.8-1.8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Cpath d='M12 2v2.6M12 19.4V22M4.2 4.2 6 6M18 18l1.8 1.8M2 12h2.6M19.4 12H22M4.2 19.8 6 18M18 6l1.8-1.8'/%3E%3C/svg%3E")}
+.ti-moon{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.8 13.4A9 9 0 1 1 10.6 3.2a7 7 0 0 0 10.2 10.2z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.8 13.4A9 9 0 1 1 10.6 3.2a7 7 0 0 0 10.2 10.2z'/%3E%3C/svg%3E")}
+.ti-warn{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.3 3.9 2.1 17.9a2 2 0 0 0 1.7 3h16.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'/%3E%3Cpath d='M12 9v4.5M12 17.2h.01'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.3 3.9 2.1 17.9a2 2 0 0 0 1.7 3h16.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z'/%3E%3Cpath d='M12 9v4.5M12 17.2h.01'/%3E%3C/svg%3E")}
+.ti-check{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m8 12 2.8 2.8L16 9.4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m8 12 2.8 2.8L16 9.4'/%3E%3C/svg%3E")}
+.ti-xmark{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m9 9 6 6M15 9l-6 6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m9 9 6 6M15 9l-6 6'/%3E%3C/svg%3E")}
+.ti-award{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='9' r='6'/%3E%3Cpath d='M8.4 14.2 7 22l5-2.8L17 22l-1.4-7.8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='9' r='6'/%3E%3Cpath d='M8.4 14.2 7 22l5-2.8L17 22l-1.4-7.8'/%3E%3C/svg%3E")}
+.ti-clock{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 6.8V12l3.4 2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 6.8V12l3.4 2'/%3E%3C/svg%3E")}
+.ti-ban{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m5.6 5.6 12.8 12.8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='m5.6 5.6 12.8 12.8'/%3E%3C/svg%3E")}
+.ti-dot{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6.5' fill='%23000' stroke='none'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='6.5' fill='%23000' stroke='none'/%3E%3C/svg%3E")}
+.ti-dotring{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.2'/%3E%3Ccircle cx='12' cy='12' r='3.4' fill='%23000' stroke='none'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.2'/%3E%3Ccircle cx='12' cy='12' r='3.4' fill='%23000' stroke='none'/%3E%3C/svg%3E")}
+.ti-bomb{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10' cy='15' r='7'/%3E%3Cpath d='M15.2 10.2 18 7.4M17.4 4.2l1 1.6 1.8.4-1.3 1.3.2 1.8-1.7-.7-1.6.9.2-1.8-1.4-1.2 1.8-.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10' cy='15' r='7'/%3E%3Cpath d='M15.2 10.2 18 7.4M17.4 4.2l1 1.6 1.8.4-1.3 1.3.2 1.8-1.7-.7-1.6.9.2-1.8-1.4-1.2 1.8-.5z'/%3E%3C/svg%3E")}
+.ti-puzzle{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 3.2a2 2 0 0 1 4 0v1.3h3.6a1 1 0 0 1 1 1V9h1.2a2 2 0 0 1 0 4h-1.2v3.5a1 1 0 0 1-1 1H14v1.3a2 2 0 0 1-4 0v-1.3H6.4a1 1 0 0 1-1-1V13H4.2a2 2 0 0 1 0-4h1.2V5.5a1 1 0 0 1 1-1H10z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 3.2a2 2 0 0 1 4 0v1.3h3.6a1 1 0 0 1 1 1V9h1.2a2 2 0 0 1 0 4h-1.2v3.5a1 1 0 0 1-1 1H14v1.3a2 2 0 0 1-4 0v-1.3H6.4a1 1 0 0 1-1-1V13H4.2a2 2 0 0 1 0-4h1.2V5.5a1 1 0 0 1 1-1H10z'/%3E%3C/svg%3E")}
+.ti-door{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 21.5V4.5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v17'/%3E%3Cpath d='M2.5 21.5h19M14.5 12.2h.01'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 21.5V4.5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v17'/%3E%3Cpath d='M2.5 21.5h19M14.5 12.2h.01'/%3E%3C/svg%3E")}
+.ti-camera{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 7.5h3L8.2 4.6h7.6L17.5 7.5h3a1.8 1.8 0 0 1 1.8 1.8v9a1.8 1.8 0 0 1-1.8 1.8h-17A1.8 1.8 0 0 1 1.7 18.3v-9A1.8 1.8 0 0 1 3.5 7.5z'/%3E%3Ccircle cx='12' cy='13.6' r='3.8'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 7.5h3L8.2 4.6h7.6L17.5 7.5h3a1.8 1.8 0 0 1 1.8 1.8v9a1.8 1.8 0 0 1-1.8 1.8h-17A1.8 1.8 0 0 1 1.7 18.3v-9A1.8 1.8 0 0 1 3.5 7.5z'/%3E%3Ccircle cx='12' cy='13.6' r='3.8'/%3E%3C/svg%3E")}
+.ti-brain{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4.2a3.2 3.2 0 0 0-6.1 1.4A3 3 0 0 0 4 11.7a3 3 0 0 0 1.6 5.5A3.2 3.2 0 0 0 12 18.6z'/%3E%3Cpath d='M12 4.2a3.2 3.2 0 0 1 6.1 1.4A3 3 0 0 1 20 11.7a3 3 0 0 1-1.6 5.5A3.2 3.2 0 0 1 12 18.6z'/%3E%3Cpath d='M12 4.2v14.4'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4.2a3.2 3.2 0 0 0-6.1 1.4A3 3 0 0 0 4 11.7a3 3 0 0 0 1.6 5.5A3.2 3.2 0 0 0 12 18.6z'/%3E%3Cpath d='M12 4.2a3.2 3.2 0 0 1 6.1 1.4A3 3 0 0 1 20 11.7a3 3 0 0 1-1.6 5.5A3.2 3.2 0 0 1 12 18.6z'/%3E%3Cpath d='M12 4.2v14.4'/%3E%3C/svg%3E")}
+.ti-key{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='7.5' cy='15.8' r='4'/%3E%3Cpath d='m10.4 13 9.6-9.6M17.2 6.2l2.2 2.2M14.4 9l2.2 2.2'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='7.5' cy='15.8' r='4'/%3E%3Cpath d='m10.4 13 9.6-9.6M17.2 6.2l2.2 2.2M14.4 9l2.2 2.2'/%3E%3C/svg%3E")}
+.ti-zap{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13.2 2 4.6 13.4h6.3L10.8 22l8.6-11.4h-6.3z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13.2 2 4.6 13.4h6.3L10.8 22l8.6-11.4h-6.3z'/%3E%3C/svg%3E")}
+.ti-chart-eq{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 20.5 9 12l4 4 7.5-11'/%3E%3Cpath d='M14.5 5.5h6v6'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 20.5 9 12l4 4 7.5-11'/%3E%3Cpath d='M14.5 5.5h6v6'/%3E%3C/svg%3E")}
 </style>
 
 </helmet>
@@ -703,17 +764,17 @@ details.tjfold>summary:hover::before{color:var(--accent)}
       <button onclick="{{ toggleCcy }}" title="{{ ccyTitle }}" style="{{ ccyStyle }}">{{ ccyBtn }}</button>
       <button onclick="{{ editFx }}" title="{{ fxTitle }}" style="font-family:'JetBrains Mono',monospace">{{ fxBtn }}</button>
     </div>
-    <button class="tj-abtn" onclick="{{ toggleTheme }}" title="Dark / Light" style="font-size:13px;padding:0 9px">{{ themeIcon }}</button>
+    <button class="tj-abtn" onclick="{{ toggleTheme }}" title="Dark / Light" style="font-size:13px;padding:0 9px"><span class="ti {{ themeIcon }}"></span></button>
     <div class="tj-actions-break"></div>
     <div class="tj-btngroup" title="Xuất / nhập dữ liệu">
-      <button onclick="{{ doExportCSV }}" title="Xuất CSV / Export CSV">⬇ CSV</button>
-      <button onclick="{{ doImportCSV }}" title="Nhập CSV / Import CSV">↥ CSV</button>
-      <button onclick="{{ doRestore }}" title="Khôi phục từ file JSON / Restore JSON">↥ JSON</button>
+      <button onclick="{{ doExportCSV }}" title="Xuất CSV / Export CSV"><span class="ti ti-download"></span> CSV</button>
+      <button onclick="{{ doImportCSV }}" title="Nhập CSV / Import CSV"><span class="ti ti-upload"></span> CSV</button>
+      <button onclick="{{ doRestore }}" title="Khôi phục từ file JSON / Restore JSON"><span class="ti ti-upload"></span> JSON</button>
     </div>
     <div class="tj-btngroup" title="Backup">
-      <button onclick="{{ doBackup }}" title="Tải file backup JSON / Download backup">💾</button>
-      <button onclick="{{ doDriveBackup }}" title="{{ driveUpTitle }}" style="{{ driveUpStyle }}">☁⬆</button>
-      <button onclick="{{ doDriveRestore }}" title="Khôi phục từ Google Drive / Restore from Drive">☁⬇</button>
+      <button onclick="{{ doBackup }}" title="Tải file backup JSON / Download backup"><span class="ti ti-save"></span></button>
+      <button onclick="{{ doDriveBackup }}" title="{{ driveUpTitle }}" style="{{ driveUpStyle }}"><span class="ti ti-cloud-up"></span></button>
+      <button onclick="{{ doDriveRestore }}" title="Khôi phục từ Google Drive / Restore from Drive"><span class="ti ti-cloud-dn"></span></button>
     </div>
   </div>
 </div>
@@ -734,7 +795,7 @@ details.tjfold>summary:hover::before{color:var(--accent)}
     <!-- POSITION SIZING CARD -->
     <div style="background:var(--card);border:1px solid var(--border2);border-radius:12px;margin-bottom:14px;display:flex;align-items:stretch;overflow:hidden">
       <div style="flex:1;padding:12px 16px;border-right:1px solid var(--border)">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px">{{ lbOneR }}</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px"><span class="ti ti-h ti-target"></span>{{ lbOneR }}</div>
         <div style="display:flex;align-items:baseline;gap:4px;flex-wrap:wrap">
           <input id="riskPctInput" type="number" min="0.05" max="10" step="0.05" onchange="{{ onRiskPct }}" title="Phần trăm tổng tài sản bạn chấp nhận mất nếu lệnh này chạm cắt lỗ. Tài liệu SEPA bản Việt hoá khuyến nghị 0,5-0,75% cho TTCK Việt Nam (mới bắt đầu: 0,5%)." style="width:62px;border:1px solid var(--border2);border-radius:7px;padding:4px 6px;font-size:14px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--amber);text-align:center;background:var(--panel)">
           <span style="font-size:11px;color:var(--text3);font-weight:700">% NAV =</span>
@@ -751,7 +812,7 @@ details.tjfold>summary:hover::before{color:var(--accent)}
         <span style="font-size:9px;color:var(--text3);font-weight:700">=</span>
       </div>
       <div style="flex:1;padding:12px 16px;border-left:1px solid var(--border)">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px">{{ lbMaxPos }}</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px"><span class="ti ti-h ti-coin"></span>{{ lbMaxPos }}</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--accent);line-height:1.1">{{ maxDisburse }}</div>
         <div style="font-size:11.5px;color:var(--text3);margin-top:4px">{{ lbMaxPosSub }}</div>
       </div>
@@ -780,7 +841,7 @@ details.tjfold>summary:hover::before{color:var(--accent)}
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;animation:fadeUp .3s ease">
       <div onclick="{{ toggleForm }}" style="display:flex;justify-content:space-between;align-items:center;padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border)">
         <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text)">{{ formTitle }}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)"><span class="ti ti-h ti-pencil"></span>{{ formTitle }}</div>
           <div style="font-size:10px;color:var(--text3);margin-top:1px">{{ lbFormSub }}</div>
         </div>
         <div style="font-size:11px;color:var(--text3);font-weight:600;padding:4px 10px;background:var(--border2);border-radius:6px">{{ formToggleLabel }}</div>
@@ -905,7 +966,7 @@ details.tjfold>summary:hover::before{color:var(--accent)}
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;animation:fadeUp .3s ease .06s both">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
         <div>
-          <div style="font-size:13px;font-weight:700">{{ lbJournal }} · <span id="cnt">{{ tradeCount }}</span> {{ lbTradeUnit }}</div>
+          <div style="font-size:13px;font-weight:700"><span class="ti ti-h ti-book"></span>{{ lbJournal }} · <span id="cnt">{{ tradeCount }}</span> {{ lbTradeUnit }}</div>
           <div style="font-size:10px;color:var(--text3);margin-top:1px">{{ lbJournalSub }}</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -931,8 +992,8 @@ details.tjfold>summary:hover::before{color:var(--accent)}
       <div style="display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:3px;box-shadow:var(--shadow)">
         <button onclick="{{ goOverview }}" style="{{ tabOverviewStyle }}">{{ lbTabOv }}</button>
         <button onclick="{{ goWatch }}" style="{{ tabWatchBtnStyle }}">{{ lbTabWl }}</button>
-        <button onclick="{{ goFund }}" style="{{ tabFundBtnStyle }}">{{ lbTabFa }}</button>
-        <button onclick="{{ goTech }}" style="{{ tabTechBtnStyle }}">{{ lbTabTa }}</button>
+        <button onclick="{{ goFund }}" style="{{ tabFundBtnStyle }}"><span class="ti ti-flask"></span> {{ lbTabFa }}</button>
+        <button onclick="{{ goTech }}" style="{{ tabTechBtnStyle }}"><span class="ti ti-trend-up"></span> {{ lbTabTa }}</button>
         <button onclick="{{ goSystem }}" style="{{ tabSystemStyle }}">{{ lbTabSys }}</button>
         <button onclick="{{ goSetups }}" style="{{ tabSetupsStyle }}">{{ lbTabSu }}</button>
         <button onclick="{{ goEmotions }}" style="{{ tabEmotionsStyle }}">{{ lbTabEm }}</button>
@@ -947,27 +1008,27 @@ details.tjfold>summary:hover::before{color:var(--accent)}
     <div style="{{ tabOvStyle }}">
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div><div style="font-size:12px;font-weight:700">{{ lbChartLine }}</div><div style="font-size:9.5px;color:var(--text3);margin-top:1px">{{ lbChartLineSub }}</div></div>
+          <div><div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-chart-eq"></span>{{ lbChartLine }}</div><div style="font-size:9.5px;color:var(--text3);margin-top:1px">{{ lbChartLineSub }}</div></div>
           <div id="lineControls"></div>
         </div>
         <div style="padding:12px 14px"><div style="position:relative;width:100%;height:270px"><canvas id="tj_lineCanvas" style="display:block"></canvas></div></div>
       </div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:700">{{ lbChartDonut }}</div>
+          <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-pie"></span>{{ lbChartDonut }}</div>
           <div id="donutControls"></div>
         </div>
         <div style="padding:12px 14px"><div style="position:relative;width:100%;height:200px"><canvas id="tj_donutCanvas" style="display:block"></canvas></div></div>
       </div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
         <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:700">{{ lbFundTitle }}</div>
+          <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-coin"></span>{{ lbFundTitle }}</div>
           <div style="font-size:9.5px;color:var(--text3);margin-top:1px">{{ lbFundSub }}</div>
         </div>
         <div style="padding:14px">
           <div id="fundBox"></div>
           <div style="margin-top:14px">
-            <div style="font-size:10.5px;font-weight:700;color:var(--text2);margin-bottom:8px">{{ lbDepBook }} (<span id="depCnt">0</span> {{ lbDepTimes }})</div>
+            <div style="font-size:10.5px;font-weight:700;color:var(--text2);margin-bottom:8px"><span class="ti ti-h ti-cash"></span>{{ lbDepBook }} (<span id="depCnt">0</span> {{ lbDepTimes }})</div>
             <div class="tj-deprow" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) auto;gap:5px;margin-bottom:8px">
               <input id="depDate" type="date" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;min-width:0">
               <input id="depAmt" type="number" step="any" placeholder="{{ lbDepAmtPh }}" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;font-family:'JetBrains Mono',monospace;min-width:0">
@@ -980,7 +1041,7 @@ details.tjfold>summary:hover::before{color:var(--accent)}
       </div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
         <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:700">{{ lbNotesTitle }}</div>
+          <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-note"></span>{{ lbNotesTitle }}</div>
           <div style="font-size:9.5px;color:var(--text3);margin-top:1px">{{ lbNotesSub }}</div>
         </div>
         <div style="padding:12px 14px">
@@ -1046,10 +1107,10 @@ const TJ_TR = {
   vi: {
     subtitle:'2026–2036 · 1R = {r}% tài sản',
     assets:'Tài sản',totalPL:'Tổng P/L',winrate:'Winrate',totalR:'Total R',capital:'Vốn nạp',
-    oneR:'🎯 Rủi ro mỗi lệnh · 1R',maxRiskSub:'Mất bấy nhiêu TIỀN nếu chạm cắt lỗ',divSL:'÷ CẮT LỖ %',
-    maxPos:'💰 Giải ngân tối đa / lệnh',maxPosSub:'Quy mô vị thế tối đa',
+    oneR:'Rủi ro mỗi lệnh · 1R',maxRiskSub:'Mất bấy nhiêu TIỀN nếu chạm cắt lỗ',divSL:'÷ CẮT LỖ %',
+    maxPos:'Giải ngân tối đa / lệnh',maxPosSub:'Quy mô vị thế tối đa',
     formSub:'Tự tính All Profit · P/L% · Tài sản sau lệnh',collapse:'▾ Thu gọn',expand:'▸ Mở rộng',
-    fNewTrade:'✍ Ghi lệnh mới',fEditTrade:'✏ Sửa lệnh',
+    fNewTrade:'Ghi lệnh mới',fEditTrade:'Sửa lệnh',
     fEntryDate:'Ngày vào',fSymbol:'Mã (Symbol)',fAction:'Action',fSetup:'Setup',
     fEntry:'Entry (cách vào)',fEntryPh:'Mô tả cách vào lệnh...',fCloseDate:'Ngày đóng',
     fPeriod:'Period (ngày)',fExit:'Exit',fEmotion:'Cảm xúc',fNetPL:'Net P/L',fR:'R-Multiple',
@@ -1059,43 +1120,43 @@ const TJ_TR = {
     fDetail:'Detail emotion / Bài học rút ra',fDetailPh:'Lý do vào lệnh, cảm xúc, bài học...',
     pvAll:'All Profit',pvPct:'P/L %',pvAsset:'Tài sản sau',pvR:'R-Multiple',
     btnAdd:'＋ Thêm vào nhật ký',btnUpdate:'✓ Cập nhật',btnCancel:'Hủy',
-    journal:'📔 Nhật ký',journalSub:'Mới nhất ở trên · click hàng để xem chi tiết',
-    searchPh:'🔍 Mã / ghi chú',fAll:'Tất cả',fWin:'Thắng',fLoss:'Thua',tradeUnit:'lệnh',
-    tabOv:'Overview',tabSu:'Setups',tabEm:'Cảm xúc',tabCal:'Lịch',tabHm:'Heatmap',tabFa:'🔬 Cơ bản',tabTa:'📈 Kỹ thuật',
-    tabWl:'Watch',wlTitle:'👀 Watchlist — điểm mua (pivot)',wlSub:'Đẩy watchlist lên GitHub cho bot Telegram theo dõi',
-    wlPush:'⤴ Push GitHub',wlPushTitle:'Đẩy watchlist thẳng lên GitHub — bot dùng ngay, không cần chạy script',
-    wlPushing:'⏳ Đang đẩy watchlist lên GitHub…',wlPushed:'✅ Đã đẩy watchlist — bot dùng từ lần chạy kế tiếp',
+    journal:'Nhật ký',journalSub:'Mới nhất ở trên · click hàng để xem chi tiết',
+    searchPh:'Mã / ghi chú',fAll:'Tất cả',fWin:'Thắng',fLoss:'Thua',tradeUnit:'lệnh',
+    tabOv:'Overview',tabSu:'Setups',tabEm:'Cảm xúc',tabCal:'Lịch',tabHm:'Heatmap',tabFa:'Cơ bản',tabTa:'Kỹ thuật',
+    tabWl:'Watch',wlTitle:'Watchlist — điểm mua (pivot)',wlSub:'Đẩy watchlist lên GitHub cho bot Telegram theo dõi',
+    wlPush:'Push GitHub',wlPushTitle:'Đẩy watchlist thẳng lên GitHub — bot dùng ngay, không cần chạy script',
+    wlPushing:'Đang đẩy watchlist lên GitHub…',wlPushed:'Đã đẩy watchlist — bot dùng từ lần chạy kế tiếp',
     wlPushNoChange:'Watchlist không đổi so với bản trên GitHub',wlPushErr:'Lỗi đẩy watchlist lên GitHub:',
     ghPatPrompt:'Dán GitHub Personal Access Token (fine-grained, chỉ cấp quyền Contents Read/Write cho repo trading-journal-2026).\nToken chỉ lưu trong trình duyệt này (localStorage).',
     ghBadToken:'Token bị GitHub từ chối (401/403) — đã xoá khỏi trình duyệt. Bấm lại để nhập token mới.',
     wlSym:'Mã',wlPivot:'Pivot',wlStop:'Stop',wlNote:'Ghi chú (setup, lý do...)',
-    wlExport:'⬇ watchlist.json',wlEmpty:'Chưa có mã nào — thêm mã ở trên.',
-    wlNeed:'Cần nhập Mã và giá Pivot (> 0)',wlHint:'💡 Bấm ⤴ Push GitHub — bot sẽ báo Telegram khi giá vượt pivot, gần pivot hoặc chạm stop. (⬇ watchlist.json + script chỉ là đường dự phòng.)',
+    wlExport:'watchlist.json',wlEmpty:'Chưa có mã nào — thêm mã ở trên.',
+    wlNeed:'Cần nhập Mã và giá Pivot (> 0)',wlHint:'Bấm Push GitHub — bot sẽ báo Telegram khi giá vượt pivot, gần pivot hoặc chạm stop. (watchlist.json + script chỉ là đường dự phòng.)',
     wlToastAdd:'Đã thêm vào watchlist',wlToastExport:'Đã xuất watchlist.json',
-    wlScanTitle:'📊 Kết quả scan Trend Template',wlScanSub:'Tự cập nhật sau scan 9h sáng · bấm mã để mở chart TradingView',
+    wlScanTitle:'Kết quả scan Trend Template',wlScanSub:'Tự cập nhật sau scan 9h sáng · bấm mã để mở chart TradingView',
     wlScanNone:'Chưa tải được dữ liệu scan (scans/latest.json). Site sẽ tự hiển thị sau lần scan + deploy kế tiếp.',
     wlScanAt:'Scan lúc',wlScanPass:'mã đạt chuẩn',wlOffHigh:'cách đỉnh',
     kpiROI:'ROI',kpiDD:'Max DD',
     kpiPeak:'Đỉnh',kpiTimes:'lần nạp',kpiOnCap:'trên vốn nạp',
     mExpect:'Kỳ vọng/lệnh',mAvgWin:'TB thắng',mAvgLoss:'TB thua',mStreak:'Chuỗi hiện tại',mWinShort:'W',mLossShort:'L',
-    bkRemind:'☁ Dữ liệu đã đổi nhưng chưa sao lưu Drive — bấm nút ☁⬆',bkLastAt:'Backup Drive gần nhất: ',bkNever:'Chưa từng sao lưu Drive — bấm để sao lưu',
+    bkRemind:'Dữ liệu đã đổi nhưng chưa sao lưu Drive — bấm nút sao lưu Drive',bkLastAt:'Backup Drive gần nhất: ',bkNever:'Chưa từng sao lưu Drive — bấm để sao lưu',
     pAll:'Tất cả',pYear:'Năm',pMonth:'Tháng',pWeek:'Tuần',
     askSetup:'Tên Setup mới:',setupExists:'Setup đã tồn tại.',setupAdded:'✓ Đã thêm setup',
-    storageWarn:'⚠ Dữ liệu lớn — nên Backup JSON để an toàn.',
-    chartLine:'📈 Equity Curve',chartLineSub:'Đường tài sản + Drawdown · Milestone markers',
-    chartDonut:'🍩 Phân bổ',chartAssets:'Tài sản',chartTrend:'Xu hướng',chartChange:'Thay đổi',
+    storageWarn:'Dữ liệu lớn — nên Backup JSON để an toàn.',
+    chartLine:'Equity Curve',chartLineSub:'Đường tài sản + Drawdown · Milestone markers',
+    chartDonut:'Phân bổ',chartAssets:'Tài sản',chartTrend:'Xu hướng',chartChange:'Thay đổi',
     donutRes:'Kết quả',donutSetup:'Setup',donutEmo:'Cảm xúc',
     donutWin:'Thắng',donutLoss:'Thua',donutDraw:'Hòa',
-    fundTitle:'💰 Vốn & Tài sản',fundSub:'Sổ nạp vốn nhập tay theo tháng thực tế',
+    fundTitle:'Vốn & Tài sản',fundSub:'Sổ nạp vốn nhập tay theo tháng thực tế',
     fundTotalDep:'Tổng vốn đã nạp',fundTotalPL:'Tổng lãi/lỗ',fundCurrent:'Tài sản hiện tại',
-    depBook:'💵 Sổ nạp vốn',times:'lần',depAmtPh:'Số tiền',depNotePh:'Ghi chú',noDeposits:'Chưa có khoản nạp nào.',
+    depBook:'Sổ nạp vốn',times:'lần',depAmtPh:'Số tiền',depNotePh:'Ghi chú',noDeposits:'Chưa có khoản nạp nào.',
     profitTag:'lãi',lossTag:'lỗ',vsCapital:'so với vốn đã nạp',
-    notesTitle:'📝 Ghi chú ngày',notesSub:'Market plan · nhận xét · tâm lý từng ngày',
+    notesTitle:'Ghi chú ngày',notesSub:'Market plan · nhận xét · tâm lý từng ngày',
     notesPh:'Ghi chú market, tâm lý, kế hoạch hôm nay...',noNotes:'Chưa có ghi chú nào.',
     calMonths:['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'],
     calMonthsShort:['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'],
     calDays:['CN','T2','T3','T4','T5','T6','T7'],
-    hmTitle:'🗓 Heatmap hiệu suất',hmSub:'P/L theo tháng — hover để xem chi tiết',lenh:'lệnh',
+    hmTitle:'Heatmap hiệu suất',hmSub:'P/L theo tháng — hover để xem chi tiết',lenh:'lệnh',
     setupTitle:'Thống kê theo Setup',emoTitle:'Thống kê theo Cảm xúc',
     colSetup:'Setup',colEmo:'Cảm xúc',colN:'N',colWin:'Win',colLoss:'Loss',
     colWR:'WR%',colAvgR:'Avg R',colTotR:'Total R',colNet:'Net',colAvgNet:'Avg Net',colTotNet:'Total Net',
@@ -1107,7 +1168,7 @@ const TJ_TR = {
     needMinFields:'Cần tối thiểu Ngày vào và Mã.',needDepFields:'Cần Ngày nạp và Số tiền.',needNoteFields:'Cần ngày và nội dung ghi chú.',
     invalidFile:'File không hợp lệ.',cantReadFile:'Không đọc được file.',
     invalidCSV:'CSV không hợp lệ — cần cột "Ngày vào" và "Mã".',noDataCSV:'Không đọc được dữ liệu.',csvErr:'Lỗi đọc CSV: ',
-    toastUpdated:'✓ Đã cập nhật',toastAdded:'✓ Thêm',toastNote:'📝 Đã lưu ghi chú',
+    toastUpdated:'✓ Đã cập nhật',toastAdded:'✓ Thêm',toastNote:'Đã lưu ghi chú',
     toastRestored:'✓ Khôi phục thành công',toastRestoredN:'✓ Khôi phục',tradesSuffix:' lệnh',
     quote:'"Trade what you see, not what you think." — Kỷ luật là làm đúng 100%, đặc biệt khi đang thua.',
     depNotePrefix:'Nạp',
@@ -1115,7 +1176,7 @@ const TJ_TR = {
     fDis:'Kỷ luật (1–5)',fMae:'MAE (R)',fMfe:'MFE (R)',
     disOpts:['5 · Tuân thủ 100% plan','4 · Lỗi nhỏ','3 · Vi phạm vừa','2 · Vi phạm nặng','1 · Phá luật hoàn toàn'],
     mEdge:'Edge Ratio',mEdgeSub:'(mục tiêu > 1.0)',mComp:'Tuân thủ',mCompSub:'(mục tiêu > 90%)',
-    sysQualityTitle:'⚙ Chất lượng hệ thống',sysQualitySub:'Thước đo Minervini · phí đã tính trong Net P/L',
+    sysQualityTitle:'Chất lượng hệ thống',sysQualitySub:'Thước đo Minervini · phí đã tính trong Net P/L',
     sysEdge:'Edge Ratio — Kỳ vọng hiệu chỉnh',sysEdgeSub:'(WR × TB thắng) ÷ (LR × TB thua)',
     sysPayoff:'Payoff — TB thắng / TB thua',
     sysLGLL:'Lãi lớn nhất / Lỗ lớn nhất',
@@ -1124,16 +1185,16 @@ const TJ_TR = {
     sysComp:'Tỷ lệ tuân thủ quy trình',sysCompScored:'{k}/{n} lệnh đạt điểm ≥ 4 · điểm TB {avg}/5',
     sysNoDis:'Chấm "Kỷ luật (1–5)" ở mục Nâng cao khi ghi lệnh để đo tỷ lệ tuân thủ (mục tiêu > 90%).',
     sysTarget:'Mục tiêu',
-    sysBellTitle:'📊 Bell Curve — Phân phối R-Multiple',sysBellSub:'Lỗ phải cắt ngắn (trái) · lãi phải kéo dài (phải)',
-    sysBellWarn:'⚠ {n} lệnh lỗ sâu hơn -1.5R — vi phạm nguyên tắc cắt lỗ',
+    sysBellTitle:'Bell Curve — Phân phối R-Multiple',sysBellSub:'Lỗ phải cắt ngắn (trái) · lãi phải kéo dài (phải)',
+    sysBellWarn:'{n} lệnh lỗ sâu hơn -1.5R — vi phạm nguyên tắc cắt lỗ',
     sysBellOk:'✓ Không có lệnh nào lỗ sâu hơn -1.5R — cắt lỗ đúng kỷ luật',
-    sysExpoTitle:'🚀 Progressive Exposure',sysExpoSub:'Quy mô vị thế theo phong độ 10 lệnh đóng gần nhất',
+    sysExpoTitle:'Progressive Exposure',sysExpoSub:'Quy mô vị thế theo phong độ 10 lệnh đóng gần nhất',
     expoUp:'TĂNG PHƠI NHIỄM',expoUpSub:'20–25% tài sản/vị thế · hệ thống đang đồng bộ với thị trường',
     expoStd:'QUY MÔ CHUẨN',expoStdSub:'10–15% tài sản/vị thế · duy trì kỷ luật hiện tại',
     expoPilot:'VỊ THẾ MỒI',expoPilotSub:'5–10% tài sản/vị thế · thử nghiệm nhỏ, có lãi thật mới tăng quy mô',
     expoCash:'ĐỨNG NGOÀI',expoCashSub:'Ưu tiên tiền mặt · chờ chuỗi lệnh mồi có lãi trở lại',
     expoWr:'WR 10 lệnh gần nhất',expoSumR:'Tổng R 10 lệnh',expoPos:'≈ ${a} – ${b} / vị thế',
-    sysMaeTitle:'🎯 MAE / MFE — Chất lượng SL & điểm thoát',
+    sysMaeTitle:'MAE / MFE — Chất lượng SL & điểm thoát',
     sysMaeWin:'MAE TB lệnh thắng',sysMaeWinSub:'Lệnh thắng từng âm sâu TB bấy nhiêu R → căn chỉnh độ rộng SL',
     sysMfeLoss:'MFE TB lệnh thua',sysMfeLossSub:'Lệnh thua từng lãi TB bấy nhiêu R → cân nhắc dời SL hòa vốn sớm hơn',
     sysExitEff:'Hiệu suất thoát lệnh thắng',sysExitEffSub:'R thực nhận ÷ MFE · càng gần 100% càng ít bỏ lỡ xu hướng',
@@ -1143,10 +1204,10 @@ const TJ_TR = {
   en: {
     subtitle:'2026–2036 · 1R = {r}% of Capital',
     assets:'Assets',totalPL:'Total P/L',winrate:'Winrate',totalR:'Total R',capital:'Capital',
-    oneR:'🎯 Risk per trade · 1R',maxRiskSub:'Cash lost if the stop is hit',divSL:'÷ STOP %',
-    maxPos:'💰 Max Position Size',maxPosSub:'Maximum position size',
+    oneR:'Risk per trade · 1R',maxRiskSub:'Cash lost if the stop is hit',divSL:'÷ STOP %',
+    maxPos:'Max Position Size',maxPosSub:'Maximum position size',
     formSub:'Auto-calc All Profit · P/L% · Assets after trade',collapse:'▾ Collapse',expand:'▸ Expand',
-    fNewTrade:'✍ New Trade',fEditTrade:'✏ Edit Trade',
+    fNewTrade:'New Trade',fEditTrade:'Edit Trade',
     fEntryDate:'Entry Date',fSymbol:'Symbol',fAction:'Action',fSetup:'Setup',
     fEntry:'Entry (how)',fEntryPh:'Describe your entry...',fCloseDate:'Close Date',
     fPeriod:'Period (days)',fExit:'Exit',fEmotion:'Emotion',fNetPL:'Net P/L',fR:'R-Multiple',
@@ -1156,43 +1217,43 @@ const TJ_TR = {
     fDetail:'Detail emotion / Lesson learned',fDetailPh:'Reason, emotion, lesson learned...',
     pvAll:'All Profit',pvPct:'P/L %',pvAsset:'Assets After',pvR:'R-Multiple',
     btnAdd:'＋ Add to Journal',btnUpdate:'✓ Update',btnCancel:'Cancel',
-    journal:'📔 Journal',journalSub:'Latest on top · click row for details',
-    searchPh:'🔍 Symbol / notes',fAll:'All',fWin:'Win',fLoss:'Loss',tradeUnit:'trades',
-    tabOv:'Overview',tabSu:'Setups',tabEm:'Emotions',tabCal:'Calendar',tabHm:'Heatmap',tabFa:'🔬 Fundamentals',tabTa:'📈 Technicals',
-    tabWl:'Watch',wlTitle:'👀 Watchlist — buy points (pivot)',wlSub:'Push the watchlist to GitHub for the Telegram alert bot',
-    wlPush:'⤴ Push GitHub',wlPushTitle:'Push the watchlist straight to GitHub — the bot picks it up, no script needed',
-    wlPushing:'⏳ Pushing watchlist to GitHub…',wlPushed:'✅ Watchlist pushed — the bot uses it from its next run',
+    journal:'Journal',journalSub:'Latest on top · click row for details',
+    searchPh:'Symbol / notes',fAll:'All',fWin:'Win',fLoss:'Loss',tradeUnit:'trades',
+    tabOv:'Overview',tabSu:'Setups',tabEm:'Emotions',tabCal:'Calendar',tabHm:'Heatmap',tabFa:'Fundamentals',tabTa:'Technicals',
+    tabWl:'Watch',wlTitle:'Watchlist — buy points (pivot)',wlSub:'Push the watchlist to GitHub for the Telegram alert bot',
+    wlPush:'Push GitHub',wlPushTitle:'Push the watchlist straight to GitHub — the bot picks it up, no script needed',
+    wlPushing:'Pushing watchlist to GitHub…',wlPushed:'Watchlist pushed — the bot uses it from its next run',
     wlPushNoChange:'Watchlist unchanged vs the GitHub copy',wlPushErr:'Failed to push watchlist to GitHub:',
     ghPatPrompt:'Paste a GitHub Personal Access Token (fine-grained, Contents Read/Write on the trading-journal-2026 repo only).\nStored only in this browser (localStorage).',
     ghBadToken:'GitHub rejected the token (401/403) — removed from this browser. Click again to enter a new one.',
     wlSym:'Symbol',wlPivot:'Pivot',wlStop:'Stop',wlNote:'Note (setup, reason...)',
-    wlExport:'⬇ watchlist.json',wlEmpty:'No symbols yet — add one above.',
-    wlNeed:'Symbol and Pivot price (> 0) required',wlHint:'💡 Hit ⤴ Push GitHub — the bot alerts on Telegram when price breaks pivot, nears pivot or hits stop. (⬇ watchlist.json + script is the fallback path.)',
+    wlExport:'watchlist.json',wlEmpty:'No symbols yet — add one above.',
+    wlNeed:'Symbol and Pivot price (> 0) required',wlHint:'Hit Push GitHub — the bot alerts on Telegram when price breaks pivot, nears pivot or hits stop. (watchlist.json + script is the fallback path.)',
     wlToastAdd:'Added to watchlist',wlToastExport:'watchlist.json exported',
-    wlScanTitle:'📊 Trend Template scan results',wlScanSub:'Auto-updates after the 9AM scan · click a symbol to open its TradingView chart',
+    wlScanTitle:'Trend Template scan results',wlScanSub:'Auto-updates after the 9AM scan · click a symbol to open its TradingView chart',
     wlScanNone:'Scan data not available yet (scans/latest.json). The site shows it after the next scan + deploy.',
     wlScanAt:'Scanned at',wlScanPass:'stocks passed',wlOffHigh:'off high',
     kpiROI:'ROI',kpiDD:'Max DD',
     kpiPeak:'Peak',kpiTimes:'deposits',kpiOnCap:'on capital',
     mExpect:'Expectancy',mAvgWin:'Avg Win',mAvgLoss:'Avg Loss',mStreak:'Current Streak',mWinShort:'W',mLossShort:'L',
-    bkRemind:'☁ Data changed but not backed up to Drive — press ☁⬆',bkLastAt:'Last Drive backup: ',bkNever:'Never backed up to Drive — click to back up',
+    bkRemind:'Data changed but not backed up to Drive — press the Drive backup button',bkLastAt:'Last Drive backup: ',bkNever:'Never backed up to Drive — click to back up',
     pAll:'All',pYear:'Year',pMonth:'Month',pWeek:'Week',
     askSetup:'New setup name:',setupExists:'Setup already exists.',setupAdded:'✓ Setup added',
-    storageWarn:'⚠ Data is large — back up JSON to be safe.',
-    chartLine:'📈 Equity Curve',chartLineSub:'Assets + Drawdown · Milestone markers',
-    chartDonut:'🍩 Distribution',chartAssets:'Assets',chartTrend:'Trend',chartChange:'Change',
+    storageWarn:'Data is large — back up JSON to be safe.',
+    chartLine:'Equity Curve',chartLineSub:'Assets + Drawdown · Milestone markers',
+    chartDonut:'Distribution',chartAssets:'Assets',chartTrend:'Trend',chartChange:'Change',
     donutRes:'Result',donutSetup:'Setup',donutEmo:'Emotion',
     donutWin:'Win',donutLoss:'Loss',donutDraw:'Break Even',
-    fundTitle:'💰 Capital & Assets',fundSub:'Manual deposit log by actual month',
+    fundTitle:'Capital & Assets',fundSub:'Manual deposit log by actual month',
     fundTotalDep:'Total deposited',fundTotalPL:'Total P/L',fundCurrent:'Current Assets',
-    depBook:'💵 Deposit Log',times:'deposits',depAmtPh:'Amount',depNotePh:'Note',noDeposits:'No deposits yet.',
+    depBook:'Deposit Log',times:'deposits',depAmtPh:'Amount',depNotePh:'Note',noDeposits:'No deposits yet.',
     profitTag:'up',lossTag:'down',vsCapital:'vs. deposited capital',
-    notesTitle:'📝 Daily Notes',notesSub:'Market plan · review · daily mindset',
+    notesTitle:'Daily Notes',notesSub:'Market plan · review · daily mindset',
     notesPh:'Note market, mindset, plan for today...',noNotes:'No notes yet.',
     calMonths:['January','February','March','April','May','June','July','August','September','October','November','December'],
     calMonthsShort:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
     calDays:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
-    hmTitle:'🗓 Performance Heatmap',hmSub:'P/L by month — hover for details',lenh:'trades',
+    hmTitle:'Performance Heatmap',hmSub:'P/L by month — hover for details',lenh:'trades',
     setupTitle:'Stats by Setup',emoTitle:'Stats by Emotion',
     colSetup:'Setup',colEmo:'Emotion',colN:'N',colWin:'Win',colLoss:'Loss',
     colWR:'WR%',colAvgR:'Avg R',colTotR:'Total R',colNet:'Net',colAvgNet:'Avg Net',colTotNet:'Total Net',
@@ -1204,7 +1265,7 @@ const TJ_TR = {
     needMinFields:'Entry Date and Symbol are required.',needDepFields:'Deposit date and amount are required.',needNoteFields:'Date and note content are required.',
     invalidFile:'Invalid file.',cantReadFile:'Cannot read file.',
     invalidCSV:'Invalid CSV — need "Ngày vào" and "Mã" columns.',noDataCSV:'No data found.',csvErr:'CSV read error: ',
-    toastUpdated:'✓ Updated',toastAdded:'✓ Added',toastNote:'📝 Note saved',
+    toastUpdated:'✓ Updated',toastAdded:'✓ Added',toastNote:'Note saved',
     toastRestored:'✓ Restore successful',toastRestoredN:'✓ Restored',tradesSuffix:' trades',
     quote:'"Trade what you see, not what you think." — Discipline means doing it right 100%, especially when losing.',
     depNotePrefix:'Deposit',
@@ -1212,7 +1273,7 @@ const TJ_TR = {
     fDis:'Discipline (1–5)',fMae:'MAE (R)',fMfe:'MFE (R)',
     disOpts:['5 · Followed plan 100%','4 · Minor slip','3 · Moderate violation','2 · Major violation','1 · Broke all rules'],
     mEdge:'Edge Ratio',mEdgeSub:'(target > 1.0)',mComp:'Compliance',mCompSub:'(target > 90%)',
-    sysQualityTitle:'⚙ System Quality',sysQualitySub:'Minervini metrics · fees included in Net P/L',
+    sysQualityTitle:'System Quality',sysQualitySub:'Minervini metrics · fees included in Net P/L',
     sysEdge:'Edge Ratio — Adjusted Expectancy',sysEdgeSub:'(WR × AvgWin) ÷ (LR × AvgLoss)',
     sysPayoff:'Payoff — AvgWin / AvgLoss',
     sysLGLL:'Largest Gain / Largest Loss',
@@ -1221,16 +1282,16 @@ const TJ_TR = {
     sysComp:'Process Compliance Rate',sysCompScored:'{k}/{n} trades scored ≥ 4 · avg {avg}/5',
     sysNoDis:'Score "Discipline (1–5)" in Advanced when logging trades to track compliance (target > 90%).',
     sysTarget:'Target',
-    sysBellTitle:'📊 Bell Curve — R-Multiple Distribution',sysBellSub:'Losses cut short (left) · winners run long (right)',
-    sysBellWarn:'⚠ {n} trades lost deeper than -1.5R — stop-loss rule violated',
+    sysBellTitle:'Bell Curve — R-Multiple Distribution',sysBellSub:'Losses cut short (left) · winners run long (right)',
+    sysBellWarn:'{n} trades lost deeper than -1.5R — stop-loss rule violated',
     sysBellOk:'✓ No trade lost deeper than -1.5R — stops honored',
-    sysExpoTitle:'🚀 Progressive Exposure',sysExpoSub:'Position sizing from the last 10 closed trades',
+    sysExpoTitle:'Progressive Exposure',sysExpoSub:'Position sizing from the last 10 closed trades',
     expoUp:'SCALE UP',expoUpSub:'20–25% of assets/position · system in sync with the market',
     expoStd:'STANDARD SIZE',expoStdSub:'10–15% of assets/position · keep current discipline',
     expoPilot:'PILOT SIZE',expoPilotSub:'5–10% of assets/position · small tests, scale up only after real gains',
     expoCash:'STAY OUT',expoCashSub:'Cash first · wait until pilot trades work again',
     expoWr:'WR last 10',expoSumR:'Σ R last 10',expoPos:'≈ ${a} – ${b} / position',
-    sysMaeTitle:'🎯 MAE / MFE — Stop & Exit Quality',
+    sysMaeTitle:'MAE / MFE — Stop & Exit Quality',
     sysMaeWin:'Avg MAE of winners',sysMaeWinSub:'How deep winners went red (R) → tune stop width',
     sysMfeLoss:'Avg MFE of losers',sysMfeLossSub:'How far losers were green (R) → move stop to break-even sooner',
     sysExitEff:'Exit efficiency (winners)',sysExitEffSub:'Realized R ÷ MFE · closer to 100% means less trend left behind',
@@ -1492,11 +1553,11 @@ class Component extends DCLogic {
   // TRÊN THỊ TRƯỜNG MỸ 1950–2000. Bảng này nói tiêu chí nào đúng VỚI CHÍNH BẠN, trên
   // HOSE, bằng tiền thật. Dấu `fa` mới bắt đầu đóng lên từng lệnh từ 08/2026 nên lệnh
   // cũ không có — cần khoảng 30–50 lệnh nữa thì các dòng dưới mới đủ nghĩa thống kê.
-  _FA_GRADE_NAME = { A: '🏆 Hạng A', B: '✅ Hạng B', C: 'Đủ mục bắt buộc',
-                     part: '⏳ Đọc dở', kill: '❌ Hỏng mục bắt buộc', none: 'Chưa đọc cơ bản' };
+  _FA_GRADE_NAME = { A: 'Hạng A', B: 'Hạng B', C: 'Đủ mục bắt buộc',
+                     part: 'Đọc dở', kill: 'Hỏng mục bắt buộc', none: 'Chưa đọc cơ bản' };
 
-  _TA_GRADE_NAME = { A: '🏆 Đủ cửa', B: '✅ Đủ cửa', C: 'Đủ cửa bắt buộc',
-                     part: '⏳ Chấm dở', kill: '❌ Hỏng cửa bắt buộc', none: 'Chưa chấm kỹ thuật' };
+  _TA_GRADE_NAME = { A: 'Đủ cửa (A)', B: 'Đủ cửa (B)', C: 'Đủ cửa bắt buộc',
+                     part: 'Chấm dở', kill: 'Hỏng cửa bắt buộc', none: 'Chưa chấm kỹ thuật' };
 
   // Một hàm cho cả hai bảng: chúng khác nhau đúng ở trường lấy dấu và bảng tên hạng.
   _gradeStats(field, names) {
@@ -1504,7 +1565,7 @@ class Component extends DCLogic {
     a.forEach(t => {
       const g = t[field];
       const k = g ? (names[g.g] || g.g) : 'Lệnh ghi trước khi có dấu';
-      if (!m[k]) m[k] = { name: k, n: 0, win: 0, loss: 0, totR: 0, totNet: 0 };
+      if (!m[k]) m[k] = { name: k, gk: g ? g.g : '', n: 0, win: 0, loss: 0, totR: 0, totNet: 0 };
       m[k].n++; if (t._all > 0) m[k].win++; else if (t._all < 0) m[k].loss++;
       m[k].totR += +t.r || 0; m[k].totNet += t._all;
     });
@@ -1537,7 +1598,7 @@ class Component extends DCLogic {
     const totR = rows.reduce((s, t) => s + (+t.r || 0), 0);
     return `<div style="background:var(--card);border:1px solid var(--red);border-radius:14px;overflow:hidden;margin-bottom:12px">
       <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-        <div style="font-size:12px;font-weight:700">📝 Lý do đã tự bào chữa khi hỏng tiêu chí bắt buộc</div>
+        <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-note"></span>Lý do đã tự bào chữa khi hỏng tiêu chí bắt buộc</div>
         <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${rows.length} lệnh · tổng <b style="color:${totR >= 0 ? 'var(--green)' : 'var(--red)'}">${totR >= 0 ? '+' : ''}${this._fmt(totR, 1)}R</b></div>
       </div>
       <div style="padding:4px 14px 12px">${body}</div>
@@ -1725,13 +1786,13 @@ class Component extends DCLogic {
     if (t.a === 'Buy' && reg && reg.state !== 'ON') {
       w.push(`• Thị trường đang ĐỨNG NGOÀI: ${reg.reason}. VN không cho bán khống — lúc này giữ tiền mặt.`);
     }
-    // Yếu tố cơ bản (thêm 2026-08-08). Trước đây bảng 🔬 Cơ bản chỉ là tờ giấy nháp:
+    // Yếu tố cơ bản (thêm 2026-08-08). Trước đây bảng Cơ bản chỉ là tờ giấy nháp:
     // đánh ✕ vào "kiểm toán ngoại trừ" xong vẫn ghi lệnh mua được, không một tiếng động.
     // Một checklist không nối vào cổng chặn thì sớm muộn cũng bị bỏ qua.
     if (t.a === 'Buy') {
       const fa = this._faStat(sym);
       if (fa.bad.length)      w.push(`• Cơ bản: đã tự tay đánh HỎNG ${fa.bad.length} tiêu chí BẮT BUỘC — ${fa.bad.join(', ')}.`);
-      else if (!fa.read)      w.push(`• Chưa đọc yếu tố cơ bản của ${sym} (nút 🔬 Cơ bản ở tab Watch). Mua mà chưa biết doanh nghiệp lãi thật hay lãi giấy.`);
+      else if (!fa.read)      w.push(`• Chưa đọc yếu tố cơ bản của ${sym} (nút "Cơ bản" ở tab Watch). Mua mà chưa biết doanh nghiệp lãi thật hay lãi giấy.`);
       else if (fa.mustLeft)   w.push(`• Cơ bản đọc dở: còn ${fa.mustLeft}/${fa.mustTotal} tiêu chí BẮT BUỘC chưa đọc.`);
       else if (fa.stale)      w.push(`• Kết quả đọc cơ bản ${sym} là của Q${fa.rq.q}/${fa.rq.y} — đã có BCTC quý mới, cần đọc lại.`);
     }
@@ -1740,7 +1801,7 @@ class Component extends DCLogic {
     if (t.a === 'Buy') {
       const ta = this._taStat(sym);
       if (ta.bad.length)      w.push(`• Kỹ thuật: đã tự tay đánh HỎNG ${ta.bad.length} cửa BẮT BUỘC — ${ta.bad.join(', ')}.`);
-      else if (!ta.read)      w.push(`• Chưa chấm kỹ thuật cho ${sym} (tab 📈 Kỹ thuật). Bốn cửa xác nhận breakout chưa qua cửa nào.`);
+      else if (!ta.read)      w.push(`• Chưa chấm kỹ thuật cho ${sym} (tab "Kỹ thuật"). Bốn cửa xác nhận breakout chưa qua cửa nào.`);
       else if (ta.mustLeft)   w.push(`• Kỹ thuật chấm dở: còn ${ta.mustLeft}/${ta.mustTotal} cửa BẮT BUỘC chưa chấm.`);
       else if (ta.stale)      w.push(`• Bảng kỹ thuật ${sym} chấm từ ${ta.days} ngày trước — đồ thị nay đã khác, chấm lại trước khi vào.`);
     }
@@ -1793,7 +1854,7 @@ class Component extends DCLogic {
     const old = isEdit ? this.state.trades[this.state.editIdx] : null;
     // Sửa lệnh cũ: giữ nguyên tỉ giá lúc ghi, không đóng dấu lại theo tỉ giá hôm nay
     if (old && +old.fx > 0) t.fx = +old.fx;
-    // Đóng dấu hạng cơ bản TẠI THỜI ĐIỂM VÀO LỆNH vào chính bản ghi lệnh. Bảng 🔬 lưu
+    // Đóng dấu hạng cơ bản TẠI THỜI ĐIỂM VÀO LỆNH vào chính bản ghi lệnh. Bảng cơ bản lưu
     // theo mã và sẽ bị ghi đè ở lần đọc sau, nên không chụp lại ở đây thì vĩnh viễn
     // không trả lời được câu đáng giá nhất: "lệnh thắng lúc mua có hạng cơ bản gì?".
     // Sửa lệnh cũ thì giữ nguyên dấu cũ — cùng lý do với tỉ giá.
@@ -1808,7 +1869,7 @@ class Component extends DCLogic {
 
     const warns = this._planWarnings(t);
     if (warns.length && !(isEdit && old && old.np)) {
-      const head = `⚠️ LỆNH NGOÀI HỆ THỐNG\n\n${warns.join('\n')}\n\n`;
+      const head = `⚠ LỆNH NGOÀI HỆ THỐNG\n\n${warns.join('\n')}\n\n`;
       const faBad = t.a === 'Buy' ? this._faStat(t.s).bad : [];
       if (faBad.length) {
         // Hỏng tiêu chí BẮT BUỘC thì không cho bấm OK cho xong. Phải gõ ra một câu:
@@ -1837,7 +1898,7 @@ class Component extends DCLogic {
     this._cache = null;
     this.setState({ trades, editIdx: -1 }, () => {
       this._persist(); this._clearForm();
-      if (t.np) this._toast(`⚠️ ${t.s} — đã ghi, ĐÁNH DẤU NGOÀI KẾ HOẠCH`, 'var(--red)');
+      if (t.np) this._toast(`⚠ ${t.s} — đã ghi, ĐÁNH DẤU NGOÀI KẾ HOẠCH`, 'var(--red)');
       else this._toast(isEdit ? `${tr.toastUpdated} ${t.s}` : `${tr.toastAdded} ${t.s} · ${t.net >= 0 ? '+' : ''}${this._m(+t.net)}`);
     });
   }
@@ -1984,7 +2045,7 @@ class Component extends DCLogic {
       const j = await resp.json();
       localStorage.setItem('tj_gdrive_last_backup', String(Date.now()));
       this.forceUpdate();
-      this._toast('☁ Da luu Drive: '+j.name, 'var(--accent)');
+      this._toast('Da luu Drive: '+j.name, 'var(--accent)');
     } catch(e) {
       if(e && e.message==='NO_CLIENT_ID') alert('Chua cau hinh Google Client ID.\nMo file HTML, tim dong  const GDRIVE_CLIENT_ID = \'\';  va dan Client ID cua ban vao giua 2 dau nhay.');
       else alert('Loi sao luu Drive: '+((e&&e.message)||e));
@@ -2012,7 +2073,7 @@ class Component extends DCLogic {
           localStorage.setItem('tj_notes_v1', JSON.stringify(this.state.notes));
           if(d.setups) localStorage.setItem('tj_setups_v1', JSON.stringify(d.setups));
           this._faRestore(d);
-          this._toast('☁ Da khoi phuc tu Drive', 'var(--accent)');
+          this._toast('Da khoi phuc tu Drive', 'var(--accent)');
         });
       } else alert('File khong hop le.');
     } catch(e) {
@@ -2053,7 +2114,7 @@ class Component extends DCLogic {
 
   _persistWl() { localStorage.setItem('tj_watchlist_v1', JSON.stringify(this.state.watchlist)); this._autoBackup(); }
 
-  // ── Trạng thái backup Drive: dữ liệu đã đổi sau lần ☁⬆ gần nhất và quá 24h ──
+  // ── Trạng thái backup Drive: dữ liệu đã đổi sau lần sao lưu Drive gần nhất và quá 24h ──
   _backupOverdue() {
     const last = +localStorage.getItem('tj_gdrive_last_backup') || 0;
     const chg = +localStorage.getItem('tj_last_change') || 0;
@@ -2080,7 +2141,7 @@ class Component extends DCLogic {
       this._persistWl();
       ['wlSym','wlPivot','wlStop','wlNote'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
       this._renderWatchlist();
-      this._toast('👀 ' + sym + ' — ' + tr.wlToastAdd, 'var(--accent)');
+      this._toast(sym + ' — ' + tr.wlToastAdd, 'var(--accent)');
     });
   }
 
@@ -2139,17 +2200,17 @@ class Component extends DCLogic {
     // Số liệu phòng thủ đi kèm từng mã (watch_stats.py). Chỉ hai thứ được lên dòng:
     //   · trần vị thế — mua quá 2% GTGD TB20 thì chính mình đẩy giá lúc vào và đạp
     //     giá lúc cắt lỗ. Nó chỉ lên tiếng với mã mỏng, mã lớn thì không bao giờ chạm.
-    //   · ⚑ nhiều phiên trần trong nền — vân tay đội lái. Đây là thứ mắt KHÔNG bắt
+    //   · cờ ⚑ nhiều phiên trần trong nền — vân tay đội lái. Đây là thứ mắt KHÔNG bắt
     //     được, vì đồ thị bị làm giá trông rất đẹp; đó chính là mục đích của làm giá.
     const stat = w => {
       const s = this._wstat(w.symbol);
       if (!s) return '';
       const bits = [];
-      if (s.manip) bits.push(`<span title="${s.ceil_base} phiên trần trong ${(this._statsCache || {}).ceil_base_n || 60} phiên gần nhất (ngưỡng nghi ngờ: ${(this._statsCache || {}).ceil_manip || 4}). Đây là vân tay quen thuộc của đội lái — kéo trần vài phiên với khối lượng tự đối ứng để VẼ RA một cái nền đẹp. Nền càng đẹp càng phải nghi." style="color:var(--red);font-weight:700">⚑ ${s.ceil_base} phiên trần</span>`);
-      else if (s.ceil) bits.push(`<span title="Phiên gần nhất đóng cửa GIÁ TRẦN — trắng bên bán, mua không khớp được, hôm sau gap-up và điểm vào lệch xa pivot." style="color:var(--amber)">🔒 đóng trần</span>`);
+      if (s.manip) bits.push(`<span title="${s.ceil_base} phiên trần trong ${(this._statsCache || {}).ceil_base_n || 60} phiên gần nhất (ngưỡng nghi ngờ: ${(this._statsCache || {}).ceil_manip || 4}). Đây là vân tay quen thuộc của đội lái — kéo trần vài phiên với khối lượng tự đối ứng để VẼ RA một cái nền đẹp. Nền càng đẹp càng phải nghi." style="color:var(--red);font-weight:700"><span class="ti ti-flag"></span> ${s.ceil_base} phiên trần</span>`);
+      else if (s.ceil) bits.push(`<span title="Phiên gần nhất đóng cửa GIÁ TRẦN — trắng bên bán, mua không khớp được, hôm sau gap-up và điểm vào lệch xa pivot." style="color:var(--amber)"><span class="ti ti-lock"></span> đóng trần</span>`);
       // Sàn 20 tỷ/phiên (tài liệu SEPA bản Việt hoá, mục 3 tầng 1). Dưới ngưỡng thì
       // trần vị thế vốn đã nhỏ, nhưng nói thẳng "mỏng" vẫn rõ hơn bắt tự nhẩm.
-      if (s.adtv != null && s.adtv < 20) bits.push(`<span title="GTGD TB20 chỉ ${this._fmt(s.adtv, 1)} tỷ/phiên, dưới sàn 20 tỷ. Sổ lệnh mỏng: vào và ra đều trượt giá, và lúc cần cắt lỗ thì chính lệnh bán của bạn đạp giá xuống." style="color:var(--amber);font-weight:700">💧 ${this._fmt(s.adtv, 1)} tỷ</span>`);
+      if (s.adtv != null && s.adtv < 20) bits.push(`<span title="GTGD TB20 chỉ ${this._fmt(s.adtv, 1)} tỷ/phiên, dưới sàn 20 tỷ. Sổ lệnh mỏng: vào và ra đều trượt giá, và lúc cần cắt lỗ thì chính lệnh bán của bạn đạp giá xuống." style="color:var(--amber);font-weight:700"><span class="ti ti-droplet"></span> ${this._fmt(s.adtv, 1)} tỷ</span>`);
       if (s.max_pos) bits.push(`<span title="Trần vị thế = ${this._fmt((this._statsCache || {}).max_pos_pct || 2, 0)}% giá trị giao dịch TB20 (${this._fmt(s.adtv, 1)} tỷ/phiên). Mua nhiều hơn thế thì chính bạn là người đẩy giá lên lúc vào, và là người đạp giá xuống lúc cắt lỗ — ở HOSE sổ lệnh mỏng nên đây là rủi ro thật, không phải lý thuyết.">tối đa <b style="color:var(--text2)">${this._posCap(s.max_pos)}</b></span>`);
       return bits.length ? `<div style="font-size:9px;color:var(--text3);margin-top:2px;line-height:1.5">${bits.join(' · ')}</div>` : '';
     };
@@ -2157,11 +2218,11 @@ class Component extends DCLogic {
     // hay chưa thì phải mở modal rồi gõ lại mã — nên thực tế là không bao giờ kiểm.
     const fab = sym => {
       const f = this._faStat(sym);
-      const short = f.grade === 'kill' ? '❌ loại'
-        : f.grade === 'none' ? '🔬 chưa đọc'
-        : f.grade === 'part' ? `⏳ ${f.mustOk}/${f.mustTotal} bắt buộc`
-        : f.stale ? '⏳ cơ bản cũ'
-        : f.grade === 'A' ? '🏆 hạng A' : f.grade === 'B' ? '✅ hạng B' : `✓ ${f.ok}/${f.total}`;
+      const short = f.grade === 'kill' ? '<span class="ti ti-xmark"></span> loại'
+        : f.grade === 'none' ? '<span class="ti ti-flask"></span> chưa đọc'
+        : f.grade === 'part' ? `<span class="ti ti-clock"></span> ${f.mustOk}/${f.mustTotal} bắt buộc`
+        : f.stale ? '<span class="ti ti-clock"></span> cơ bản cũ'
+        : f.grade === 'A' ? '<span class="ti ti-award"></span> hạng A' : f.grade === 'B' ? '<span class="ti ti-check"></span> hạng B' : `✓ ${f.ok}/${f.total}`;
       const col = f.stale && f.grade !== 'kill' ? 'var(--amber)' : f.col;
       return `<div onclick="window._tj.openFA('${esc(sym)}')" title="${esc(f.txt)} — bấm để mở bảng đọc yếu tố cơ bản" style="cursor:pointer;font-size:9px;font-weight:700;color:${col};margin-top:2px;line-height:1.3">${short}</div>`;
     };
@@ -2170,11 +2231,11 @@ class Component extends DCLogic {
     // lúc mua không". Một mã hạng A cơ bản mà chưa qua 4 cửa thì vẫn là không mua.
     const tab = sym => {
       const f = this._taStat(sym);
-      const short = f.grade === 'kill' ? '📈 hỏng cửa'
-        : f.grade === 'none' ? '📈 chưa chấm'
-        : f.grade === 'part' ? `📈 ${f.mustOk}/${f.mustTotal} cửa`
-        : f.stale ? `📈 cũ ${f.days} ngày`
-        : `📈 đủ ${f.ok}/${f.total}`;
+      const short = f.grade === 'kill' ? '<span class="ti ti-trend-up"></span> hỏng cửa'
+        : f.grade === 'none' ? '<span class="ti ti-trend-up"></span> chưa chấm'
+        : f.grade === 'part' ? `<span class="ti ti-trend-up"></span> ${f.mustOk}/${f.mustTotal} cửa`
+        : f.stale ? `<span class="ti ti-trend-up"></span> cũ ${f.days} ngày`
+        : `<span class="ti ti-trend-up"></span> đủ ${f.ok}/${f.total}`;
       const col = f.stale && f.grade !== 'kill' ? 'var(--amber)' : f.col;
       return `<div onclick="window._tj.openTA('${esc(sym)}')" title="${esc(f.txt)} — bấm để mở bảng chấm kỹ thuật" style="cursor:pointer;font-size:9px;font-weight:700;color:${col};margin-top:1px;line-height:1.3">${short}</div>`;
     };
@@ -2191,22 +2252,22 @@ class Component extends DCLogic {
           <div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(w.note)}">${esc(w.note)}</div>
           ${stat(w)}
         </div>
-        <span onclick="window._tj.delWatch(${i})" style="cursor:pointer;color:var(--text3);font-size:12px;flex-shrink:0;padding:2px 4px">🗑</span>
+        <span onclick="window._tj.delWatch(${i})" style="cursor:pointer;color:var(--text3);font-size:12px;flex-shrink:0;padding:2px 4px"><span class="ti ti-trash"></span></span>
       </div>`).join('') : `<div style="color:var(--text3);font-size:12px;padding:6px 0">${tr.wlEmpty}</div>`;
     el.innerHTML = `
     ${this._regimeBox()}
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
       <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px">
         <div style="min-width:0">
-          <div style="font-size:12px;font-weight:700">${tr.wlTitle}</div>
+          <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-eye"></span>${tr.wlTitle}</div>
           <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${tr.wlSub}</div>
         </div>
         <div style="display:flex;gap:5px;flex-shrink:0;align-items:center">
-          <button onclick="window._tj.openFA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn">🔬 Cơ bản</button>
-          <button onclick="window._tj.openTA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap" title="Bảng chấm kỹ thuật — 4 cửa xác nhận breakout, nền giá VCP, kế hoạch thoát">📈 Kỹ thuật</button>
-          <button onclick="window._tj.pushWatchlist()" title="${tr.wlPushTitle}" style="background:var(--accent);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--btn-fg);white-space:nowrap">${tr.wlPush}</button>
-          <button onclick="window._tj.exportWatchlist()" style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap">${tr.wlExport}</button>
-          <button onclick="window._tj.reloadScan()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:12px;cursor:pointer;color:var(--text2)" title="Nạp lại công tắc thị trường + số liệu watchlist">⟳</button>
+          <button onclick="window._tj.openFA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn"><span class="ti ti-flask"></span> Cơ bản</button>
+          <button onclick="window._tj.openTA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap" title="Bảng chấm kỹ thuật — 4 cửa xác nhận breakout, nền giá VCP, kế hoạch thoát"><span class="ti ti-trend-up"></span> Kỹ thuật</button>
+          <button onclick="window._tj.pushWatchlist()" title="${tr.wlPushTitle}" style="background:var(--accent);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--btn-fg);white-space:nowrap"><span class="ti ti-upload"></span> ${tr.wlPush}</button>
+          <button onclick="window._tj.exportWatchlist()" style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap"><span class="ti ti-download"></span> ${tr.wlExport}</button>
+          <button onclick="window._tj.reloadScan()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:12px;cursor:pointer;color:var(--text2)" title="Nạp lại công tắc thị trường + số liệu watchlist"><span class="ti ti-rotate"></span></button>
         </div>
       </div>
       <div style="padding:12px 14px">
@@ -2218,7 +2279,7 @@ class Component extends DCLogic {
         </div>
         <input id="wlNote" placeholder="${tr.wlNote}" style="${inp};width:100%;margin-bottom:8px">
         <div>${rows}</div>
-        <div style="font-size:9.5px;color:var(--text3);margin-top:8px;line-height:1.5">${tr.wlHint}</div>
+        <div style="font-size:9.5px;color:var(--text3);margin-top:8px;line-height:1.5"><span class="ti ti-h ti-bulb"></span>${tr.wlHint}</div>
       </div>
     </div>`;
     this._loadRegimeData();
@@ -2298,7 +2359,7 @@ class Component extends DCLogic {
   //  7. Giải chấp chéo: cổ phiếu tốt bị bán để bù mã xấu cùng tài khoản → ghi ở bước 3.
   _FA_VN = [
     { k: 'vndisc', g: '0 · Chất lượng công bố thông tin (đặc thù VN)', must: 1, s: 'CafeF · Tin doanh nghiệp',
-      src: '⚠️ Không có trong Minervini/O\'Neil — bắt buộc bổ sung cho thị trường VN',
+      src: '<span class="ti ti-warn"></span> Không có trong Minervini/O\'Neil — bắt buộc bổ sung cho thị trường VN',
       u: t => `https://cafef.vn/tim-kiem.chn?keywords=${t}`,
       w: 'Lướt tin 12 tháng gần nhất, tìm: <b>ý kiến kiểm toán ngoại trừ / lưu ý</b>, <b>hồi tố hoặc điều chỉnh lợi nhuận sau kiểm toán</b>, chậm nộp BCTC, bị nhắc nhở/cảnh báo/kiểm soát, <b>giao dịch với bên liên quan</b> giá trị lớn',
       p: 'Không có dấu hiệu nào ở trên · BCTC nộp đúng hạn · chênh lệch trước/sau kiểm toán không đáng kể',
@@ -2307,7 +2368,7 @@ class Component extends DCLogic {
     { k: 'vnq', g: '1 · Lợi nhuận quý (chữ C của CAN SLIM)', must: 1, s: 'CafeF · Kết quả kinh doanh (quý)',
       src: "O'Neil Ch.1 tr.24–36 · Minervini Ch.7 tr.145–172",
       u: t => this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh'),
-      w: t => `Trang mặc định hiện <b>4 quý gần nhất</b>. Đọc <b>Doanh thu thuần</b> và <b>Lợi nhuận sau thuế</b>.<br>⚠️ Phải so với <b>CÙNG QUÝ NĂM TRƯỚC</b>, không phải quý liền trước — mùa vụ ở VN rất mạnh (bán lẻ quý 4, thép/xây dựng quý 2-3, ngân hàng quý 4).<br>→ <a href="${this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh', -1)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">mở thẳng cùng kỳ năm trước ↗</a> để đặt cạnh nhau mà so`,
+      w: t => `Trang mặc định hiện <b>4 quý gần nhất</b>. Đọc <b>Doanh thu thuần</b> và <b>Lợi nhuận sau thuế</b>.<br><span class="ti ti-warn"></span> Phải so với <b>CÙNG QUÝ NĂM TRƯỚC</b>, không phải quý liền trước — mùa vụ ở VN rất mạnh (bán lẻ quý 4, thép/xây dựng quý 2-3, ngân hàng quý 4).<br>→ <a href="${this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh', -1)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">mở thẳng cùng kỳ năm trước ↗</a> để đặt cạnh nhau mà so`,
       p: 'LNST cùng quý năm trước tăng <b>≥ 25%</b> và <b>đang tăng tốc</b> · doanh thu tăng <b>≥ 20%</b><br><span style="opacity:.75">Ngưỡng gốc của O\'Neil là EPS ≥ 20-25%. Giữ nguyên — không có lý do hạ chuẩn cho VN.</span>',
       f: '<b>Doanh thu đứng yên mà lợi nhuận tăng vọt = bẫy.</b> Ở VN nguồn phổ biến nhất là <b>hoàn nhập dự phòng</b>, <b>lãi từ thanh lý tài sản / công ty con</b>, hoặc <b>đánh giá lại tài sản</b>. Xem bước 2<br>Lợi nhuận âm quý gần nhất → loại' },
 
@@ -2337,11 +2398,11 @@ class Component extends DCLogic {
       f: '<b>Doanh thu tăng mạnh mà biên co lại = đang mua thị phần bằng giá.</b> Ở VN rất hay gặp ở thép, bán lẻ, xây lắp: nhận thêm hợp đồng bằng cách bỏ giá thấp, doanh thu đẹp trên báo cáo còn lãi thì mỏng dần.<br>Biên nở chỉ nhờ <b>giá nguyên liệu đầu vào rẻ đi</b> là biên vay mượn — chu kỳ hàng hóa đảo chiều thì nó trả lại hết. Phân biệt với biên nở do bán được giá cao hơn' },
 
     { k: 'vnsec', g: '3 · Nhóm đặc thù (nếu là ngân hàng / chứng khoán / BĐS)', s: 'CafeF · Bảng cân đối kế toán',
-      src: '⚠️ Không có trong Minervini/O\'Neil — hai ông chủ yếu phân tích doanh nghiệp sản xuất & bán lẻ',
+      src: '<span class="ti ti-warn"></span> Không có trong Minervini/O\'Neil — hai ông chủ yếu phân tích doanh nghiệp sản xuất & bán lẻ',
       u: t => this._CF(t, 'bsheet', 'bang-can-doi-ke-toan'),
       w: '<b>Ngân hàng</b> (MSB, STB, SSB, LPB…): NIM, tỷ lệ nợ xấu <b>NPL</b>, <b>tỷ lệ bao phủ nợ xấu LLR</b>, CIR, tăng trưởng tín dụng<br><b>Chứng khoán</b> (HCM, ORS, PSI…): dư nợ cho vay margin, lãi/lỗ tự doanh, thị phần môi giới<br><b>Bất động sản</b>: hàng tồn kho, người mua trả tiền trước, dòng tiền kinh doanh',
       p: '<b>NH:</b> NPL &lt; 2% và không tăng · LLR &gt; 80% · NIM ổn định hoặc mở rộng<br><b>CK:</b> lợi nhuận không phụ thuộc hoàn toàn vào tự doanh (biến động theo chỉ số)<br><b>BĐS:</b> "người mua trả tiền trước" tăng = bán được hàng thật',
-      f: '<b>NH:</b> NPL tăng nhanh mà LLR giảm = đang giấu nợ xấu → loại<br><b>CK:</b> lãi chủ yếu từ tự doanh nghĩa là bạn đang mua một quỹ đầu tư có đòn bẩy, không phải doanh nghiệp — và nó sập cùng lúc với chính chỉ số bạn đang giao dịch<br><b>BĐS:</b> tồn kho phình mà tiền trả trước đứng yên = hàng ế<br><br><b>⚠️ Giải chấp chéo (cross-margin) — rủi ro hệ thống của cả sàn:</b> khi thị trường sập, CTCK bán <b>cổ phiếu tốt</b> trong tài khoản để bù thâm hụt cho <b>cổ phiếu xấu</b> cùng tài khoản đó. Nghĩa là một mã đạt sạch mọi tiêu chí trong bảng này <b>vẫn</b> bị bán tháo vì lý do không liên quan gì đến nó. Đây chính là lý do công tắc tổng VN-Index quan trọng hơn việc chọn mã: chọn đúng thời điểm ăn đứt chọn đúng cổ phiếu<br><span style="opacity:.7">Nếu là doanh nghiệp sản xuất/bán lẻ thông thường thì bấm ✓ bỏ qua phần đặc thù ngành, nhưng đọc đoạn giải chấp chéo</span>' },
+      f: '<b>NH:</b> NPL tăng nhanh mà LLR giảm = đang giấu nợ xấu → loại<br><b>CK:</b> lãi chủ yếu từ tự doanh nghĩa là bạn đang mua một quỹ đầu tư có đòn bẩy, không phải doanh nghiệp — và nó sập cùng lúc với chính chỉ số bạn đang giao dịch<br><b>BĐS:</b> tồn kho phình mà tiền trả trước đứng yên = hàng ế<br><br><b><span class="ti ti-warn"></span> Giải chấp chéo (cross-margin) — rủi ro hệ thống của cả sàn:</b> khi thị trường sập, CTCK bán <b>cổ phiếu tốt</b> trong tài khoản để bù thâm hụt cho <b>cổ phiếu xấu</b> cùng tài khoản đó. Nghĩa là một mã đạt sạch mọi tiêu chí trong bảng này <b>vẫn</b> bị bán tháo vì lý do không liên quan gì đến nó. Đây chính là lý do công tắc tổng VN-Index quan trọng hơn việc chọn mã: chọn đúng thời điểm ăn đứt chọn đúng cổ phiếu<br><span style="opacity:.7">Nếu là doanh nghiệp sản xuất/bán lẻ thông thường thì bấm ✓ bỏ qua phần đặc thù ngành, nhưng đọc đoạn giải chấp chéo</span>' },
 
     { k: 'vnbs', g: '4 · Chất lượng lợi nhuận', must: 1, s: 'CafeF · Bảng cân đối kế toán (quý)',
       src: 'Minervini Ch.8 tr.173–195',
@@ -2351,7 +2412,7 @@ class Component extends DCLogic {
       f: 'Cả hai cùng tăng <b>≥ 2× tốc độ doanh thu</b> mà không giải thích được → loại.<br><b>Phải thu phình to là bệnh phổ biến nhất của doanh nghiệp VN</b> — ghi nhận doanh thu nhưng tiền chưa về, có khi không bao giờ về.<br>Đọc kỹ tồn kho: <b>nguyên vật liệu</b> tăng có thể là tín hiệu TỐT (gom hàng giá rẻ trước chu kỳ). Chỉ khi <b>thành phẩm</b> tăng nhanh hơn nguyên liệu mới là hàng ế' },
 
     { k: 'vncf', must: 1, s: 'CafeF · Lưu chuyển tiền tệ',
-      src: '⚠️ Không có trong sách — nhưng ở VN đây gần như bắt buộc',
+      src: '<span class="ti ti-warn"></span> Không có trong sách — nhưng ở VN đây gần như bắt buộc',
       u: t => this._CF(t, 'cashflow', 'luu-chuyen-tien-te-gian-tiep'),
       w: '<b>Lưu chuyển tiền thuần từ hoạt động kinh doanh (OCF)</b> so với <b>Lợi nhuận sau thuế</b>',
       p: 'OCF <b>dương</b> và cùng chiều với lợi nhuận, lý tưởng OCF ≥ LNST',
@@ -2367,12 +2428,12 @@ class Component extends DCLogic {
     { k: 'vnfo', g: '6 · Bảo trợ của dòng tiền lớn', s: 'Vietstock · Thống kê giao dịch (theo mã)',
       src: "O'Neil Ch.6 tr.79–87 — VN không có 13F nên phải thay bằng nguồn khác",
       u: t => this._VS(t, 'thong-ke-giao-dich'),
-      w: t => `Tab <b>GD nước ngoài</b> trên trang này: <b>khối ngoại mua/bán ròng</b> mã này 1-3 tháng · tự doanh CTCK · danh mục các quỹ lớn (VEIL, Pyn Elite, VinaCapital, Dragon Capital) công bố hằng tháng<br>⚠️ <b>Xem TỶ LỆ SỞ HỮU NƯỚC NGOÀI CÒN LẠI trước tiên</b> — nếu mã này <b>kín room</b> thì đọc tiếp phần dưới<br>→ <a href="https://cafef.vn/du-lieu/thong-ke-giao-dich-khoi-ngoai.chn" target="_blank" rel="noopener" style="color:var(--accent)">bảng khối ngoại toàn sàn ↗</a> để xem ${t} nằm ở đâu so với phần còn lại`,
+      w: t => `Tab <b>GD nước ngoài</b> trên trang này: <b>khối ngoại mua/bán ròng</b> mã này 1-3 tháng · tự doanh CTCK · danh mục các quỹ lớn (VEIL, Pyn Elite, VinaCapital, Dragon Capital) công bố hằng tháng<br><span class="ti ti-warn"></span> <b>Xem TỶ LỆ SỞ HỮU NƯỚC NGOÀI CÒN LẠI trước tiên</b> — nếu mã này <b>kín room</b> thì đọc tiếp phần dưới<br>→ <a href="https://cafef.vn/du-lieu/thong-ke-giao-dich-khoi-ngoai.chn" target="_blank" rel="noopener" style="color:var(--accent)">bảng khối ngoại toàn sàn ↗</a> để xem ${t} nằm ở đâu so với phần còn lại`,
       p: 'Khối ngoại <b>mua ròng đều đặn</b> nhiều tuần liên tiếp · có mặt trong danh mục ít nhất một quỹ lớn<br>Nếu <b>kín room</b>: bỏ qua tiêu chí này, đừng tính là điểm trừ',
-      f: '⚠️ <b>Đây là hàng thay thế, không tương đương 13F.</b> VN không bắt quỹ công bố danh mục theo quý, nên bạn chỉ thấy được phần nổi.<br>Khối ngoại bán ròng kéo dài là cảnh báo mạnh ở VN — họ chiếm tỷ trọng nhỏ nhưng dẫn dắt tâm lý.<br>O\'Neil cảnh báo mặt ngược lại: <b>quá nhiều tổ chức sở hữu</b> thì cơ hội tốt nhất đã qua<br><br><b>🔑 Bẫy room ngoại (FOL) — chỉ có ở VN:</b> mã kín room (FPT, MWG, PNJ… thường xuyên) thì quỹ ngoại muốn mua <b>bắt buộc phải thoả thuận ngoài sàn với giá premium</b>. Lực mua đó <b>không hiện lên khớp lệnh</b>. Hệ quả: mã cơ bản tốt nhất sàn lại đi ngang uể oải trên đồ thị, và bảng này chấm nó "khối ngoại không mua" — <b>sai hoàn toàn</b>. Kín room = tiêu chí này mất hiệu lực, không phải mã xấu' },
+      f: '<span class="ti ti-warn"></span> <b>Đây là hàng thay thế, không tương đương 13F.</b> VN không bắt quỹ công bố danh mục theo quý, nên bạn chỉ thấy được phần nổi.<br>Khối ngoại bán ròng kéo dài là cảnh báo mạnh ở VN — họ chiếm tỷ trọng nhỏ nhưng dẫn dắt tâm lý.<br>O\'Neil cảnh báo mặt ngược lại: <b>quá nhiều tổ chức sở hữu</b> thì cơ hội tốt nhất đã qua<br><br><b><span class="ti ti-key"></span> Bẫy room ngoại (FOL) — chỉ có ở VN:</b> mã kín room (FPT, MWG, PNJ… thường xuyên) thì quỹ ngoại muốn mua <b>bắt buộc phải thoả thuận ngoài sàn với giá premium</b>. Lực mua đó <b>không hiện lên khớp lệnh</b>. Hệ quả: mã cơ bản tốt nhất sàn lại đi ngang uể oải trên đồ thị, và bảng này chấm nó "khối ngoại không mua" — <b>sai hoàn toàn</b>. Kín room = tiêu chí này mất hiệu lực, không phải mã xấu' },
 
     { k: 'vnins', s: 'Vietstock · Giao dịch cổ đông nội bộ',
-      src: '⚠️ Không có trong sách — dữ liệu này ở VN đặc biệt hữu ích',
+      src: '<span class="ti ti-warn"></span> Không có trong sách — dữ liệu này ở VN đặc biệt hữu ích',
       u: t => this._VS(t, 'giao-dich-noi-bo'),
       w: 'Giao dịch của <b>cổ đông nội bộ và người liên quan</b> 6 tháng gần nhất',
       p: 'Không có bán ra lớn · nội bộ mua vào là điểm cộng',
@@ -2383,14 +2444,14 @@ class Component extends DCLogic {
       u: t => `https://www.tradingview.com/symbols/HOSE-${String(t).toUpperCase()}/`,
       w: t => `Kéo xuống khối <b>Peers</b> / <b>Cùng ngành</b> ngay trên trang ${t}: nhóm ngành đang mạnh hay yếu · có mã nào khác cùng ngành cũng đang tạo nền / phá vỡ không<br>→ <a href="https://cafef.vn/du-lieu.chn" target="_blank" rel="noopener" style="color:var(--accent)">bảng ngành CafeF ↗</a> nếu muốn xem xếp hạng hiệu suất cả sàn`,
       p: 'Nhóm ngành đang mạnh <b>VÀ có ít nhất một mã cùng ngành xác nhận</b><br><b>Chữ L — mã này phải là số 1 hoặc số 2 của nhóm</b>, xét theo hiệu suất giá 3-6 tháng và quy mô lợi nhuận. Không phải "mã ăn theo giá rẻ cùng ngành"<br><span style="opacity:.75">Nhóm ngành quyết định ~49% biến động giá một cổ phiếu. Hơn 60% siêu cổ phiếu tăng theo nhóm.</span>',
-      f: '⚠️ <b>Ở VN cả sàn chạy theo một nhịp mạnh hơn Mỹ nhiều</b>, và chỉ có ~5 nhóm ngành thật sự tách biệt: ngân hàng, bất động sản, chứng khoán, thép, bán lẻ.<br>Hệ quả: tiêu chí "dẫn dắt ngành" ở VN yếu hơn nhiều so với trong sách — dùng để xác nhận, đừng dùng để chọn<br><b>Bẫy mã ăn theo:</b> ngành nóng lên thì mã đội sổ cũng tăng, và nó tăng SAU, mạnh hơn trong vài phiên. Đó là đoạn cuối của sóng ngành, không phải điểm vào. O\'Neil: đi theo mã dẫn dắt, bỏ mã đội sổ' },
+      f: '<span class="ti ti-warn"></span> <b>Ở VN cả sàn chạy theo một nhịp mạnh hơn Mỹ nhiều</b>, và chỉ có ~5 nhóm ngành thật sự tách biệt: ngân hàng, bất động sản, chứng khoán, thép, bán lẻ.<br>Hệ quả: tiêu chí "dẫn dắt ngành" ở VN yếu hơn nhiều so với trong sách — dùng để xác nhận, đừng dùng để chọn<br><b>Bẫy mã ăn theo:</b> ngành nóng lên thì mã đội sổ cũng tăng, và nó tăng SAU, mạnh hơn trong vài phiên. Đó là đoạn cuối của sóng ngành, không phải điểm vào. O\'Neil: đi theo mã dẫn dắt, bỏ mã đội sổ' },
 
     { k: 'vncat', g: '8 · Chất xúc tác (chữ N của CAN SLIM)', must: 1, s: 'CafeF · Tin doanh nghiệp',
       src: "O'Neil Ch.3 (New) · Minervini Ch.7 — bảng VN trước đây THIẾU hẳn bước này",
       u: t => `https://cafef.vn/tim-kiem.chn?keywords=${t}`,
       w: 'Trả lời đúng một câu: <b>vì sao là BÂY GIỜ?</b> Tìm sự kiện mới trong 6-12 tháng: <b>sản phẩm/nhà máy/công suất mới</b>, <b>đổi ban lãnh đạo</b>, <b>chu kỳ ngành đảo chiều</b> (giá thép, giá heo, cước vận tải, lãi suất), <b>chính sách vĩ mô</b> (đầu tư công, nâng hạng thị trường, sửa luật đất đai), <b>M&A / thoái vốn nhà nước</b>',
       p: 'Chỉ ra được <b>một sự kiện cụ thể, gọi được tên</b>, giải thích vì sao lợi nhuận tăng tốc từ đây<br><span style="opacity:.75">O\'Neil: 95% siêu cổ phiếu đều có một "cái mới" tại thời điểm bắt đầu chạy. Không có chất xúc tác thì nền giá đẹp cũng chỉ là đồ thị đẹp.</span>',
-      f: '<b>Không gọi tên được chất xúc tác = chưa hiểu vì sao mình mua.</b> Lúc giá giảm 5% bạn sẽ không biết nên cắt hay giữ.<br>⚠️ <b>Ở VN bước này quan trọng hơn ở Mỹ, không phải kém hơn.</b> Nghiên cứu ABSA + XGBoost trên rổ VN30 (2019-2024): kết hợp đọc tin tức với tín hiệu kỹ thuật cho lợi nhuận <b>16,7%</b> so với <b>7,1%</b> khi chỉ dùng kỹ thuật. VN là thị trường chạy theo câu chuyện mạnh hơn Mỹ nhiều.<br>Nhưng phân biệt cho kỹ: <b>tin đồn "sắp có tin" không phải chất xúc tác</b> — nó là bẫy. Chất xúc tác phải là sự kiện <b>đã xảy ra hoặc đã công bố chính thức</b> và đo được vào doanh thu' },
+      f: '<b>Không gọi tên được chất xúc tác = chưa hiểu vì sao mình mua.</b> Lúc giá giảm 5% bạn sẽ không biết nên cắt hay giữ.<br><span class="ti ti-warn"></span> <b>Ở VN bước này quan trọng hơn ở Mỹ, không phải kém hơn.</b> Nghiên cứu ABSA + XGBoost trên rổ VN30 (2019-2024): kết hợp đọc tin tức với tín hiệu kỹ thuật cho lợi nhuận <b>16,7%</b> so với <b>7,1%</b> khi chỉ dùng kỹ thuật. VN là thị trường chạy theo câu chuyện mạnh hơn Mỹ nhiều.<br>Nhưng phân biệt cho kỹ: <b>tin đồn "sắp có tin" không phải chất xúc tác</b> — nó là bẫy. Chất xúc tác phải là sự kiện <b>đã xảy ra hoặc đã công bố chính thức</b> và đo được vào doanh thu' },
 
     // Thêm 2026-08-08. Bảng trước đây chấm cơ bản mà hoàn toàn không biết cổ phiếu
     // đang ở đâu trong chu kỳ — nên một mã đạt sạch 8 bước ở nền thứ 5 vẫn ra "Hạng A".
@@ -2414,14 +2475,14 @@ class Component extends DCLogic {
       u: t => this._VS(t, 'lich-su-kien'),
       w: 'Ba mốc trong 4 tuần tới: <b>ngày công bố BCTC quý</b> (VN không ấn định trước — canh cuối tháng 1/4/7/10, hạn chót 20-30 ngày sau khi chốt quý), <b>ngày giao dịch không hưởng quyền (GDKHQ)</b> cổ tức tiền/cổ phiếu/thưởng, và <b>ĐHCĐ</b> (thường tháng 4)',
       p: 'Không có sự kiện lớn trong 2 tuần tới · nếu có BCTC sắp ra thì <b>chỉ giữ vị thế lớn khi đã có đệm lãi ≥ 10%</b> (mốc của Minervini)',
-      f: 'Nắm giữ vị thế đầy qua ngày ra BCTC là <b>chơi xúc xắc</b> — ngay cả mã báo lãi vượt dự báo vẫn có thể bị bán tháo.<br><b>⚠️ Bẫy cổ tức (chỉ có ở VN, không có trong sách):</b> ngày GDKHQ giá bị điều chỉnh giảm ĐÚNG bằng phần cổ tức/thưởng. Chia thưởng 100% thì giá còn một nửa. Trên đồ thị GIÁ THÔ nó trông y hệt một phiên sập thủng nền → <b>cắt lỗ oan</b>, hoặc ngược lại tưởng "cổ phiếu rẻ đi" mà mua.<br><b>Luôn xem đồ thị GIÁ ĐÃ ĐIỀU CHỈNH</b> — TradingView mặc định đã điều chỉnh, bảng giá CTCK thì thường không.<br>ĐHCĐ tháng 4: đây là chỗ kế hoạch phát hành thêm được thông qua — đọc tờ trình trước, đừng đọc sau (xem bước 5)' },
+      f: 'Nắm giữ vị thế đầy qua ngày ra BCTC là <b>chơi xúc xắc</b> — ngay cả mã báo lãi vượt dự báo vẫn có thể bị bán tháo.<br><b><span class="ti ti-warn"></span> Bẫy cổ tức (chỉ có ở VN, không có trong sách):</b> ngày GDKHQ giá bị điều chỉnh giảm ĐÚNG bằng phần cổ tức/thưởng. Chia thưởng 100% thì giá còn một nửa. Trên đồ thị GIÁ THÔ nó trông y hệt một phiên sập thủng nền → <b>cắt lỗ oan</b>, hoặc ngược lại tưởng "cổ phiếu rẻ đi" mà mua.<br><b>Luôn xem đồ thị GIÁ ĐÃ ĐIỀU CHỈNH</b> — TradingView mặc định đã điều chỉnh, bảng giá CTCK thì thường không.<br>ĐHCĐ tháng 4: đây là chỗ kế hoạch phát hành thêm được thông qua — đọc tờ trình trước, đừng đọc sau (xem bước 5)' },
 
     { k: 'vnbr', s: 'Simplize · Báo cáo phân tích CTCK',
-      src: '⚠️ Thay cho Zacks Estimate Revisions — nguồn YẾU HƠN HẲN',
+      src: '<span class="ti ti-warn"></span> Thay cho Zacks Estimate Revisions — nguồn YẾU HƠN HẲN',
       u: t => this._SZ(t, 'bao-cao'),
       w: 'Các báo cáo phân tích gần nhất của công ty chứng khoán: dự phóng lợi nhuận có được <b>nâng lên</b> so với báo cáo trước không',
       p: 'Dự phóng được nâng qua 2-3 báo cáo liên tiếp',
-      f: '⚠️ <b>Đọc với thái độ hoài nghi.</b> VN không có tổ chức tổng hợp đồng thuận độc lập như Zacks. Báo cáo CTCK thường có xung đột lợi ích (chính họ đang tự doanh hoặc bảo lãnh phát hành mã đó) và gần như không bao giờ khuyến nghị BÁN.<br><b>Đây là tiêu chí yếu nhất trong bảng — đừng để nó quyết định gì</b>' },
+      f: '<span class="ti ti-warn"></span> <b>Đọc với thái độ hoài nghi.</b> VN không có tổ chức tổng hợp đồng thuận độc lập như Zacks. Báo cáo CTCK thường có xung đột lợi ích (chính họ đang tự doanh hoặc bảo lãnh phát hành mã đó) và gần như không bao giờ khuyến nghị BÁN.<br><b>Đây là tiêu chí yếu nhất trong bảng — đừng để nó quyết định gì</b>' },
   ]
 
   // ══ BẢNG CƠ BẢN — CỔ PHIẾU MỸ · ĐANG NGỦ từ 03/08/2026 ══
@@ -2452,13 +2513,13 @@ class Component extends DCLogic {
       u: t => this._TV(t, 'balance-sheet', 1),
       w: '<b>Accounts receivable</b> và <b>Inventories</b> — so tốc độ tăng với doanh thu ở bước 1',
       p: 'Cả hai tăng chậm hơn doanh thu',
-      f: 'Cả hai cùng tăng <b>≥ 2× tốc độ doanh thu</b> mà không giải thích được = vấn đề nghiêm trọng → loại<br><b>Đọc kỹ tồn kho</b>: tồn kho <b>nguyên vật liệu</b> tăng vọt có khi là tín hiệu TỐT (chuẩn bị cho nhu cầu lớn — case Encore Wire ôm kho đồng giá rẻ trước khi giá đồng tăng → biên nở → siêu cổ phiếu). Chỉ khi <b>thành phẩm tăng nhanh hơn nguyên liệu + dở dang</b> mới là hàng ế<br>⚠️ Trang Balance sheet của TradingView có thể không hiện dòng chi tiết khi chưa đăng nhập — nếu không thấy, dùng <b>stockanalysis.com</b>' },
+      f: 'Cả hai cùng tăng <b>≥ 2× tốc độ doanh thu</b> mà không giải thích được = vấn đề nghiêm trọng → loại<br><b>Đọc kỹ tồn kho</b>: tồn kho <b>nguyên vật liệu</b> tăng vọt có khi là tín hiệu TỐT (chuẩn bị cho nhu cầu lớn — case Encore Wire ôm kho đồng giá rẻ trước khi giá đồng tăng → biên nở → siêu cổ phiếu). Chỉ khi <b>thành phẩm tăng nhanh hơn nguyên liệu + dở dang</b> mới là hàng ế<br><span class="ti ti-warn"></span> Trang Balance sheet của TradingView có thể không hiện dòng chi tiết khi chưa đăng nhập — nếu không thấy, dùng <b>stockanalysis.com</b>' },
     { k: 'cf', s: 'TradingView · Cash flow (quý)',
-      src: '⚠️ Không có trong Minervini/O\'Neil — bổ sung ngoài sách',
+      src: '<span class="ti ti-warn"></span> Không có trong Minervini/O\'Neil — bổ sung ngoài sách',
       u: t => this._TV(t, 'cash-flow', 1),
       w: '<b>Cash flow from operating activities</b> so với <b>Net income</b>',
       p: 'OCF ≥ Net income và cùng chiều tăng',
-      f: 'Lãi kế toán bùng nổ mà OCF èo uột = lãi trên giấy.<br>⚠️ <b>Đây KHÔNG phải tiêu chí của Minervini hay O\'Neil</b> — là nguyên tắc kế toán bổ sung, nên dùng để tham khảo chứ không loại thẳng' },
+      f: 'Lãi kế toán bùng nổ mà OCF èo uột = lãi trên giấy.<br><span class="ti ti-warn"></span> <b>Đây KHÔNG phải tiêu chí của Minervini hay O\'Neil</b> — là nguyên tắc kế toán bổ sung, nên dùng để tham khảo chứ không loại thẳng' },
     { k: 'mg', g: '4 · Biên lợi nhuận & pha loãng', s: 'TradingView · Statistics & ratios (quý)',
       src: "Minervini Ch.8 · O'Neil Ch.2, Ch.4",
       u: t => this._TV(t, 'statistics-and-ratios', 1),
@@ -2482,7 +2543,7 @@ class Component extends DCLogic {
       u: t => `https://fintel.io/so/us/${t.toLowerCase()}`,
       w: '<b>Số lượng quỹ 13F</b> nắm giữ qua từng quý',
       p: 'Tối thiểu <b>~10 tổ chức</b> bảo trợ và số lượng <b>đang tăng</b> 2–3 quý liên tiếp<br><b>Chất lượng quan trọng hơn số lượng</b> — ưu tiên quỹ có thành tích tốt, và chú ý <b>vị thế MỚI mở hoặc củng cố trong quý gần nhất</b> (quỹ đang tăng vốn có nhiều khả năng tiếp tục mua)',
-      f: '⚠️ <b>"Lệ thuộc quá độ" (over-owned)</b> — quá nhiều tổ chức sở hữu là nguy cơ, vì nếu có bất ổn thì áp lực bán sẽ khủng khiếp. Cisco (hè 2000) và AOL (hè 2001) có <b>hơn một nghìn tổ chức</b> sở hữu → Cisco −83%, Yahoo! −95%, JDSU −94% tính tới 30/10/2001.<br>"Đến thời điểm thành tích một công ty rõ ràng đến nỗi mọi tổ chức đổ xô vào mua thì cơ hội tốt nhất đã qua."<br><span style="opacity:.7">Đừng nhìn <b>% institutional</b> — đa số mid-cap Mỹ có 80–95% chỉ vì quỹ chỉ số, con số này vô nghĩa</span>' },
+      f: '<span class="ti ti-warn"></span> <b>"Lệ thuộc quá độ" (over-owned)</b> — quá nhiều tổ chức sở hữu là nguy cơ, vì nếu có bất ổn thì áp lực bán sẽ khủng khiếp. Cisco (hè 2000) và AOL (hè 2001) có <b>hơn một nghìn tổ chức</b> sở hữu → Cisco −83%, Yahoo! −95%, JDSU −94% tính tới 30/10/2001.<br>"Đến thời điểm thành tích một công ty rõ ràng đến nỗi mọi tổ chức đổ xô vào mua thì cơ hội tốt nhất đã qua."<br><span style="opacity:.7">Đừng nhìn <b>% institutional</b> — đa số mid-cap Mỹ có 80–95% chỉ vì quỹ chỉ số, con số này vô nghĩa</span>' },
     { k: 'ind', g: '8 · Nhóm ngành', s: 'TradingView · Industries (Mỹ)',
       src: "O'Neil Ch.15 · Minervini Ch.6 tr.119–143",
       u: () => 'https://www.tradingview.com/markets/stocks-usa/sectorandindustry-industry/',
@@ -2531,11 +2592,11 @@ class Component extends DCLogic {
       src: "O'Neil Ch.9 (chữ M) — chương ông gọi là quan trọng nhất sách",
       u: () => `https://www.tradingview.com/chart/?symbol=${encodeURIComponent('HOSE:VNINDEX')}`,
       w: 'VN-Index có <b>trên MA50</b> không · MA50 có <b>trên MA200</b> không · có cụm <b>ngày phân phối</b> nào trong 2-4 tuần gần đây không (xem hộp công tắc tổng ở tab Watch — máy đã đếm sẵn)',
-      p: 'Công tắc tổng đang <b>🟢 ĐƯỢC PHÉP VÀO LỆNH</b> và số ngày phân phối chưa chạm ngưỡng cảnh báo',
+      p: 'Công tắc tổng đang <b><span class="ti ti-dot" style="color:var(--green)"></span> ĐƯỢC PHÉP VÀO LỆNH</b> và số ngày phân phối chưa chạm ngưỡng cảnh báo',
       f: '<b>Mua breakout khi chỉ số dưới MA50 thất bại khoảng 70-80% số lần.</b> Đây là cửa rẻ nhất để bỏ qua một lệnh — không tốn gì cả.<br>VN không có bán khống cổ phiếu cơ sở: thị trường xấu thì <b>vũ khí duy nhất là TIỀN MẶT</b>, không phải đảo chiều vị thế. "Không làm gì" trong 3 tháng là một chiến lược hợp lệ' },
 
     { k: 'taliq', g: '2 · Thanh khoản & sổ lệnh', must: 1, s: 'Số liệu máy đã lấy (watch_stats.py)',
-      src: '⚠️ Không có trong sách — ngưỡng của TTCK Việt Nam, sàn Mỹ không cần lo',
+      src: '<span class="ti ti-warn"></span> Không có trong sách — ngưỡng của TTCK Việt Nam, sàn Mỹ không cần lo',
       u: t => `https://www.tradingview.com/symbols/HOSE-${String(t).toUpperCase()}/`,
       w: '<b>Giá trị giao dịch trung bình 20 phiên (GTGD TB20)</b> · và vị thế định mua có vượt trần thanh khoản không',
       p: 'GTGD TB20 <b>≥ 20 tỷ/phiên</b> (tài khoản nhỏ) hoặc <b>≥ 50 tỷ</b> (tài khoản > 1 tỷ) · vị thế nằm dưới trần ≈ 2% GTGD TB20 · <b>sàn HOSE hoặc HNX</b>, không phải UPCoM',
@@ -2546,14 +2607,14 @@ class Component extends DCLogic {
       u: t => `https://www.tradingview.com/chart/?symbol=${encodeURIComponent('HOSE:' + String(t).toUpperCase())}`,
       w: 'Tám tiêu chí, đọc thẳng trên đồ thị:<br>① giá > MA150 <b>và</b> > MA200 · ② MA150 > MA200 · ③ MA200 dốc lên tối thiểu 1 tháng · ④ MA50 > MA150 > MA200 · ⑤ giá > MA50 · ⑥ giá ≥ <b>+30%</b> so với đáy 52 tuần · ⑦ giá trong khoảng <b>−25%</b> so với đỉnh 52 tuần · ⑧ sức mạnh tương đối khá',
       p: 'Đạt <b>cả 8</b>. Thiếu một là chưa ở Giai đoạn 2 — <b>không bao giờ mua ở Giai đoạn 4</b> (xu hướng giảm), dù cơ bản đẹp cỡ nào',
-      f: '<b>⚠️ Đây là điều kiện LOẠI, không phải điểm cộng.</b> Backtest HOSE 2018-2026 của chính dự án này: dùng Trend Template làm bộ lọc <b>xếp hạng</b> thì alpha ≈ 0 (t = 0,13), tỷ lệ pass dao động 0-85% tùy pha thị trường. Nghĩa là đạt Trend Template <b>không</b> làm mã đó tốt hơn mã khác — nó chỉ đảm bảo mã đó không đang rơi.<br><b>Điểm mù đã biết:</b> Trend Template là khung 52 TUẦN nên mù với xu hướng giảm nhiều năm. Một mã sập 87% rồi đi ngang đủ lâu vẫn đạt sạch 8 tiêu chí. → <b>Kiểm thêm khoảng cách tới đỉnh mọi thời đại</b>: cách hơn −40% là nhóm "cựu dẫn dắt bị lãng quên", tránh (trừ mã niêm yết ≤ 5 năm)' },
+      f: '<b><span class="ti ti-warn"></span> Đây là điều kiện LOẠI, không phải điểm cộng.</b> Backtest HOSE 2018-2026 của chính dự án này: dùng Trend Template làm bộ lọc <b>xếp hạng</b> thì alpha ≈ 0 (t = 0,13), tỷ lệ pass dao động 0-85% tùy pha thị trường. Nghĩa là đạt Trend Template <b>không</b> làm mã đó tốt hơn mã khác — nó chỉ đảm bảo mã đó không đang rơi.<br><b>Điểm mù đã biết:</b> Trend Template là khung 52 TUẦN nên mù với xu hướng giảm nhiều năm. Một mã sập 87% rồi đi ngang đủ lâu vẫn đạt sạch 8 tiêu chí. → <b>Kiểm thêm khoảng cách tới đỉnh mọi thời đại</b>: cách hơn −40% là nhóm "cựu dẫn dắt bị lãng quên", tránh (trừ mã niêm yết ≤ 5 năm)' },
 
     { k: 'tars', s: 'TradingView · thêm chỉ báo tỉ lệ giá / VNINDEX',
       src: "O'Neil Ch.5 (RS) — bản VN phải tự tính vì không có RS Rating của IBD",
       u: t => `https://www.tradingview.com/chart/?symbol=${encodeURIComponent('HOSE:' + String(t).toUpperCase())}%2FHOSE%3AVNINDEX`,
       w: 'Đường <b>giá cổ phiếu / VN-Index</b>. Hai câu hỏi: trong <b>nhịp giảm gần nhất</b> của chỉ số, mã này giảm ít hơn hay đi ngang? Trong <b>nhịp hồi</b>, nó về đỉnh cũ TRƯỚC chỉ số?',
       p: 'Đường RS <b>đang tạo đỉnh mới</b> — lý tưởng là RS tạo đỉnh mới <b>trước khi</b> giá phá pivot',
-      f: '<b>⚠️ Dùng đường RS bằng MẮT, đừng dùng ngưỡng RS Rating.</b> Backtest HOSE của dự án: RS Rating càng siết càng tệ (RS ≥ 90 → alpha −0,47%); động lượng 6-12 tháng <b>không tồn tại</b> ở HOSE (decile D9−D0 = −0,77%). Đây là chỗ tài liệu SEPA bản Việt hoá (đòi RS ≥ 70, ưu tiên 80-90) <b>mâu thuẫn trực tiếp</b> với dữ liệu sàn này — và dữ liệu sàn này thắng.<br>Cái CÒN dùng được là quan sát định tính của O\'Neil ở Ch.5: mã giữ giá trong nhịp chỉnh của chỉ số là mã có tay to đỡ. Đó là đọc hành vi, không phải xếp hạng số' },
+      f: '<b><span class="ti ti-warn"></span> Dùng đường RS bằng MẮT, đừng dùng ngưỡng RS Rating.</b> Backtest HOSE của dự án: RS Rating càng siết càng tệ (RS ≥ 90 → alpha −0,47%); động lượng 6-12 tháng <b>không tồn tại</b> ở HOSE (decile D9−D0 = −0,77%). Đây là chỗ tài liệu SEPA bản Việt hoá (đòi RS ≥ 70, ưu tiên 80-90) <b>mâu thuẫn trực tiếp</b> với dữ liệu sàn này — và dữ liệu sàn này thắng.<br>Cái CÒN dùng được là quan sát định tính của O\'Neil ở Ch.5: mã giữ giá trong nhịp chỉnh của chỉ số là mã có tay to đỡ. Đó là đọc hành vi, không phải xếp hạng số' },
 
     { k: 'tavcp', g: '4 · Nền giá — VCP bản Việt Nam', must: 1, s: 'TradingView · đồ thị NGÀY + TUẦN, bật khối lượng',
       src: 'Minervini Ch.9 (VCP) · tham số VN từ backtest HOSE 2018-2026 của dự án',
@@ -2562,10 +2623,10 @@ class Component extends DCLogic {
       p: '<b>3 lần nén</b> (2T-3T là phổ biến ở VN vì biên độ ±7% nén sẵn dao động)<br>Độ sâu nhịp đầu <b>15-25%</b> · mỗi nhịp sau ≈ <b>một nửa</b> nhịp trước · nhịp cuối nén còn <b>2-5%</b><br>Thời gian nền <b>5-10 tuần</b> (dưới 3 tuần thường chưa đủ rũ bỏ)<br><b>Khối lượng ở nhịp co thắt cuối phải CẠN KIỆT — thấp nhất toàn nền. Điều kiện không thương lượng.</b>',
       f: '<b>Đây là bước duy nhất trong cả hệ thống đã được backtest trên HOSE và CHO ALPHA THẬT:</b> VCP 3 lần nén + breakout → CAGR +10,36%, sụt giảm tối đa −15,9% (cùng kỳ VN-Index +8,67% / −40,3%). Thắng 38,6%, lãi TB +25,9%, lỗ TB −6,9% → tỉ lệ 3,75:1, đúng chân dung Minervini mô tả.<br><b>Nới lỏng còn 2 lần nén là chết hẳn: CAGR −0,78%. Độ chặt CHÍNH LÀ lợi thế</b> — đây là chỗ tuyệt đối không được dễ dãi với bản thân.<br>Nhịp đầu sâu > 35% = nền quá lỏng → bỏ. Nền giai đoạn cuối thường rộng và lỏng lẻo.<br><span style="opacity:.7">Cảnh báo diễn giải: backtest chỉ có 114 lệnh trong 8 năm và còn survivorship bias.</span>' },
 
-    { k: 'tabase', s: 'Bảng 🔬 Cơ bản · bước 9 (số nền giá)',
+    { k: 'tabase', s: 'Bảng Cơ bản · bước 9 (số nền giá)',
       src: "Minervini, Cách tư duy & giao dịch như một nhà vô địch, Phần 9 · O'Neil Ch.10",
       u: t => `https://www.tradingview.com/chart/?symbol=${encodeURIComponent('HOSE:' + String(t).toUpperCase())}&interval=1W`,
-      w: 'Trên đồ thị <b>TUẦN</b>, đếm số nền đã hoàn thành kể từ khi mã thoát vùng đáy. Nền đang xét là nền thứ mấy?<br><span style="opacity:.7">Bước này cũng có trong bảng 🔬 Cơ bản (bước 9) — để nguyên ở đó cho khỏi mất dữ liệu đã chấm; ở đây nhắc lại vì nó là quyết định KỸ THUẬT.</span>',
+      w: 'Trên đồ thị <b>TUẦN</b>, đếm số nền đã hoàn thành kể từ khi mã thoát vùng đáy. Nền đang xét là nền thứ mấy?<br><span style="opacity:.7">Bước này cũng có trong bảng Cơ bản (bước 9) — để nguyên ở đó cho khỏi mất dữ liệu đã chấm; ở đây nhắc lại vì nó là quyết định KỸ THUẬT.</span>',
       p: '<b>Nền 1 hoặc 2</b> — hơn 90% sóng tăng mạnh xuất hiện sau các đợt điều chỉnh đầu tiên này. Nền 3-4 vẫn vào được nhưng phải nhỏ vị thế lại',
       f: '<b>Nền 5-6: cân nhắc BÁN thay vì mua.</b> Hay gặp đỉnh cao trào — thổi bùng lên rồi gãy.<br>O\'Neil: <i>"Lần đột phá thứ ba hiếm khi có sức quyến rũ. Nó đã quá rõ ràng, và gần như tất cả mọi người đều nhìn thấy."</i>' },
 
@@ -2591,11 +2652,11 @@ class Component extends DCLogic {
       f: '<b>Pyramiding kiểu Mỹ (lãi 2-3% là gom thêm ngay) không chạy được ở VN</b> — hàng chưa về, không xoay vòng được. Phải giãn theo ngày.<br><b>Cấm tuyệt đối bình quân giá xuống.</b> Mua thêm khi đang lỗ là biến một lệnh sai thành một lệnh sai to hơn, và ở VN bạn còn không thoát được trong 2,5 phiên' },
 
     { k: 'tamanip', g: '8 · Thao túng & tình trạng mã', s: 'HOSE/HNX · tình trạng chứng khoán',
-      src: '⚠️ Không có trong sách — rủi ro đặc thù TTCK Việt Nam (tài liệu mục 7)',
+      src: '<span class="ti ti-warn"></span> Không có trong sách — rủi ro đặc thù TTCK Việt Nam (tài liệu mục 7)',
       u: t => `https://cafef.vn/tim-kiem.chn?keywords=${t}`,
-      w: 'Mã có đang thuộc <b>diện cảnh báo / kiểm soát / hạn chế giao dịch</b> không · có <b>bị cắt margin</b> không · trong 60 phiên gần đây có bao nhiêu <b>phiên đóng giá trần</b> (máy đã đếm — xem cờ ⚑ ở tab Watch)',
+      w: 'Mã có đang thuộc <b>diện cảnh báo / kiểm soát / hạn chế giao dịch</b> không · có <b>bị cắt margin</b> không · trong 60 phiên gần đây có bao nhiêu <b>phiên đóng giá trần</b> (máy đã đếm — xem cờ <span class="ti ti-flag"></span> ở tab Watch)',
       p: 'Không thuộc diện nào · không bị cắt margin · không có cụm phiên trần bất thường trong nền',
-      f: '<b>⚑ Nhiều phiên trần trong nền là vân tay quen thuộc của đội lái</b> — kéo trần vài phiên với khối lượng tự đối ứng để VẼ RA một cái nền đẹp. Đây là thứ mắt KHÔNG bắt được, vì nền bị làm giá trông rất đẹp; đó chính là mục đích của làm giá. <b>Nền càng đẹp càng phải nghi.</b><br><b>Bị cắt margin = lực bán kỹ thuật xuất hiện bất kể cơ bản</b>, vì người đang dùng đòn bẩy buộc phải bán ra.<br><b>🔒 Phiên đóng giá trần:</b> trắng bên bán, mua không khớp được, hôm sau gap-up và điểm vào lệch xa pivot — tự nó đã vi phạm cửa 4' },
+      f: '<b><span class="ti ti-flag"></span> Nhiều phiên trần trong nền là vân tay quen thuộc của đội lái</b> — kéo trần vài phiên với khối lượng tự đối ứng để VẼ RA một cái nền đẹp. Đây là thứ mắt KHÔNG bắt được, vì nền bị làm giá trông rất đẹp; đó chính là mục đích của làm giá. <b>Nền càng đẹp càng phải nghi.</b><br><b>Bị cắt margin = lực bán kỹ thuật xuất hiện bất kể cơ bản</b>, vì người đang dùng đòn bẩy buộc phải bán ra.<br><b><span class="ti ti-lock"></span> Phiên đóng giá trần:</b> trắng bên bán, mua không khớp được, hôm sau gap-up và điểm vào lệch xa pivot — tự nó đã vi phạm cửa 4' },
 
     { k: 'taexit', g: '9 · Kế hoạch thoát — viết TRƯỚC khi bấm mua', must: 1, s: 'Viết ra giấy / vào ghi chú watchlist',
       src: 'Minervini Phần 4 & 9 · O\'Neil Ch.10-11 (quy tắc bán)',
@@ -2637,12 +2698,12 @@ class Component extends DCLogic {
     const r = { ok, total: list.length, bad, mustOk, mustTotal: musts.length,
                 mustLeft: musts.length - mustOk - bad.length, read, stale, t: st.t || 0,
                 days: st.t ? Math.floor(age / 86400000) : 0 };
-    if (bad.length)                 Object.assign(r, { grade: 'kill', txt: `❌ KHÔNG MUA — hỏng ${bad.length} cửa BẮT BUỘC`, col: 'var(--red)' });
+    if (bad.length)                 Object.assign(r, { grade: 'kill', txt: `KHÔNG MUA — hỏng ${bad.length} cửa BẮT BUỘC`, col: 'var(--red)' });
     else if (!read)                 Object.assign(r, { grade: 'none', txt: 'chưa chấm kỹ thuật', col: 'var(--text3)' });
     else if (mustOk < musts.length) Object.assign(r, { grade: 'part', txt: `chấm dở — ${mustOk}/${musts.length} bắt buộc`, col: 'var(--amber)' });
-    else if (ok >= list.length - 2) Object.assign(r, { grade: 'A', txt: `🏆 Đủ cửa — ${ok}/${list.length} đạt`, col: 'var(--green)' });
+    else if (ok >= list.length - 2) Object.assign(r, { grade: 'A', txt: `Đủ cửa — ${ok}/${list.length} đạt`, col: 'var(--green)' });
     else if (ok >= Math.ceil(list.length * 0.62))
-                                    Object.assign(r, { grade: 'B', txt: `✅ Đủ cửa — ${ok}/${list.length} đạt`, col: 'var(--green)' });
+                                    Object.assign(r, { grade: 'B', txt: `Đủ cửa — ${ok}/${list.length} đạt`, col: 'var(--green)' });
     else                            Object.assign(r, { grade: 'C', txt: `đủ bắt buộc — ${ok}/${list.length} đạt`, col: 'var(--text2)' });
     return r;
   }
@@ -2725,7 +2786,7 @@ class Component extends DCLogic {
     else {
       if (ta.grade === 'none') verdict = `Chưa chấm — 0/${ta.total}`;
       if (ta.t) verdict += ` · chấm ${new Date(ta.t).toLocaleDateString('vi-VN')}`;
-      if (ta.stale) { verdict += ` · ⏳ ĐÃ CŨ (${ta.days} ngày trước — đồ thị nay đã khác)`; vcol = 'var(--amber)'; }
+      if (ta.stale) { verdict += ` · <span class="ti ti-clock"></span> ĐÃ CŨ (${ta.days} ngày trước — đồ thị nay đã khác)`; vcol = 'var(--amber)'; }
     }
 
     const txt = x => typeof x === 'function' ? x(t) : x;
@@ -2743,10 +2804,10 @@ class Component extends DCLogic {
           <span style="display:flex;gap:4px;flex-shrink:0">${btn(1, '✓', 'var(--green)')}${btn(-1, '✕', 'var(--red)')}</span>
         </div>
         ${t ? this._taData(s.k, t) : ''}
-        <div style="font-size:12.5px;color:var(--text2);line-height:1.65;margin-top:4px">👁 ${txt(s.w)}</div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.65;margin-top:4px"><span class="ti ti-eye"></span> ${txt(s.w)}</div>
         <div style="font-size:12.5px;color:var(--green);line-height:1.65;margin-top:3px">✓ ${txt(s.p)}</div>
         ${s.f ? `<div style="font-size:12.5px;color:var(--red);line-height:1.65;margin-top:3px">✕ ${txt(s.f)}</div>` : ''}
-        ${s.src ? `<div style="font-size:10.5px;color:var(--text3);line-height:1.5;margin-top:4px;font-style:italic">📖 ${s.src}</div>` : ''}
+        ${s.src ? `<div style="font-size:10.5px;color:var(--text3);line-height:1.5;margin-top:4px;font-style:italic"><span class="ti ti-book"></span> ${s.src}</div>` : ''}
       </div>`;
     }).join('');
 
@@ -2759,15 +2820,15 @@ class Component extends DCLogic {
     host.innerHTML = `
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
         <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:700">📈 Chấm kỹ thuật — 4 cửa xác nhận 🇻🇳</div>
+          <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-trend-up"></span>Chấm kỹ thuật — 4 cửa xác nhận (VN)</div>
           <div style="font-size:11px;color:${vcol};margin-top:2px;font-weight:700">${verdict}</div>
           <div style="font-size:10px;color:var(--text3);margin-top:3px">Chấm lại mỗi lần định vào lệnh — đồ thị đổi theo phiên, khác bảng cơ bản đổi theo quý.</div>
         </div>
         <div style="padding:10px 14px 4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <input id="taSymInp" value="${esc(t)}" placeholder="Mã…" oninput="window._tj.setTASym(this.value)" style="width:96px;flex-shrink:0;background:var(--bg);border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text);letter-spacing:.06em">
           <button onclick="window._tj.openAllTA()" ${t ? '' : 'disabled'} style="background:var(--accent);color:var(--btn-fg);border:0;border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0">Mở đồ thị ↗</button>
-          <button onclick="window._tj.openFA('${esc(t)}')" ${t ? '' : 'disabled'} style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:10.5px;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0" title="Mở bảng cơ bản của cùng mã">🔬 Cơ bản</button>
-          ${ta.read ? `<button onclick="window._tj.resetTA()" style="background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:10.5px;cursor:pointer;flex-shrink:0" title="Xoá hết đánh dấu để chấm lại theo đồ thị hôm nay">↺ Chấm lại</button>` : ''}
+          <button onclick="window._tj.openFA('${esc(t)}')" ${t ? '' : 'disabled'} style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:10.5px;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0" title="Mở bảng cơ bản của cùng mã"><span class="ti ti-flask"></span> Cơ bản</button>
+          ${ta.read ? `<button onclick="window._tj.resetTA()" style="background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:10.5px;cursor:pointer;flex-shrink:0" title="Xoá hết đánh dấu để chấm lại theo đồ thị hôm nay"><span class="ti ti-rotate"></span> Chấm lại</button>` : ''}
         </div>
         ${chips ? `<div style="padding:2px 14px 8px;display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="font-size:9.5px;color:var(--text3)">watchlist:</span>${chips}</div>` : ''}
         <div style="padding:0 14px 14px">${rows}
@@ -2802,7 +2863,7 @@ class Component extends DCLogic {
   //
   // Luật xếp hạng (sửa 2026-08-08): CHƯA ĐỌC HẾT MỤC BẮT BUỘC THÌ KHÔNG ĐƯỢC HẠNG NÀO.
   // Lỗi cũ: chỉ cần không có mục bắt buộc nào bị đánh ✕ là đã tính hạng, nên tick vài
-  // mục phụ cũng ra "✅ Hạng B" trong khi 4 mục bắt buộc còn trắng. Đó là đèn xanh giả.
+  // mục phụ cũng ra "Hạng B" trong khi 4 mục bắt buộc còn trắng. Đó là đèn xanh giả.
   _faStat(sym) {
     const list = this._faList(), lb = this._faLabels();
     const st = (this._faGet()[String(sym || '').toUpperCase()]) || {};
@@ -2817,12 +2878,12 @@ class Component extends DCLogic {
     const stale = !!(rq && (rq.y * 4 + rq.q) < (nq.y * 4 + nq.q));
     const r = { ok, total: list.length, bad, mustOk, mustTotal: musts.length,
                 mustLeft: musts.length - mustOk - bad.length, read, stale, rq, t: st.t || 0 };
-    if (bad.length)                 Object.assign(r, { grade: 'kill', txt: `❌ LOẠI — hỏng ${bad.length} mục bắt buộc`, col: 'var(--red)' });
+    if (bad.length)                 Object.assign(r, { grade: 'kill', txt: `LOẠI — hỏng ${bad.length} mục bắt buộc`, col: 'var(--red)' });
     else if (!read)                 Object.assign(r, { grade: 'none', txt: 'chưa đọc cơ bản', col: 'var(--text3)' });
     else if (mustOk < musts.length) Object.assign(r, { grade: 'part', txt: `đọc dở — ${mustOk}/${musts.length} bắt buộc`, col: 'var(--amber)' });
-    else if (ok >= list.length - 2) Object.assign(r, { grade: 'A', txt: `🏆 Hạng A — ${ok}/${list.length} đạt`, col: 'var(--green)' });
+    else if (ok >= list.length - 2) Object.assign(r, { grade: 'A', txt: `Hạng A — ${ok}/${list.length} đạt`, col: 'var(--green)' });
     else if (ok >= Math.ceil(list.length * 0.62))
-                                    Object.assign(r, { grade: 'B', txt: `✅ Hạng B — ${ok}/${list.length} đạt`, col: 'var(--green)' });
+                                    Object.assign(r, { grade: 'B', txt: `Hạng B — ${ok}/${list.length} đạt`, col: 'var(--green)' });
     else                            Object.assign(r, { grade: 'C', txt: `đủ bắt buộc — ${ok}/${list.length} đạt`, col: 'var(--text2)' });
     return r;
   }
@@ -2949,13 +3010,13 @@ class Component extends DCLogic {
         const a = G(V.npat[0], V.npat[1]), b = G(V.rev[0], V.rev[1]), c = G(V.npat1[0], V.npat1[1]);
         const L = [gl('LNST YoY', a, T.q_npat), gl('Doanh thu YoY', b, T.q_rev)];
         if (V.npat[0] != null && V.npat[0] < 0)
-          L.push({ lab: '⛔ Quý gần nhất LỖ', txt: 'LOẠI', ok: -1, sub: 'quy tắc bước 1 — không cần xét YoY nữa' });
+          L.push({ lab: '<span class="ti ti-ban"></span> Quý gần nhất LỖ', txt: 'LOẠI', ok: -1, sub: 'quy tắc bước 1 — không cần xét YoY nữa' });
         if (c) L.push(a && a.p != null && c.p != null
           ? { lab: 'Gia tốc', txt: `${pc(c.p)} → ${pc(a.p)}`, ok: a.p >= c.p ? 1 : -1,
               sub: a.p >= c.p ? 'đang tăng tốc — đúng thứ O\'Neil đòi' : 'đang GIẢM tốc: quý này tăng chậm hơn quý trước' }
           : { lab: 'Gia tốc', txt: 'không đo được', ok: 0, sub: 'một trong hai quý có gốc âm' });
         if (a && a.p != null && b && b.p != null && a.p >= T.q_npat && b.p < 5)
-          L.push({ lab: '⚠ Bẫy', txt: 'doanh thu đứng yên mà lợi nhuận tăng vọt', ok: -1,
+          L.push({ lab: '<span class="ti ti-warn"></span> Bẫy', txt: 'doanh thu đứng yên mà lợi nhuận tăng vọt', ok: -1,
                    sub: 'bóc khoản một lần ở khối ngay dưới trước khi bấm ✓' });
         return L;
       },
@@ -3005,7 +3066,7 @@ class Component extends DCLogic {
         }
         const rest = [V.npat[1], V.npat[2], V.npat[3]].filter(v => v != null);
         if (V.npat[0] != null && rest.length && V.npat[0] < Math.max(...rest))
-          L.push({ lab: '⚠ Bẫy phục hồi giả', txt: 'chưa về lại đỉnh cũ', ok: -1,
+          L.push({ lab: '<span class="ti ti-warn"></span> Bẫy phục hồi giả', txt: 'chưa về lại đỉnh cũ', ok: -1,
                    sub: `đỉnh cũ ${n1(Math.max(...rest))} tỷ — năm gần nhất mới ${n1(V.npat[0])} tỷ, % tăng đẹp chỉ vì năm trước quá tệ` });
         return L;
       },
@@ -3031,7 +3092,7 @@ class Component extends DCLogic {
         if (V.llr[0] != null) { const dr = d(V.llr[0], V.llr[1]);
           L.push({ lab: 'LLR', txt: this._fmt(V.llr[0], 1) + '%', ok: V.llr[0] > 80 ? 1 : -1, sub: 'cần > 80%' + dl(dr) }); }
         if (d(V.npl[0], V.npl[1]) > 0 && d(V.llr[0], V.llr[1]) < 0)
-          L.push({ lab: '⛔ Đang giấu nợ xấu', txt: 'NPL tăng mà LLR giảm', ok: -1, sub: 'loại — không cần đọc tiếp' });
+          L.push({ lab: '<span class="ti ti-ban"></span> Đang giấu nợ xấu', txt: 'NPL tăng mà LLR giảm', ok: -1, sub: 'loại — không cần đọc tiếp' });
         if (V.nim[0] != null) { const dn = d(V.nim[0], V.nim[1]);
           L.push({ lab: 'NIM', txt: this._fmt(V.nim[0], 2) + '%', ok: dn == null ? null : (dn >= 0 ? 1 : 0), sub: 'ổn định hoặc mở rộng' + dl(dn) }); }
         if (V.cir[0] != null) { const dc = d(V.cir[0], V.cir[1]);
@@ -3060,7 +3121,7 @@ class Component extends DCLogic {
                      sub: fast2 ? 'ghi nhận doanh thu nhưng tiền chưa về' : '' });
           });
           if (ge && gi && ge.p > 2 * gr.p && gi.p > 2 * gr.p)
-            L.push({ lab: '⛔ Cả hai cùng ≥ 2× doanh thu', txt: 'LOẠI', ok: -1, sub: 'trừ khi giải thích được' });
+            L.push({ lab: '<span class="ti ti-ban"></span> Cả hai cùng ≥ 2× doanh thu', txt: 'LOẠI', ok: -1, sub: 'trừ khi giải thích được' });
         }
         return L;
       },
@@ -3079,7 +3140,7 @@ class Component extends DCLogic {
         if (b <= 0) return [{ lab: 'OCF / LNST', txt: 'không tính được', ok: 0,
                               sub: `LNST âm — nhìn thẳng dấu của OCF: ${a >= 0 ? 'dương, còn đỡ' : 'ÂM, lỗ cả trên giấy lẫn trong két'}` }];
         const L = [{ lab: 'OCF / LNST', txt: this._fmt(a / b, 2) + '×', ok: a / b >= T.ocf ? 1 : -1, sub: `cần ≥ ${this._fmt(T.ocf, 1)}×` }];
-        if (a < 0) L.push({ lab: '⛔ OCF ÂM', txt: 'lãi trên giấy', ok: -1, sub: 'lãi nhiều mà tiền không về — ghép với phải thu phình ở bước 4' });
+        if (a < 0) L.push({ lab: '<span class="ti ti-ban"></span> OCF ÂM', txt: 'lãi trên giấy', ok: -1, sub: 'lãi nhiều mà tiền không về — ghép với phải thu phình ở bước 4' });
         return L;
       },
     };
@@ -3100,7 +3161,7 @@ class Component extends DCLogic {
           : gl('Pha loãng 1 năm', g, null)];
         if (V.plan[0] != null && V.sh[0]) {
           const p = V.plan[0] / V.sh[0] * 100;
-          L.push({ lab: '💣 Pha loãng sắp tới', txt: '+' + this._fmt(p, 1) + '%', ok: p <= T.dilute_ok ? 1 : -1,
+          L.push({ lab: '<span class="ti ti-bomb"></span> Pha loãng sắp tới', txt: '+' + this._fmt(p, 1) + '%', ok: p <= T.dilute_ok ? 1 : -1,
                    sub: 'quả bom hẹn giờ — báo cáo hiện tại đẹp không cứu được' });
         }
         return L;
@@ -3164,7 +3225,7 @@ class Component extends DCLogic {
       ? `<div style="font-size:10px;color:var(--text3);font-family:inherit;margin-top:6px">% bạn từng gõ tay ở bản cũ: LNST ${v1.npat ?? '—'} · D.thu ${v1.rev ?? '—'}</div>` : '';
     return `<div style="background:var(--border2);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:12.5px;line-height:1.6;font-family:'JetBrains Mono',monospace;overflow-x:auto">
       <div style="display:flex;gap:6px;align-items:center;font-family:inherit;font-size:11px;font-weight:700;color:var(--accent);margin-bottom:3px">
-        <span style="flex:1;min-width:0">✎ Gõ số của hai kỳ — máy tính %</span>
+        <span style="flex:1;min-width:0"><span class="ti ti-pencil"></span> Gõ số của hai kỳ — máy tính %</span>
         ${Object.keys(store).length ? `<button onclick="window._tj.clearFANum('${k}')" style="background:transparent;border:1px solid var(--border);color:var(--text3);border-radius:5px;padding:2px 6px;font-size:10px;cursor:pointer">xoá số</button>` : ''}
       </div>
       ${sp.hint ? `<div style="font-family:inherit;font-size:10px;color:var(--text3);margin-bottom:5px">${sp.hint}</div>` : ''}
@@ -3191,7 +3252,7 @@ class Component extends DCLogic {
       if (a === 0) return `<div style="color:var(--amber);margin-top:3px">⇒ máy không kết luận được — tự đọc</div>`;
       return '';
     };
-    const stamp = f ? `<div style="font-size:11.5px;color:var(--text3);font-family:inherit;margin-top:3px">📊 ${(this._fundCache || {}).checked_at || ''} · vnstock</div>` : '';
+    const stamp = f ? `<div style="font-size:11.5px;color:var(--text3);font-family:inherit;margin-top:3px"><span class="ti ti-bars"></span> ${(this._fundCache || {}).checked_at || ''} · vnstock</div>` : '';
 
     // Bước 1: khối này chỉ TRÌNH BÀY số máy. Phép chia nằm ở _faCalcBox ngay dưới,
     // vì bước nào cũng cần cùng một cái máy tính hai kỳ.
@@ -3222,7 +3283,7 @@ class Component extends DCLogic {
     if (k === 'vnsec' && c.bank)
       return box(`Tăng trưởng cho vay: <b>${pc(c.bank.loans_growth)}</b> · tiền gửi: <b>${pc(c.bank.deposit_growth)}</b>
         <br>LDR: <b>${n1(c.bank.ldr)}%</b> · Dự phòng/cho vay: <b>${n1(c.bank.provision_to_loans)}%</b>
-        <br><span style="color:var(--red);font-family:inherit;font-size:12.5px">⚠ KHÔNG có NPL ở đây — nợ nhóm 3-5 nằm trong thuyết minh BCTC, máy không đọc được. NPL và LLR vẫn phải đọc tay.</span>${stamp}`);
+        <br><span style="color:var(--red);font-family:inherit;font-size:12.5px"><span class="ti ti-warn"></span> KHÔNG có NPL ở đây — nợ nhóm 3-5 nằm trong thuyết minh BCTC, máy không đọc được. NPL và LLR vẫn phải đọc tay.</span>${stamp}`);
 
     if (k === 'vnbs') {
       if (f.sector === 'bank') return box(`<span style="color:var(--text3);font-family:inherit">Ngân hàng không có phải thu / hàng tồn kho — bước này không áp dụng, xem bước 3.</span>`);
@@ -3334,7 +3395,7 @@ class Component extends DCLogic {
       // Ngày đọc đứng ngay cạnh kết luận: một cái ✓ đóng từ hai quý trước trông
       // hệt như cái ✓ đóng sáng nay, mà giá trị thì khác hẳn.
       if (fa.t) verdict += ` · đọc ${new Date(fa.t).toLocaleDateString('vi-VN')}`;
-      if (fa.stale) { verdict += ` · ⏳ ĐÃ CŨ (đọc ở Q${fa.rq.q}/${fa.rq.y}, nay đã có BCTC quý mới)`; vcol = 'var(--amber)'; }
+      if (fa.stale) { verdict += ` · <span class="ti ti-clock"></span> ĐÃ CŨ (đọc ở Q${fa.rq.q}/${fa.rq.y}, nay đã có BCTC quý mới)`; vcol = 'var(--amber)'; }
     }
 
     const txt = x => typeof x === 'function' ? x(t) : x;   // w/p/f có thể là hàm nhận mã
@@ -3355,10 +3416,10 @@ class Component extends DCLogic {
           <span style="display:flex;gap:4px;flex-shrink:0">${btn(1, '✓', 'var(--green)')}${btn(-1, '✕', 'var(--red)')}</span>
         </div>
         ${t ? this._faData(s.k, t) + this._faCalcBox(s.k, t) : ''}
-        <div style="font-size:12.5px;color:var(--text2);line-height:1.65;margin-top:4px">👁 ${txt(s.w)}</div>
+        <div style="font-size:12.5px;color:var(--text2);line-height:1.65;margin-top:4px"><span class="ti ti-eye"></span> ${txt(s.w)}</div>
         <div style="font-size:12.5px;color:var(--green);line-height:1.65;margin-top:3px">✓ ${txt(s.p)}</div>
         ${s.f ? `<div style="font-size:12.5px;color:var(--red);line-height:1.65;margin-top:3px">✕ ${txt(s.f)}</div>` : ''}
-        ${s.src ? `<div style="font-size:10.5px;color:var(--text3);line-height:1.5;margin-top:4px;font-style:italic">📖 ${s.src}</div>` : ''}
+        ${s.src ? `<div style="font-size:10.5px;color:var(--text3);line-height:1.5;margin-top:4px;font-style:italic"><span class="ti ti-book"></span> ${s.src}</div>` : ''}
       </div>`;
     }).join('');
 
@@ -3372,20 +3433,20 @@ class Component extends DCLogic {
     // Máy đã tự kiểm chưa — trả lời thẳng câu "số này có đáng tin không"
     const ck = fu && fu.check;
     const checkLine = !ck ? '' : ck.ok
-      ? `<div style="font-size:10px;color:var(--green);margin-top:3px">✅ Máy đã tự kiểm: bảng cân đối khớp đẳng thức kế toán (TS = Nợ + VCSH), lệch ${this._fmt(ck.bs_dev_pct || 0, 2)}% · lợi nhuận lấy dòng <b>${ck.npat_basis === 'parent' ? 'cổ đông công ty mẹ' : 'LNST tổng (báo cáo không tách cổ đông mẹ)'}</b></div>`
-      : `<div style="font-size:10px;color:var(--red);margin-top:3px">⛔ Bảng cân đối KHÔNG khớp (lệch ${this._fmt(ck.bs_dev_pct || 0, 2)}%) — máy không chấm mã này, đọc tay hoàn toàn</div>`;
+      ? `<div style="font-size:10px;color:var(--green);margin-top:3px"><span class="ti ti-check"></span> Máy đã tự kiểm: bảng cân đối khớp đẳng thức kế toán (TS = Nợ + VCSH), lệch ${this._fmt(ck.bs_dev_pct || 0, 2)}% · lợi nhuận lấy dòng <b>${ck.npat_basis === 'parent' ? 'cổ đông công ty mẹ' : 'LNST tổng (báo cáo không tách cổ đông mẹ)'}</b></div>`
+      : `<div style="font-size:10px;color:var(--red);margin-top:3px"><span class="ti ti-ban"></span> Bảng cân đối KHÔNG khớp (lệch ${this._fmt(ck.bs_dev_pct || 0, 2)}%) — máy không chấm mã này, đọc tay hoàn toàn</div>`;
 
     host.innerHTML = `
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
         <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:700">🔬 Đọc yếu tố cơ bản — SEPA ${this._scanMkt() === 'VN' ? '🇻🇳 nguồn Việt Nam' : '🇺🇸'}</div>
+          <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-flask"></span>Đọc yếu tố cơ bản — SEPA ${this._scanMkt() === 'VN' ? 'nguồn Việt Nam' : 'nguồn Mỹ'}</div>
           <div style="font-size:11px;color:${vcol};margin-top:2px;font-weight:700">${verdict}</div>
           ${checkLine}
         </div>
         <div style="padding:10px 14px 4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <input id="faSymInp" value="${esc(t)}" placeholder="Mã…" oninput="window._tj.setFASym(this.value)" style="width:96px;flex-shrink:0;background:var(--bg);border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text);letter-spacing:.06em">
           <button onclick="window._tj.openAllFA()" ${t ? '' : 'disabled'} style="background:var(--accent);color:var(--btn-fg);border:0;border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0">Mở tất cả ↗</button>
-          ${nAuto ? `<button onclick="window._tj.applyFAAuto()" style="background:var(--green-soft);color:var(--green);border:1px solid var(--green);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;flex-shrink:0" title="Đánh dấu ✓/✕ theo gợi ý của máy cho ${nAuto} mục — vẫn sửa lại từng mục được">⚡ Gợi ý máy (${nAuto})</button>` : ''}
+          ${nAuto ? `<button onclick="window._tj.applyFAAuto()" style="background:var(--green-soft);color:var(--green);border:1px solid var(--green);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;flex-shrink:0" title="Đánh dấu ✓/✕ theo gợi ý của máy cho ${nAuto} mục — vẫn sửa lại từng mục được"><span class="ti ti-zap"></span> Gợi ý máy (${nAuto})</button>` : ''}
           <button onclick="window._tj.faToNote()" ${t ? '' : 'disabled'} style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:10.5px;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0" title="Ghi kết quả vào ghi chú của mã trong watchlist">→ Ghi chú</button>
         </div>
         ${chips ? `<div style="padding:2px 14px 8px;display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="font-size:9.5px;color:var(--text3)">watchlist:</span>${chips}</div>` : ''}
@@ -3447,9 +3508,10 @@ class Component extends DCLogic {
     const on = r.state === 'ON', unknown = r.state === 'UNKNOWN';
     const col = on ? 'var(--green)' : unknown ? 'var(--amber)' : 'var(--red)';
     const bg = on ? 'var(--green-soft)' : unknown ? 'var(--amber-soft)' : 'var(--red-soft)';
-    const head = on ? '🟢 ĐƯỢC PHÉP VÀO LỆNH'
-      : unknown ? '🟡 CHƯA XÁC ĐỊNH ĐƯỢC TRẠNG THÁI — coi như đứng ngoài'
-      : '🔴 ĐỨNG NGOÀI — KHÔNG VÀO LỆNH NÀO';
+    const dot = '<span class="ti ti-dot"></span> ';
+    const head = on ? dot + 'ĐƯỢC PHÉP VÀO LỆNH'
+      : unknown ? dot + 'CHƯA XÁC ĐỊNH ĐƯỢC TRẠNG THÁI — coi như đứng ngoài'
+      : dot + 'ĐỨNG NGOÀI — KHÔNG VÀO LỆNH NÀO';
     // Độ rộng thị trường đã bỏ cùng lúc với bảng scan: tính nó phải quét cả sàn
     // (~151 mã, 8 phút gọi API) trong khi nó vốn được ghi rõ là "chỉ để tham khảo,
     // không tham gia quyết định". Trả 8 phút lấy một dòng chữ không dùng đến.
@@ -3485,7 +3547,7 @@ class Component extends DCLogic {
     const bits = [];
     if (r.dist_days != null) {
       const warn = r.dist_warn;
-      bits.push(`<span title="Ngày chỉ số giảm ≥0,2% mà khối lượng cao hơn phiên trước = tổ chức xả hàng. O'Neil: từ ${r.dist_danger || 5} ngày trong ${r.dist_lookback || 25} phiên là dấu hiệu thị trường sắp quay đầu.${(r.dist_list || []).length ? '\n\nGần nhất: ' + r.dist_list.map(x => `${x.date} (${x.chg}%)`).join(', ') : ''}">Ngày phân phối: <b style="color:${warn ? 'var(--red)' : 'var(--text2)'}">${r.dist_days}</b>/${r.dist_lookback || 25} phiên${warn ? ' ⚠️' : ''}</span>`);
+      bits.push(`<span title="Ngày chỉ số giảm ≥0,2% mà khối lượng cao hơn phiên trước = tổ chức xả hàng. O'Neil: từ ${r.dist_danger || 5} ngày trong ${r.dist_lookback || 25} phiên là dấu hiệu thị trường sắp quay đầu.${(r.dist_list || []).length ? '\n\nGần nhất: ' + r.dist_list.map(x => `${x.date} (${x.chg}%)`).join(', ') : ''}">Ngày phân phối: <b style="color:${warn ? 'var(--red)' : 'var(--text2)'}">${r.dist_days}</b>/${r.dist_lookback || 25} phiên${warn ? ' <span class="ti ti-warn"></span>' : ''}</span>`);
     }
     if (r.ftd) {
       bits.push(`<span title="Ngày bùng nổ theo đà: phiên thứ ${r.ftd.day} của nhịp nỗ lực hồi phục, tăng ${r.ftd.chg}% kèm khối lượng cao hơn phiên trước — dấu hiệu dòng tiền tổ chức quay lại.&#10;&#10;Chưa được backtest trên HOSE nên KHÔNG dùng làm tín hiệu vào lệnh, chỉ để biết nhịp hồi đang có xác nhận.">FTD: <b style="color:var(--text2)">${esc(r.ftd.date)}</b> (+${r.ftd.chg}%, ${r.ftd.ago} phiên trước)</span>`);
@@ -3506,7 +3568,7 @@ class Component extends DCLogic {
     if (d === undefined) return '';                       // chưa nạp xong
     if (!d || !d.regime) {
       return `<div style="background:var(--amber-soft);border:1px solid var(--amber);border-radius:9px;padding:8px 11px;margin-bottom:8px;font-size:10px;color:var(--text2);line-height:1.5">
-        🟡 Chưa có dữ liệu công tắc thị trường — coi như <b>đứng ngoài</b>.
+        <span class="ti ti-dot" style="color:var(--amber)"></span> Chưa có dữ liệu công tắc thị trường — coi như <b>đứng ngoài</b>.
         Chạy: <code>python automation/regime.py</code></div>`;
     }
     return this._regimeBanner(d, esc);
@@ -3522,7 +3584,7 @@ class Component extends DCLogic {
       const entries = n[d].map((e, i) => `
         <div style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-bottom:1px dashed var(--border)">
           <div style="flex:1;font-size:11.5px;color:var(--text2);line-height:1.6">${e.txt}</div>
-          <span onclick="window._tj.delNote('${d}',${i})" style="cursor:pointer;color:var(--text3);font-size:12px;flex-shrink:0;padding:2px 4px">🗑</span>
+          <span onclick="window._tj.delNote('${d}',${i})" style="cursor:pointer;color:var(--text3);font-size:12px;flex-shrink:0;padding:2px 4px"><span class="ti ti-trash"></span></span>
         </div>`).join('');
       return `<div style="margin-bottom:8px"><div style="font-size:9.5px;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace;margin-bottom:3px">${d}</div>${entries}</div>`;
     }).join('');
@@ -3565,7 +3627,7 @@ class Component extends DCLogic {
       `Ba phiên sàn HOSE liên tiếp = 0,93³ − 1 = −19,6%. Vì T+2, phiên đầu tiên thực sự bán được là T+2 chiều — nếu T+2 cũng nằm sàn thì không khớp, phải chờ T+3. Nó xảy ra vài lần mỗi chu kỳ ở VN, thường do giải chấp margin dây chuyền.`,
       // Tiêu đề gấp lại vẫn phải mang con số — nếu gấp xong không còn thông tin nào thì
       // nó thành một cái nút không ai bấm, và cảnh báo coi như không tồn tại.
-      `<b style="color:${col}">🩸 Kịch bản 3 phiên sàn: −${this._fmt(floorPct, 2)}% NAV</b>
+      `<b style="color:${col}"><span class="ti ti-trend-dn"></span> Kịch bản 3 phiên sàn: −${this._fmt(floorPct, 2)}% NAV</b>
        <span style="color:var(--text3)">— ${bad ? 'vượt ngưỡng 2%' : 'trong ngưỡng 2%'}</span>`,
       `vị thế đầy ${this._fmt(posPct, 1)}% NAV × (−19,6%) = <b style="color:${col}">−${this._fmt(floorPct, 2)}% NAV</b>
       ${bad ? `— vượt ngưỡng 2% NAV. Muốn về dưới 2% thì <b>hạ rủi ro/lệnh xuống ≤ ${this._fmt(safeRisk, 2)}%</b> (đừng nới ô cắt lỗ — nó phải nói đúng chỗ bạn thật sự cắt).` : '— trong ngưỡng 2% NAV của kịch bản xấu nhất.'}
@@ -3596,7 +3658,7 @@ class Component extends DCLogic {
     el.innerHTML = `
       <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:9px 11px">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:7px">
-          <span style="font-size:12px;font-weight:700;color:var(--text)">🧩 Chia 3 nhịp — mỗi nhịp <span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${this._m(one, d)}</span></span>
+          <span style="font-size:12px;font-weight:700;color:var(--text)"><span class="ti ti-h ti-puzzle"></span>Chia 3 nhịp — mỗi nhịp <span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${this._m(one, d)}</span></span>
           <span style="font-size:10.5px;color:var(--text3)">trần ${this._m(maxPos, d)} là <b>tổng cả 3 nhịp</b> · 1R = ${this._m(oneR, d)}</span>
         </div>
         <div class="tj-tranche" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px">
@@ -3641,7 +3703,7 @@ class Component extends DCLogic {
       <span><b style="color:${col}">${head}</b> ${body}</span></div>`;
     el.innerHTML = this._foldBox('exit', 'background:var(--card);border:1px solid var(--border)',
       'Năm cửa thoát, ba cửa đầu là bắt buộc bán. Con số bám theo ô cắt lỗ đang đặt.',
-      `<b>🚪 Thoát khi nào</b> <span style="color:var(--text3)">· 1R = ${this._fmt(sl, 1)}% giá · 2R = +${this._fmt(sl * 2, 1)}%</span>`,
+      `<b><span class="ti ti-door"></span> Thoát khi nào</b> <span style="color:var(--text3)">· 1R = ${this._fmt(sl, 1)}% giá · 2R = +${this._fmt(sl * 2, 1)}%</span>`,
       `<div style="font-size:11.5px;color:var(--text3);line-height:1.65;margin-bottom:6px">
         <b>Ô "cắt lỗ ${this._fmt(sl, 1)}%" ở trên là khoảng cách từ GIÁ VÀO tới GIÁ CẮT LỖ</b>, không phải % tài sản. Vào 100.000₫ thì cắt ở <b>${this._fmt(100000 * (1 - sl / 100), 0)}₫</b>. Mất bấy nhiêu tiền = đúng ô rủi ro %NAV bên trái.
       </div>
@@ -3739,7 +3801,7 @@ class Component extends DCLogic {
       </div>`;
     }).join('');
     const bellNote = s.deepLoss > 0
-      ? `<div style="margin-top:9px;border-radius:8px;padding:7px 10px;font-size:10.5px;background:var(--red-soft);color:var(--red);font-weight:600">${tr.sysBellWarn.replace('{n}', s.deepLoss)}</div>`
+      ? `<div style="margin-top:9px;border-radius:8px;padding:7px 10px;font-size:10.5px;background:var(--red-soft);color:var(--red);font-weight:600"><span class="ti ti-warn"></span> ${tr.sysBellWarn.replace('{n}', s.deepLoss)}</div>`
       : `<div style="margin-top:9px;border-radius:8px;padding:7px 10px;font-size:10.5px;background:var(--green-soft);color:var(--green);font-weight:600">${tr.sysBellOk}</div>`;
     const bell = `<div style="display:flex;align-items:flex-end;gap:2px;padding-top:6px;min-height:118px">${bars}</div>${bellNote}`;
 
@@ -3779,10 +3841,10 @@ class Component extends DCLogic {
     }
 
     el.innerHTML =
-      card(tr.sysQualityTitle, tr.sysQualitySub, quality) +
-      card(tr.sysBellTitle, tr.sysBellSub, bell) +
-      card(tr.sysExpoTitle, tr.sysExpoSub, expo) +
-      card(tr.sysMaeTitle, '', maefe);
+      card('<span class="ti ti-h ti-sliders"></span>' + tr.sysQualityTitle, tr.sysQualitySub, quality) +
+      card('<span class="ti ti-h ti-bars"></span>' + tr.sysBellTitle, tr.sysBellSub, bell) +
+      card('<span class="ti ti-h ti-gauge"></span>' + tr.sysExpoTitle, tr.sysExpoSub, expo) +
+      card('<span class="ti ti-h ti-target"></span>' + tr.sysMaeTitle, '', maefe);
   }
 
   _periodFrom() {
@@ -3822,7 +3884,7 @@ class Component extends DCLogic {
       return true;
     });
     const TH = (t, r, c) => `<th style="text-align:${c?'center':r?'right':'left'};padding:7px 8px;font-size:8.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:1;white-space:nowrap">${t}</th>`;
-    const head = `<thead><tr>${TH('#')}${TH(tr.thDate)}${TH(tr.thSymbol)}${TH(tr.thBS,0,1)}${TH(tr.thSetup)}${TH(tr.thNet+' '+this._ccySym(),1)}${TH(tr.thR,1)}${TH(tr.thAsset,1)}${TH(tr.thEmo,0,1)}${TH('📸',0,1)}${TH('')}</tr></thead>`;
+    const head = `<thead><tr>${TH('#')}${TH(tr.thDate)}${TH(tr.thSymbol)}${TH(tr.thBS,0,1)}${TH(tr.thSetup)}${TH(tr.thNet+' '+this._ccySym(),1)}${TH(tr.thR,1)}${TH(tr.thAsset,1)}${TH(tr.thEmo,0,1)}${TH('<span class="ti ti-camera"></span>',0,1)}${TH('')}</tr></thead>`;
     const body = rows.length ? rows.map(t => {
       const num = a.indexOf(t) + 1, blow = t._all < -500;
       const isEditing = t._i === this.state.editIdx;
@@ -3868,7 +3930,7 @@ class Component extends DCLogic {
       return `<tr style="background:${rowBg};border-bottom:${rowBorder};cursor:pointer;outline:${isEditing?'1px solid var(--accent)':'none'};outline-offset:-1px"
         onmouseenter="if(!${blow}&&!${isEditing})this.style.background='var(--border2)'" onmouseleave="if(!${blow}&&!${isEditing})this.style.background='${rowBg}'"
         onclick="window._tj.toggleRow(${t._i})">
-        <td style="padding:6px 8px;font-size:11px;color:var(--text3)">${isEditing?'✎':num}</td>
+        <td style="padding:6px 8px;font-size:11px;color:var(--text3)">${isEditing?'<span class="ti ti-pencil"></span>':num}</td>
         <td style="padding:6px 8px;font-size:11px;color:var(--text3);white-space:nowrap">${t.d||''}</td>
         <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${blow?'var(--red)':isEditing?'var(--accent)':'var(--text)'}">${t.s||''}</td>
         <td style="padding:6px 8px;text-align:center"><span style="background:${t.a==='Buy'?'var(--green-soft)':'var(--red-soft)'};color:${t.a==='Buy'?'var(--green)':'var(--red)'};border-radius:99px;padding:1px 6px;font-size:8.5px;font-weight:700">${t.a}</span></td>
@@ -3879,8 +3941,8 @@ class Component extends DCLogic {
         <td style="padding:6px 8px;text-align:center">${emoBadge}</td>
         <td style="padding:6px 8px;text-align:center">${imgs}</td>
         <td style="padding:6px 4px;text-align:center;white-space:nowrap">
-          <span onclick="event.stopPropagation();window._tj.editTrade(${t._i})" style="cursor:pointer;color:${isEditing?'var(--accent)':'var(--text3)'};padding:3px 4px;font-size:13px">✎</span>
-          <span onclick="event.stopPropagation();window._tj.delTrade(${t._i})" style="cursor:pointer;color:var(--text3);padding:3px 4px;font-size:13px">🗑</span>
+          <span onclick="event.stopPropagation();window._tj.editTrade(${t._i})" style="cursor:pointer;color:${isEditing?'var(--accent)':'var(--text3)'};padding:3px 4px;font-size:13px"><span class="ti ti-pencil"></span></span>
+          <span onclick="event.stopPropagation();window._tj.delTrade(${t._i})" style="cursor:pointer;color:var(--text3);padding:3px 4px;font-size:13px"><span class="ti ti-trash"></span></span>
         </td>
       </tr>${detail}`;
     }).join('') : `<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:26px;font-size:13px">${tr.noTrades}</td></tr>`;
@@ -3895,8 +3957,8 @@ class Component extends DCLogic {
     const lang = this.state.lang;
     const row = (l, v, col) => `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--border);font-size:12.5px"><span style="color:var(--text2)">${l}</span><b style="font-family:'JetBrains Mono',monospace;color:${col||'var(--text)'}">${v}</b></div>`;
     const profitSentence = lang === 'en'
-      ? `${diff>=0?'📈':'📉'} <b>${diff>=0?'Up':'Down'}</b> <b>${this._m(Math.abs(diff),0)}</b> (${this._fmt(pct,1)}%) ${tr.vsCapital}.`
-      : `${diff>=0?'📈':'📉'} Đang <b>${diff>=0?tr.profitTag:tr.lossTag}</b> <b>${this._m(Math.abs(diff),0)}</b> (${this._fmt(pct,1)}%) ${tr.vsCapital}.`;
+      ? `${diff>=0?'<span class="ti ti-trend-up"></span>':'<span class="ti ti-trend-dn"></span>'} <b>${diff>=0?'Up':'Down'}</b> <b>${this._m(Math.abs(diff),0)}</b> (${this._fmt(pct,1)}%) ${tr.vsCapital}.`
+      : `${diff>=0?'<span class="ti ti-trend-up"></span>':'<span class="ti ti-trend-dn"></span>'} Đang <b>${diff>=0?tr.profitTag:tr.lossTag}</b> <b>${this._m(Math.abs(diff),0)}</b> (${this._fmt(pct,1)}%) ${tr.vsCapital}.`;
     fb.innerHTML = row(`${tr.fundTotalDep} (${this.state.deposits.length} ${tr.times})`, this._m(s.capNow,0))
       + row(tr.fundTotalPL, (s.totNet>=0?'+':'')+' $'+this._fmt(s.totNet,2), s.totNet>=0?'var(--green)':'var(--red)')
       + `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 6px;border-top:2px solid var(--border);margin-top:3px">
@@ -3913,7 +3975,7 @@ class Component extends DCLogic {
         <span style="color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap">${x.d||''}</span>
         <span style="flex:1;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.note||''}</span>
         <b style="color:var(--green);font-family:'JetBrains Mono',monospace;white-space:nowrap">+${this._m(this._cv(+x.amt||0,x),0)}</b>
-        <span onclick="window._tj.delDep(${i})" style="cursor:pointer;color:var(--text3);font-size:12px;padding:2px 4px">🗑</span>
+        <span onclick="window._tj.delDep(${i})" style="cursor:pointer;color:var(--text3);font-size:12px;padding:2px 4px"><span class="ti ti-trash"></span></span>
       </div>`;
     }).join('') || `<div style="color:var(--text3);padding:8px 2px;font-size:12px">${tr.noDeposits}</div>`;
   }
@@ -3957,18 +4019,18 @@ class Component extends DCLogic {
       { t:tr.colNet+' '+this._ccySym(), r:1, mono:true, get: x => sgn(x.totNet,this._m(x.totNet)), col: x => x.totNet>=0?'var(--green)':'var(--red)' },
     ];
     const faCol = { t:'HẠNG CƠ BẢN', get: x => {
-      const c = x.name.startsWith('❌') ? 'var(--red)' : x.name.startsWith('🏆') || x.name.startsWith('✅') ? 'var(--green)'
-        : x.name.startsWith('⏳') ? 'var(--amber)' : 'var(--text2)';
+      const c = x.gk === 'kill' ? 'var(--red)' : (x.gk === 'A' || x.gk === 'B') ? 'var(--green)'
+        : x.gk === 'part' ? 'var(--amber)' : 'var(--text2)';
       return `<span style="color:${c};font-weight:700">${x.name}</span>`;
     } };
     el.innerHTML =
-      this._statsTableHtml(this._setupStats(), tr.setupTitle, '📊', [
+      this._statsTableHtml(this._setupStats(), tr.setupTitle, '<span class="ti ti-h ti-bars"></span>', [
         { t:tr.colSetup, get: x => x.name==='NOT IN PLAN'?'<span style="color:var(--red);font-weight:700">NOT IN PLAN</span>':x.name },
         ...numCols])
       + this._statsTableHtml(this._faStats(),
-          'Hạng cơ bản lúc vào lệnh — tiêu chí nào thật sự đẻ ra tiền trên HOSE', '🔬', [faCol, ...numCols])
+          'Hạng cơ bản lúc vào lệnh — tiêu chí nào thật sự đẻ ra tiền trên HOSE', '<span class="ti ti-h ti-flask"></span>', [faCol, ...numCols])
       + this._statsTableHtml(this._taStats(),
-          'Số cửa kỹ thuật đã qua lúc vào lệnh — 4 cửa xác nhận có đáng công không', '📈',
+          'Số cửa kỹ thuật đã qua lúc vào lệnh — 4 cửa xác nhận có đáng công không', '<span class="ti ti-h ti-trend-up"></span>',
           [{ ...faCol, t: 'HẠNG KỸ THUẬT' }, ...numCols])
       + this._faReasonHtml();
   }
@@ -3977,7 +4039,7 @@ class Component extends DCLogic {
     const el = document.getElementById('emotionStatsBox');
     const data = this._emotionStats(), tr = this._tr();
     const sgn = (v,s) => v>=0?`+${s}`:s;
-    this._renderStatsTable(el, data, tr.emoTitle, '🧠', [
+    this._renderStatsTable(el, data, tr.emoTitle, '<span class="ti ti-h ti-brain"></span>', [
       { t:tr.colEmo, get: x => x.name },
       { t:tr.colN, r:1, mono:true, get: x => x.n },
       { t:tr.colWin, r:1, mono:true, get: x => x.win, col: () => 'var(--green)' },
@@ -4049,7 +4111,7 @@ class Component extends DCLogic {
     }).join('');
     el.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
       <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-        <div style="font-size:12px;font-weight:700">${tr.hmTitle}</div>
+        <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-calendar"></span>${tr.hmTitle}</div>
         <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${tr.hmSub}</div>
       </div>
       <div style="padding:12px;overflow-x:auto">
@@ -4434,7 +4496,9 @@ class Component extends DCLogic {
     const tabSt = name => ({
       flex:1, background:s.rightTab===name?'var(--accent-soft)':'transparent',
       border:'none', borderRadius:'7px', padding:'7px 2px', fontSize:'10px',
-      fontWeight:700, cursor:'pointer', fontFamily:"'Be Vietnam Pro',system-ui,sans-serif",
+      // Nhãn tab không được xuống dòng: "Kỹ thuật" gãy làm đôi thì cả hàng tab cao gấp
+      // rưỡi và icon rớt khỏi chữ. Chật thì để thanh tab cuộn ngang (giống mobile).
+      fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', fontFamily:"'Be Vietnam Pro',system-ui,sans-serif",
       color:s.rightTab===name?'var(--accent)':'var(--text3)', transition:'all .15s',
     });
     const monoSt = col => ({ fontFamily:"'JetBrains Mono',monospace", fontSize:'14px', fontWeight:700, lineHeight:1.2, color:col });
@@ -4465,7 +4529,7 @@ class Component extends DCLogic {
       topWR: this._fmt(st.wr,1)+'%', topWRStyle: monoSt(st.wr>=50?'var(--green)':'var(--red)'),
       topR: sgn(st.totR)+this._fmt(st.totR,1)+'R', topRStyle: monoSt(st.totR>=0?'var(--green)':'var(--red)'),
       topCapNow: this._m(st.capNow,0),
-      themeIcon: s.theme==='dark'?'☀️':'🌙',
+      themeIcon: s.theme==='dark'?'ti-sun':'ti-moon',
       driveUpTitle: (() => { const last = +localStorage.getItem('tj_gdrive_last_backup') || 0;
         return last ? tr.bkLastAt + new Date(last).toLocaleString(s.lang==='vi'?'vi-VN':'en-US') : tr.bkNever; })(),
       driveUpStyle: (() => { const od = this._backupOverdue(); return od
