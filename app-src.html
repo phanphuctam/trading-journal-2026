@@ -616,6 +616,113 @@ body.theme-light{
   --shadow:0 1px 2px rgba(36,31,35,.05),0 6px 18px rgba(36,31,35,.07);
   --blow:rgba(255,107,109,.08);--btn-fg:#fff;--blue:#7A5AD9;
 }
+/* ══ DESIGN TOKENS ══
+   Trước đây mỗi khối tự chọn padding/cỡ chữ riêng (10px, 10.5px, 11.5px, 9.5px…),
+   nên hai thẻ cạnh nhau không bao giờ thẳng hàng. Ba thang đo dưới đây là nguồn duy
+   nhất: khoảng cách bội số 4, cỡ chữ theo vai trò (nhãn / số / ghi chú), chiều cao
+   điều khiển cố định. Không thêm giá trị lẻ ngoài thang này.
+   Đây thuần tuý là lớp trình bày — không có con số nào ở đây tham gia tính toán. */
+:root{
+  /* Spacing — bội số 4px */
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-8:32px;
+  /* Bo góc */
+  --r-xs:6px;--r-sm:8px;--r-md:10px;--r-lg:12px;--r-xl:14px;--r-pill:999px;
+  /* Chiều cao điều khiển — mọi input/button/select/tab trong cùng hàng dùng chung */
+  --ctl-h:30px;--ctl-h-sm:26px;--ctl-px:10px;
+  /* Typography theo VAI TRÒ, không theo cảm tính từng chỗ */
+  --fs-eyebrow:9px;      /* nhãn in hoa phía trên số liệu */
+  --fs-micro:10px;       /* chú thích nhỏ nhất, phụ đề panel */
+  --fs-note:11px;        /* ghi chú phụ dưới số liệu */
+  --fs-body:12px;        /* chữ thường trong bảng / form */
+  --fs-label:12px;       /* nhãn nút, tab */
+  --fs-title:13px;       /* tiêu đề thẻ */
+  --lh-tight:1.15;--lh-body:1.5;--lh-loose:1.65;
+  --ls-eyebrow:.06em;
+  /* Cỡ số liệu — 4 bậc, mỗi bậc dùng cho một nhóm, không trộn trong cùng nhóm */
+  --fs-num-hero:19px;    /* số chủ đạo của thẻ KPI lớn */
+  --fs-num-lg:16px;      /* hàng chỉ số trên header, thẻ KPI nhỏ */
+  --fs-num-md:14px;      /* số trong ô nhập, dòng phụ */
+  --fs-num-sm:12px;      /* số trong bảng */
+  /* Icon — đúng hai cỡ */
+  --icon-sm:14px;        /* icon đi kèm chữ */
+  --icon-md:16px;        /* icon trong nút / tab */
+  --mono:'JetBrains Mono',monospace;
+  --sans:'Be Vietnam Pro',system-ui,sans-serif;
+}
+/* ── Nguyên tố dùng lại ─────────────────────────────────────────────────────── */
+/* Nhãn in hoa phía trên số liệu — một cỡ, một màu, một letter-spacing cho cả site */
+.tj-lb{font-size:var(--fs-eyebrow);line-height:1.25;color:var(--text3);text-transform:uppercase;letter-spacing:var(--ls-eyebrow);font-weight:700;white-space:nowrap}
+/* Số liệu — luôn mono + tabular-nums để các chữ số thẳng cột theo hàng đơn vị */
+.tj-num{font-family:var(--mono);font-weight:700;line-height:var(--lh-tight);letter-spacing:-.02em;font-variant-numeric:tabular-nums;display:block}
+.tj-num-hero{font-size:var(--fs-num-hero)}
+.tj-num-lg{font-size:var(--fs-num-lg)}
+.tj-num-md{font-size:var(--fs-num-md)}
+/* Ghi chú phụ — cỡ nhỏ nhất, xám nhạt */
+.tj-sub{font-size:var(--fs-note);color:var(--text2);line-height:var(--lh-body)}
+.tj-sub3{font-size:var(--fs-note);color:var(--text3);line-height:var(--lh-body)}
+/* Thẻ — bo góc / viền / nền đồng nhất toàn site */
+.tj-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg)}
+/* Ô số liệu: nhãn → số → ghi chú, khoảng cách dọc bằng nhau ở mọi thẻ */
+.tj-cell{display:flex;flex-direction:column;gap:var(--sp-1);min-width:0}
+/* Tiêu đề có icon — flex để icon luôn căn giữa theo trục dọc với chữ */
+.tj-hd{display:flex;align-items:center;gap:var(--sp-1);min-width:0}
+.tj-hd-t{font-size:var(--fs-title);font-weight:700;color:var(--text);line-height:1.3}
+/* Đầu thẻ: tiêu đề (+ phụ đề) bên trái, cụm điều khiển bên phải — cùng một khuôn
+   padding cho MỌI thẻ, nên tiêu đề của bảng nhật ký và của panel biểu đồ thẳng hàng */
+.tj-cardhd{display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);flex-wrap:wrap;padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border)}
+.tj-cardsub{font-size:var(--fs-micro);color:var(--text3);line-height:1.35}
+.tj-cardbd{padding:var(--sp-3) var(--sp-4)}
+/* Điều khiển — mọi input/select cùng nhóm cao bằng nhau */
+.tj-ctl{height:var(--ctl-h);border:1px solid var(--border);border-radius:var(--r-sm);padding:0 var(--ctl-px);font-size:var(--fs-body);font-family:var(--sans);background:var(--panel);color:var(--text);line-height:1}
+select.tj-ctl{cursor:pointer;padding-right:var(--sp-1)}
+/* Nhóm nút phân đoạn (T/Q/N · Tất cả/Năm/Tháng/Tuần · Kết quả/Setup/Cảm xúc) */
+.tj-seg{display:inline-flex;align-items:stretch;height:var(--ctl-h);padding:2px;gap:2px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-sm);flex-shrink:0}
+.tj-seg>button{border:none;border-radius:var(--r-xs);padding:0 var(--ctl-px);font-size:var(--fs-note);font-weight:700;cursor:pointer;font-family:var(--sans);line-height:1;white-space:nowrap;transition:background .15s,color .15s}
+/* Badge — cùng chiều cao bất kể độ dài chữ (padding dọc = 0, chiều cao do line-height) */
+.tj-badge{display:inline-flex;align-items:center;justify-content:center;height:16px;padding:0 var(--sp-2);border-radius:var(--r-pill);font-size:var(--fs-eyebrow);font-weight:700;line-height:1;white-space:nowrap;letter-spacing:.01em}
+/* Ô icon thao tác trong bảng — vuông, căn giữa 2 trục; ô rỗng "—" chiếm đúng chỗ đó */
+/* inline-block chứ không inline-flex: cùng hộp vuông 22×22 và cùng cách căn giữa,
+   nhưng copy một hàng trong bảng không bị chèn thêm xuống dòng ở cột icon */
+.tj-iact{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;border-radius:var(--r-xs);color:var(--text3);cursor:pointer;vertical-align:middle;text-decoration:none;transition:color .15s,background .15s}
+.tj-iact:hover{color:var(--accent);background:var(--accent-soft)}
+.tj-iact-off{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;color:var(--text3);vertical-align:middle}
+.tj-iacts{display:inline-block;white-space:nowrap;vertical-align:middle}
+.tj-iacts>*+*{margin-left:var(--sp-1)}
+/* ── Khối quản lý rủi ro ────────────────────────────────────────────────────── */
+/* Ba khối cùng khuôn 3 dòng (tiêu đề / hàng số / ghi chú) và cùng padding, nên
+   chúng tự thẳng hàng theo cả chiều cao lẫn đường chân của từng dòng. */
+.tj-riskcell{display:flex;flex-direction:column;justify-content:center;gap:var(--sp-2);padding:var(--sp-3) var(--sp-4);min-width:0}
+/* Hàng số cao bằng đúng một điều khiển, kể cả khi trong đó chỉ có chữ — nếu không,
+   khối có ô nhập sẽ cao hơn khối chỉ có số và ghi chú bên dưới lệch nhau vài pixel */
+.tj-riskval{display:flex;align-items:center;gap:var(--sp-2);min-height:var(--ctl-h);flex-wrap:wrap}
+.tj-inp-num{width:64px;height:var(--ctl-h);border:1px solid var(--border2);border-radius:var(--r-sm);padding:0 var(--sp-2);font-size:var(--fs-num-md);font-family:var(--mono);font-weight:700;text-align:center;background:var(--panel);font-variant-numeric:tabular-nums;flex-shrink:0}
+/* Toán tử nối (% NAV = · % · =) — cùng cỡ, cùng màu, nằm giữa dòng với ô nhập */
+.tj-op{font-size:var(--fs-note);color:var(--text3);font-weight:700;white-space:nowrap;line-height:1}
+/* ── Chia 3 nhịp ────────────────────────────────────────────────────────────── */
+.tj-trbox{display:flex;flex-direction:column;padding:var(--sp-3);border-left:3px solid var(--accent);background:var(--panel);border-radius:0 var(--r-md) var(--r-md) 0;min-width:0}
+/* Ô số thứ tự cố định → ①②③ cùng kích thước và cùng tâm với con số bên cạnh */
+.tj-trnum{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;flex-shrink:0;font-size:15px;line-height:1;font-weight:700;color:var(--accent)}
+/* Dòng "cộng dồn" bị đẩy xuống đáy → cùng khoảng cách tới đáy hộp ở cả ba nhịp */
+.tj-trfoot{margin-top:auto;padding-top:var(--sp-2);border-top:1px dashed var(--border);font-size:var(--fs-note);color:var(--text3);line-height:1.4}
+.tj-trbox .tj-sub{margin-bottom:var(--sp-3)}
+/* ── Bảng nhật ký ───────────────────────────────────────────────────────────── */
+.tj-table{width:100%;border-collapse:collapse;font-size:var(--fs-body);table-layout:auto}
+.tj-th{padding:var(--sp-2);font-size:var(--fs-eyebrow);font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:var(--ls-eyebrow);border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:1;white-space:nowrap}
+/* Chiều cao hàng do padding + line-height cố định, không do nội dung từng ô: badge
+   dài hay ngắn, có ảnh hay không, hàng vẫn cao đúng bằng nhau */
+.tj-td{padding:var(--sp-2);height:34px;font-size:var(--fs-note);line-height:1.3;vertical-align:middle;white-space:nowrap}
+.tj-td-dim{color:var(--text3)}
+.tj-td-sym{font-family:var(--mono);font-size:var(--fs-num-sm);font-weight:700;letter-spacing:.02em}
+/* Cột số: canh phải + tabular-nums để hàng nghìn / hàng trăm thẳng cột theo chiều dọc */
+.tj-td-num{text-align:right;font-family:var(--mono);font-size:var(--fs-num-sm);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Nút chấm ✓/✕ của bảng cơ bản & kỹ thuật — ô vuông cố định, hai nút bằng nhau
+   tuyệt đối dù ký tự ✓ và ✕ rộng khác nhau */
+.tj-mark{display:inline-flex;align-items:center;justify-content:center;width:var(--ctl-h-sm);height:var(--ctl-h-sm);flex-shrink:0;border:1px solid var(--border);border-radius:var(--r-xs);font-size:var(--fs-title);font-weight:700;line-height:1}
+/* Chip mã cổ phiếu — cùng chiều cao với nút chấm */
+.tj-chip{display:inline-flex;align-items:center;justify-content:center;height:var(--ctl-h-sm);padding:0 var(--sp-2);border:1px solid var(--border);border-radius:var(--r-xs);font-family:var(--mono);font-size:var(--fs-note);font-weight:700;line-height:1;white-space:nowrap}
+/* Mép trái/phải của bảng thụt vào bằng padding của thẻ chứa nó */
+.tj-table td:first-child,.tj-table th:first-child{padding-left:var(--sp-4)}
+.tj-table td:last-child,.tj-table th:last-child{padding-right:var(--sp-3)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
@@ -633,15 +740,26 @@ details.tjfold[open]>summary::before{transform:rotate(90deg)}
 details.tjfold>summary:hover::before{color:var(--accent)}
 .tj-actions-break{display:none}
 .tj-actions-toggle{display:none}
-.tj-tabbar{position:sticky;top:0;z-index:40;margin:0 -14px 14px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--border)}
+.tj-tabbar{position:sticky;top:0;z-index:40;margin:0 calc(var(--sp-4)*-1) var(--sp-3);padding:var(--sp-2) var(--sp-4);background:var(--panel);border-bottom:1px solid var(--border)}
 /* Tab khong xuong dong nen khi cot phai hep thi cho cuon ngang, khong cho tran */
 .tj-tabbar>div{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .tj-tabbar>div::-webkit-scrollbar{display:none}
-.tj-abtn{height:30px;padding:0 11px;border:1px solid var(--border);border-radius:8px;background:var(--border2);color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:color .15s,border-color .15s,background .15s}
+/* Tab rộng theo nội dung + padding bằng nhau → khoảng cách giữa các nhãn đều nhau.
+   Ép flex:1 thì chiều rộng bằng nhau nhưng chữ dài bị bóp sát mép, chữ ngắn thừa chỗ.
+   Cột phải hẹp thì hàng tab XUỐNG DÒNG chứ không cuộn ngang: cuộn ngang giấu mất tab
+   cuối (Heatmap) sau khi mỗi tab có thêm icon, mà tab bị giấu thì coi như không có. */
+.tj-tabbar>div{flex-wrap:wrap;row-gap:2px}
+.tj-tab{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-1);flex:0 0 auto;height:var(--ctl-h);padding:0 var(--sp-2);border:none;border-radius:var(--r-xs);background:transparent;color:var(--text3);font-size:var(--fs-micro);font-weight:700;line-height:1;white-space:nowrap;cursor:pointer;font-family:var(--sans);transition:background .15s,color .15s}
+.tj-tab:hover{color:var(--text2)}
+.tj-tab .ti{color:inherit}
+/* Hàng nút góc phải header — cùng chiều cao, cùng padding ngang, cùng cỡ icon.
+   Viền luôn 1px (nút nhấn mạnh dùng box-shadow inset thay vì 1,5px, nếu không hộp
+   của nó lệch nửa pixel so với các nút bên cạnh và cả hàng trông so le). */
+.tj-abtn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-1);height:var(--ctl-h);padding:0 var(--ctl-px);border:1px solid var(--border);border-radius:var(--r-sm);background:var(--border2);color:var(--text2);font-size:var(--fs-note);font-weight:600;line-height:1;cursor:pointer;font-family:inherit;flex-shrink:0;transition:color .15s,border-color .15s,background .15s}
 .tj-abtn:hover{color:var(--accent);border-color:var(--accent)}
-.tj-abtn-accent{background:var(--accent-soft);border:1.5px solid var(--accent);color:var(--accent);font-weight:700;letter-spacing:.06em}
-.tj-btngroup{display:flex;align-items:stretch;height:30px;border:1px solid var(--border);border-radius:8px;background:var(--border2);overflow:hidden;flex-shrink:0}
-.tj-btngroup button{border:none;border-left:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;font-weight:600;cursor:pointer;padding:0 10px;font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
+.tj-abtn-accent{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent);font-weight:700;letter-spacing:.06em}
+.tj-btngroup{display:flex;align-items:stretch;height:var(--ctl-h);border:1px solid var(--border);border-radius:var(--r-sm);background:var(--border2);overflow:hidden;flex-shrink:0}
+.tj-btngroup button{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-1);border:none;border-left:1px solid var(--border);background:transparent;color:var(--text2);font-size:var(--fs-note);font-weight:600;line-height:1;cursor:pointer;padding:0 var(--ctl-px);font-family:inherit;white-space:nowrap;transition:background .15s,color .15s}
 .tj-btngroup button:first-child{border-left:none}
 .tj-btngroup button:hover{background:var(--accent-soft);color:var(--accent)}
 /* ══ CHIA CỘT — φ (1.618) làm mốc, cột phải có sàn 420px để chart còn đọc được ══ */
@@ -668,9 +786,16 @@ details.tjfold>summary:hover::before{color:var(--accent)}
   .tj-deprow{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .tj-ministrip{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .tj-tranche{grid-template-columns:minmax(0,1fr)!important}
+  /* Ba khối rủi ro nằm ngang ở màn hẹp thì mỗi khối còn ~110px, số bị cắt và tiêu đề
+     gãy làm ba dòng. Xếp chồng thì mỗi khối được nguyên chiều rộng. */
+  .tj-riskrow{flex-direction:column!important}
+  .tj-riskcell{border-left:none!important;border-right:none!important;align-items:stretch!important;text-align:left!important}
+  .tj-riskcell+.tj-riskcell{border-top:1px solid var(--border)}
+  .tj-riskcell .tj-riskval{justify-content:flex-start!important}
   #tjGrid>div{padding-left:12px!important;padding-right:12px!important;max-width:100vw}
   .tj-tabbar{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}
-  .tj-tabbar>div{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  /* Màn hẹp: 9 tab xuống dòng thành 4 hàng ăn hết màn hình → quay lại cuộn ngang */
+  .tj-tabbar>div{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
   .tj-tabbar>div::-webkit-scrollbar{display:none}
   .tj-tabbar button{white-space:nowrap;flex-shrink:0}
   input[type=date]{width:100%}
@@ -689,10 +814,14 @@ details.tjfold>summary:hover::before{color:var(--accent)}
    đổi tên thuộc tính camelCase sang kebab (viewBox → sc-camel-view-box). Mất viewBox
    thì SVG hết tỉ lệ, mask-size:contain không co lại được nữa và icon bị cắt còn một
    góc. Dùng width/height (chữ thường) — toạ độ path vốn đã nằm trong 0..24. */
-.ti{display:inline-block;width:1.05em;height:1.05em;vertical-align:-.16em;flex-shrink:0;background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
+/* Cỡ icon lấy từ token, KHÔNG theo em: icon co giãn theo cỡ chữ nghĩa là mỗi chỗ
+   một cỡ khác nhau (nhãn 8,5px và tiêu đề 13px cho ra icon lệch nhau gần gấp rưỡi).
+   Hai cỡ cố định + vertical-align:middle → icon luôn nằm giữa dòng chữ đi kèm. */
+.ti{display:inline-block;width:var(--icon-sm);height:var(--icon-sm);vertical-align:middle;flex-shrink:0;background-color:currentColor;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;-webkit-mask-size:contain;mask-size:contain}
 /* Icon tieu de muc: xam trung tinh, khong tranh chu y voi con so ben canh */
-.ti-h{color:var(--text3);margin-right:5px}
-.ti-lg{width:1.15em;height:1.15em}
+.ti-h{color:var(--text3);margin-right:var(--sp-1);position:relative;top:-1px}
+.tj-hd .ti-h{top:0;margin-right:0}
+.ti-lg{width:var(--icon-md);height:var(--icon-md)}
 .ti-target{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Ccircle cx='12' cy='12' r='1.4' fill='%23000' stroke='none'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Ccircle cx='12' cy='12' r='5'/%3E%3Ccircle cx='12' cy='12' r='1.4' fill='%23000' stroke='none'/%3E%3C/svg%3E")}
 .ti-coin{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v10M14.6 9.3A2.6 2.6 0 0 0 12.2 8h-.9a1.9 1.9 0 0 0 0 3.8h1.4a1.9 1.9 0 0 1 0 3.8h-.9a2.6 2.6 0 0 1-2.4-1.3'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v10M14.6 9.3A2.6 2.6 0 0 0 12.2 8h-.9a1.9 1.9 0 0 0 0 3.8h1.4a1.9 1.9 0 0 1 0 3.8h-.9a2.6 2.6 0 0 1-2.4-1.3'/%3E%3C/svg%3E")}
 .ti-cash{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='6' width='19' height='12' rx='2.5'/%3E%3Ccircle cx='12' cy='12' r='2.6'/%3E%3Cpath d='M6 12h.01M18 12h.01'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='6' width='19' height='12' rx='2.5'/%3E%3Ccircle cx='12' cy='12' r='2.6'/%3E%3Cpath d='M6 12h.01M18 12h.01'/%3E%3C/svg%3E")}
@@ -744,27 +873,31 @@ details.tjfold>summary:hover::before{color:var(--accent)}
 </helmet>
 
 <!-- ══ TOPBAR ══ -->
-<div class="tj-top" style="position:fixed;top:0;left:0;right:0;z-index:300;height:52px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px">
+<!-- Năm chỉ số trong header dùng CHUNG một cỡ số (--fs-num-lg) và chung một nhãn
+     (.tj-lb). Trước đây TÀI SẢN 19px, ba ô giữa 14px, VỐN NẠP 14px với line-height
+     khác nhau nên không con số nào nằm cùng đường chân với con số bên cạnh. Cùng cỡ
+     + cùng cấu trúc ô (.tj-cell) thì baseline tự khớp, không cần canh tay. -->
+<div class="tj-top" style="position:fixed;top:0;left:0;right:0;z-index:300;height:52px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 var(--sp-4);gap:var(--sp-4)">
   <div style="flex-shrink:0;line-height:1.25">
-    <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;letter-spacing:-.02em">TJ<span style="color:var(--accent)">·26</span></div>
-    <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">{{ lbSubtitle }}</div>
+    <div style="font-family:var(--mono);font-size:15px;font-weight:700;letter-spacing:-.02em">TJ<span style="color:var(--accent)">·26</span></div>
+    <div class="tj-lb" style="font-weight:400">{{ lbSubtitle }}</div>
   </div>
-  <div style="width:1px;height:28px;background:var(--border);flex-shrink:0"></div>
-  <div class="tj-stats" style="display:flex;align-items:center;gap:20px;flex:1;overflow:hidden;min-width:0">
-    <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">{{ lbAssets }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;line-height:1.1;color:var(--accent)">{{ topBal }}</div></div>
-    <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">{{ lbTotalPL }}</div><div style="{{ topPLStyle }}">{{ topPL }}</div></div>
-    <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">{{ lbWinrate }}</div><div style="{{ topWRStyle }}">{{ topWR }}</div></div>
-    <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">{{ lbTotalR }}</div><div style="{{ topRStyle }}">{{ topR }}</div></div>
-    <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">{{ lbCapital }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;line-height:1.2;color:var(--text2)">{{ topCapNow }}</div></div>
+  <div style="width:1px;height:var(--sp-6);background:var(--border);flex-shrink:0"></div>
+  <div class="tj-stats" style="display:flex;align-items:flex-start;gap:var(--sp-5);flex:1;overflow:hidden;min-width:0">
+    <div class="tj-cell"><div class="tj-lb">{{ lbAssets }}</div><div class="tj-num tj-num-lg" style="color:var(--accent)">{{ topBal }}</div></div>
+    <div class="tj-cell"><div class="tj-lb">{{ lbTotalPL }}</div><div class="tj-num tj-num-lg" style="{{ topPLStyle }}">{{ topPL }}</div></div>
+    <div class="tj-cell"><div class="tj-lb">{{ lbWinrate }}</div><div class="tj-num tj-num-lg" style="{{ topWRStyle }}">{{ topWR }}</div></div>
+    <div class="tj-cell"><div class="tj-lb">{{ lbTotalR }}</div><div class="tj-num tj-num-lg" style="{{ topRStyle }}">{{ topR }}</div></div>
+    <div class="tj-cell"><div class="tj-lb">{{ lbCapital }}</div><div class="tj-num tj-num-lg" style="color:var(--text2)">{{ topCapNow }}</div></div>
   </div>
-  <button class="tj-actions-toggle" onclick="{{ toggleActions }}" style="background:var(--border2);border:1px solid var(--border);border-radius:8px;color:var(--text2);cursor:pointer">{{ actionsToggleIcon }}</button>
+  <button class="tj-actions-toggle" onclick="{{ toggleActions }}" style="background:var(--border2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text2);cursor:pointer">{{ actionsToggleIcon }}</button>
   <div class="tj-actions" style="{{ actionsStyle }}">
     <button class="tj-abtn tj-abtn-accent" onclick="{{ toggleLang }}">{{ langBtn }}</button>
     <div class="tj-btngroup" title="Đơn vị tiền tệ">
       <button onclick="{{ toggleCcy }}" title="{{ ccyTitle }}" style="{{ ccyStyle }}">{{ ccyBtn }}</button>
       <button onclick="{{ editFx }}" title="{{ fxTitle }}" style="font-family:'JetBrains Mono',monospace">{{ fxBtn }}</button>
     </div>
-    <button class="tj-abtn" onclick="{{ toggleTheme }}" title="Dark / Light" style="font-size:13px;padding:0 9px"><span class="ti {{ themeIcon }}"></span></button>
+    <button class="tj-abtn" onclick="{{ toggleTheme }}" title="Dark / Light"><span class="ti {{ themeIcon }}"></span></button>
     <div class="tj-actions-break"></div>
     <div class="tj-btngroup" title="Xuất / nhập dữ liệu">
       <button onclick="{{ doExportCSV }}" title="Xuất CSV / Export CSV"><span class="ti ti-download"></span> CSV</button>
@@ -787,34 +920,40 @@ details.tjfold>summary:hover::before{color:var(--accent)}
 <div id="tjGrid" style="display:grid;height:100vh;padding-top:52px;overflow:hidden">
 
   <!-- ═══ LEFT COL ═══ -->
-  <div style="overflow-y:auto;padding:16px 18px 20px">
+  <div style="overflow-y:auto;padding:var(--sp-4) var(--sp-4) var(--sp-5)">
 
     <!-- KPI GRID — tổng quan cả hành trình, luôn hiện, không phụ thuộc tab bên phải -->
-    <div id="kpiGrid" style="margin-bottom:14px"></div>
+    <div id="kpiGrid" style="margin-bottom:var(--sp-3)"></div>
 
-    <!-- POSITION SIZING CARD -->
-    <div style="background:var(--card);border:1px solid var(--border2);border-radius:12px;margin-bottom:14px;display:flex;align-items:stretch;overflow:hidden">
-      <div style="flex:1;padding:12px 16px;border-right:1px solid var(--border)">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px"><span class="ti ti-h ti-target"></span>{{ lbOneR }}</div>
-        <div style="display:flex;align-items:baseline;gap:4px;flex-wrap:wrap">
-          <input id="riskPctInput" type="number" min="0.05" max="10" step="0.05" onchange="{{ onRiskPct }}" title="Phần trăm tổng tài sản bạn chấp nhận mất nếu lệnh này chạm cắt lỗ. Tài liệu SEPA bản Việt hoá khuyến nghị 0,5-0,75% cho TTCK Việt Nam (mới bắt đầu: 0,5%)." style="width:62px;border:1px solid var(--border2);border-radius:7px;padding:4px 6px;font-size:14px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--amber);text-align:center;background:var(--panel)">
-          <span style="font-size:11px;color:var(--text3);font-weight:700">% NAV =</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--amber);line-height:1.1">{{ onePercent }}</span>
+    <!-- POSITION SIZING CARD
+         Ba khối cùng một khuôn: tiêu đề có icon (.tj-hd) → hàng số → ghi chú, cùng
+         padding, cùng nhịp dọc. Hai ô nhập "1" và "9,8" dùng chung class .tj-inp-num
+         nên bằng nhau tuyệt đối về chiều rộng, chiều cao, viền và bo góc.
+         Dấu "=" của khối giữa trước đây rơi xuống một dòng riêng dưới ô nhập; giờ nó
+         là dấu nối nằm ngay trên đường chân của hàng số, đúng chỗ mắt đọc công thức. -->
+    <div class="tj-riskrow tj-card" style="margin-bottom:var(--sp-3);display:flex;align-items:stretch;overflow:hidden">
+      <div class="tj-riskcell" style="flex:1;border-right:1px solid var(--border)">
+        <div class="tj-hd"><span class="ti ti-h ti-target"></span><span class="tj-lb">{{ lbOneR }}</span></div>
+        <div class="tj-riskval">
+          <input id="riskPctInput" class="tj-inp-num" type="number" min="0.05" max="10" step="0.05" onchange="{{ onRiskPct }}" title="Phần trăm tổng tài sản bạn chấp nhận mất nếu lệnh này chạm cắt lỗ. Tài liệu SEPA bản Việt hoá khuyến nghị 0,5-0,75% cho TTCK Việt Nam (mới bắt đầu: 0,5%)." style="color:var(--amber)">
+          <span class="tj-op">% NAV =</span>
+          <span class="tj-num tj-num-lg" style="color:var(--amber)">{{ onePercent }}</span>
         </div>
-        <div style="font-size:11.5px;color:var(--text3);margin-top:4px">{{ lbMaxRiskSub }}</div>
+        <div class="tj-sub3">{{ lbMaxRiskSub }}</div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 12px;flex-shrink:0;gap:3px">
-        <span style="font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.04em">{{ lbDivSL }}</span>
-        <div style="display:flex;align-items:center;gap:3px">
-          <input id="slPctInput" type="number" min="0.1" max="100" step="0.1" onchange="{{ onSlPct }}" style="width:62px;border:1px solid var(--border2);border-radius:7px;padding:4px 6px;font-size:14px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--amber);text-align:center;background:var(--panel)">
-          <span style="font-size:12px;color:var(--text3);font-weight:700">%</span>
+      <div class="tj-riskcell" style="align-items:center;text-align:center;flex-shrink:0;padding-left:var(--sp-3);padding-right:var(--sp-3)">
+        <div class="tj-lb">{{ lbDivSL }}</div>
+        <div class="tj-riskval" style="justify-content:center;gap:var(--sp-1)">
+          <input id="slPctInput" class="tj-inp-num" type="number" min="0.1" max="100" step="0.1" onchange="{{ onSlPct }}" style="color:var(--amber)">
+          <span class="tj-op">%</span>
+          <span class="tj-op">=</span>
         </div>
-        <span style="font-size:9px;color:var(--text3);font-weight:700">=</span>
+        <div class="tj-sub3">&nbsp;</div>
       </div>
-      <div style="flex:1;padding:12px 16px;border-left:1px solid var(--border)">
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:5px"><span class="ti ti-h ti-coin"></span>{{ lbMaxPos }}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;color:var(--accent);line-height:1.1">{{ maxDisburse }}</div>
-        <div style="font-size:11.5px;color:var(--text3);margin-top:4px">{{ lbMaxPosSub }}</div>
+      <div class="tj-riskcell" style="flex:1;border-left:1px solid var(--border)">
+        <div class="tj-hd"><span class="ti ti-h ti-coin"></span><span class="tj-lb">{{ lbMaxPos }}</span></div>
+        <div class="tj-riskval"><span class="tj-num tj-num-lg" style="color:var(--accent)">{{ maxDisburse }}</span></div>
+        <div class="tj-sub3">{{ lbMaxPosSub }}</div>
       </div>
     </div>
     <!-- CHIA 3 NHỊP — thêm 2026-08-10.
@@ -822,79 +961,79 @@ details.tjfold>summary:hover::before{color:var(--accent)}
          Lỗi dễ mắc nhất là dồn hết trần vào nhịp 1 rồi hết đạn khi cổ phiếu chạy.
          Quy trình 3 nhịp (mục 5.3) sinh ra vì T+2: 2,5 phiên đầu không cắt được,
          nên chỉ đặt 1/3 rủi ro vào chỗ chưa xác nhận được gì. -->
-    <div id="tjTrancheBox" style="margin:-6px 0 10px"></div>
+    <div id="tjTrancheBox" style="margin:0 0 var(--sp-3)"></div>
     <!-- KỊCH BẢN 3 PHIÊN SÀN — thêm 2026-08-09.
          Thẻ định cỡ ở trên trả lời "được mua bao nhiêu". Nó KHÔNG trả lời câu đắt hơn:
          "nếu ngay sau khi mua có 3 phiên sàn liên tiếp thì mất bao nhiêu?". Ở VN câu
          đó có thật vì T+2 — hàng chưa về thì không bán được, dù đã biết mình sai từ
          phiên đầu. Chuỗi sàn xảy ra vài lần mỗi chu kỳ, thường do giải chấp dây chuyền.
          Ngưỡng 2% NAV lấy từ tài liệu SEPA bản Việt hoá mục 4.1. -->
-    <div id="tjFloorBox" style="margin:-8px 0 8px"></div>
+    <div id="tjFloorBox" style="margin:0 0 var(--sp-3)"></div>
     <!-- THOÁT KHI NÀO — thêm 2026-08-09.
          Thẻ định cỡ trả lời "vào bao nhiêu". Không chỗ nào trong journal trả lời câu
          đi cùng nó: "ra lúc nào, và SL là khoảng cách tính từ đâu tới đâu". Quy tắc bán
          nằm rải trong bảng kỹ thuật (bước 9), nhưng lúc đang cầm một lệnh thì không ai
          mở checklist ra đọc — nó phải đứng ngay cạnh con số định cỡ. -->
-    <div id="tjExitBox" style="margin:0 0 14px"></div>
+    <div id="tjExitBox" style="margin:0 0 var(--sp-3)"></div>
 
     <!-- FORM CARD — second -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;animation:fadeUp .3s ease">
-      <div onclick="{{ toggleForm }}" style="display:flex;justify-content:space-between;align-items:center;padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--border)">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text)"><span class="ti ti-h ti-pencil"></span>{{ formTitle }}</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:1px">{{ lbFormSub }}</div>
+    <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3);animation:fadeUp .3s ease">
+      <div onclick="{{ toggleForm }}" class="tj-cardhd" style="cursor:pointer">
+        <div class="tj-cell" style="gap:2px">
+          <div class="tj-hd tj-hd-t"><span class="ti ti-h ti-pencil"></span><span>{{ formTitle }}</span></div>
+          <div class="tj-cardsub">{{ lbFormSub }}</div>
         </div>
-        <div style="font-size:11px;color:var(--text3);font-weight:600;padding:4px 10px;background:var(--border2);border-radius:6px">{{ formToggleLabel }}</div>
+        <div class="tj-abtn" style="background:var(--border2);border-color:transparent">{{ formToggleLabel }}</div>
       </div>
       <sc-if value="{{ formOpen }}" hint-placeholder-val="{{ true }}">
-        <div style="padding:14px 16px">
-          <div class="tj-formgrid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px">
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFEntryDate }}</label>
-              <input id="f_d" type="date" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%">
+        <div class="tj-cardbd">
+          <div class="tj-formgrid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-3)">
+            <div class="tj-cell">
+              <label class="tj-lb">{{ lbFEntryDate }}</label>
+              <input id="f_d" type="date" class="tj-ctl" style="width:100%">
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFSymbol }}</label>
-              <input id="f_s" placeholder="" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;width:100%;text-transform:uppercase">
+            <div class="tj-cell">
+              <label class="tj-lb">{{ lbFSymbol }}</label>
+              <input id="f_s" placeholder="" class="tj-ctl" style="width:100%;font-family:var(--mono);font-weight:700;text-transform:uppercase">
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFAction }}</label>
-              <select id="f_a" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%;cursor:pointer"><option>Buy</option><option>Sell</option></select>
+            <div class="tj-cell">
+              <label class="tj-lb">{{ lbFAction }}</label>
+              <select id="f_a" class="tj-ctl" style="width:100%"><option>Buy</option><option>Sell</option></select>
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFSetup }}</label>
-              <div style="display:flex;gap:4px">
-                <select id="f_su" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%;min-width:0;cursor:pointer"></select>
-                <button type="button" onclick="{{ onAddSetup }}" title="Thêm Setup mới / Add setup" style="flex-shrink:0;background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:0 9px;font-size:13px;font-weight:700;cursor:pointer;color:var(--accent)">＋</button>
+            <div class="tj-cell">
+              <label class="tj-lb">{{ lbFSetup }}</label>
+              <div style="display:flex;gap:var(--sp-1)">
+                <select id="f_su" class="tj-ctl" style="width:100%;min-width:0"></select>
+                <button type="button" class="tj-abtn" onclick="{{ onAddSetup }}" title="Thêm Setup mới / Add setup" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700">＋</button>
               </div>
             </div>
-            <div style="grid-column:span 2;display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFEntry }}</label>
-              <input id="f_en" placeholder="{{ lbFEntryPh }}" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%">
+            <div class="tj-cell" style="grid-column:span 2">
+              <label class="tj-lb">{{ lbFEntry }}</label>
+              <input id="f_en" placeholder="{{ lbFEntryPh }}" class="tj-ctl" style="width:100%">
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFCloseDate }}</label>
-              <input id="f_cd" type="date" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%">
+            <div class="tj-cell">
+              <label class="tj-lb">{{ lbFCloseDate }}</label>
+              <input id="f_cd" type="date" class="tj-ctl" style="width:100%">
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFPeriod }}</label>
-              <input id="f_p" type="number" step="1" placeholder="" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;font-family:'JetBrains Mono',monospace;width:100%">
+            <div class="tj-cell">
+              <label class="tj-lb">{{ lbFPeriod }}</label>
+              <input id="f_p" type="number" step="1" placeholder="" class="tj-ctl" style="width:100%;font-family:var(--mono)">
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFExit }}</label>
-              <select id="f_ex" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%;cursor:pointer"></select>
+            <div class="tj-cell">
+              <label class="tj-lb">{{ lbFExit }}</label>
+              <select id="f_ex" class="tj-ctl" style="width:100%"></select>
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFEmotion }}</label>
-              <select id="f_e" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%;cursor:pointer"></select>
+            <div class="tj-cell">
+              <label class="tj-lb">{{ lbFEmotion }}</label>
+              <select id="f_e" class="tj-ctl" style="width:100%"></select>
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFNetPL }}</label>
-              <input id="f_net" type="number" step="any" placeholder="" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;width:100%">
+            <div class="tj-cell">
+              <label class="tj-lb">{{ lbFNetPL }}</label>
+              <input id="f_net" type="number" step="any" placeholder="" class="tj-ctl" style="width:100%;font-family:var(--mono);font-weight:700">
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFR }}</label>
-              <input id="f_r" type="number" step="any" placeholder="" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;width:100%">
+            <div class="tj-cell">
+              <label class="tj-lb">{{ lbFR }}</label>
+              <input id="f_r" type="number" step="any" placeholder="" class="tj-ctl" style="width:100%;font-family:var(--mono);font-weight:700">
             </div>
           </div>
           <!-- Trạng thái đóng/mở gắn ở componentDidUpdate (id tjAdv), không đặt thuộc
@@ -902,77 +1041,81 @@ details.tjfold>summary:hover::before{color:var(--accent)}
                một thuộc tính boolean. -->
           <details id="tjAdv" class="tjfold" style="margin-top:10px">
             <summary style="font-size:10.5px;color:var(--text3);font-weight:600;padding:5px 0;cursor:pointer;outline:none;user-select:none">{{ lbFAdvanced }}</summary>
-            <div class="tj-formgrid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:10px">
-              <div style="display:flex;flex-direction:column;gap:4px">
-                <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFEntryPrice }}</label>
-                <input id="f_o" type="number" step="any" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;font-family:'JetBrains Mono',monospace;width:100%">
+            <div class="tj-formgrid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-3);margin-top:var(--sp-3)">
+              <div class="tj-cell">
+                <label class="tj-lb">{{ lbFEntryPrice }}</label>
+                <input id="f_o" type="number" step="any" class="tj-ctl" style="width:100%;font-family:var(--mono)">
               </div>
-              <div style="display:flex;flex-direction:column;gap:4px">
-                <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFExitPrice }}</label>
-                <input id="f_c" type="number" step="any" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;font-family:'JetBrains Mono',monospace;width:100%">
+              <div class="tj-cell">
+                <label class="tj-lb">{{ lbFExitPrice }}</label>
+                <input id="f_c" type="number" step="any" class="tj-ctl" style="width:100%;font-family:var(--mono)">
               </div>
-              <div style="display:flex;flex-direction:column;gap:4px">
-                <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFComm }}</label>
-                <input id="f_comm" type="number" step="any" placeholder="" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;font-family:'JetBrains Mono',monospace;width:100%">
+              <div class="tj-cell">
+                <label class="tj-lb">{{ lbFComm }}</label>
+                <input id="f_comm" type="number" step="any" placeholder="" class="tj-ctl" style="width:100%;font-family:var(--mono)">
               </div>
-              <div style="display:flex;flex-direction:column;gap:4px">
-                <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFDisplayDay }}</label>
-                <input id="f_day" type="date" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%">
+              <div class="tj-cell">
+                <label class="tj-lb">{{ lbFDisplayDay }}</label>
+                <input id="f_day" type="date" class="tj-ctl" style="width:100%">
               </div>
-              <div style="display:flex;flex-direction:column;gap:4px">
-                <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFDis }}</label>
-                <select id="f_dis" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%;cursor:pointer"></select>
+              <div class="tj-cell">
+                <label class="tj-lb">{{ lbFDis }}</label>
+                <select id="f_dis" class="tj-ctl" style="width:100%"></select>
               </div>
-              <div style="display:flex;flex-direction:column;gap:4px">
-                <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFMae }}</label>
-                <input id="f_mae" type="number" step="any" placeholder="0.4" title="Maximum Adverse Excursion (R) — muc am sau nhat trong doi lenh" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;font-family:'JetBrains Mono',monospace;width:100%">
+              <div class="tj-cell">
+                <label class="tj-lb">{{ lbFMae }}</label>
+                <input id="f_mae" type="number" step="any" placeholder="0.4" title="Maximum Adverse Excursion (R) — muc am sau nhat trong doi lenh" class="tj-ctl" style="width:100%;font-family:var(--mono)">
               </div>
-              <div style="display:flex;flex-direction:column;gap:4px">
-                <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFMfe }}</label>
-                <input id="f_mfe" type="number" step="any" placeholder="1.5" title="Maximum Favorable Excursion (R) — muc lai cao nhat trong doi lenh" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;font-family:'JetBrains Mono',monospace;width:100%">
+              <div class="tj-cell">
+                <label class="tj-lb">{{ lbFMfe }}</label>
+                <input id="f_mfe" type="number" step="any" placeholder="1.5" title="Maximum Favorable Excursion (R) — muc lai cao nhat trong doi lenh" class="tj-ctl" style="width:100%;font-family:var(--mono)">
               </div>
-              <div style="grid-column:span 2;display:flex;flex-direction:column;gap:4px">
-                <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFImgEntry }}</label>
-                <input id="f_io" placeholder="https://..." style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%">
+              <div class="tj-cell" style="grid-column:span 2">
+                <label class="tj-lb">{{ lbFImgEntry }}</label>
+                <input id="f_io" placeholder="https://..." class="tj-ctl" style="width:100%">
               </div>
-              <div style="grid-column:span 2;display:flex;flex-direction:column;gap:4px">
-                <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFImgExit }}</label>
-                <input id="f_ic" placeholder="https://..." style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%">
+              <div class="tj-cell" style="grid-column:span 2">
+                <label class="tj-lb">{{ lbFImgExit }}</label>
+                <input id="f_ic" placeholder="https://..." class="tj-ctl" style="width:100%">
               </div>
-              <div style="grid-column:span 4;display:flex;flex-direction:column;gap:4px">
-                <label style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">{{ lbFDetail }}</label>
-                <textarea id="f_de" rows="2" placeholder="{{ lbFDetailPh }}" style="border:1px solid var(--border);border-radius:8px;padding:7px 9px;font-size:12.5px;width:100%;resize:vertical;min-height:42px"></textarea>
+              <div class="tj-cell" style="grid-column:span 4">
+                <label class="tj-lb">{{ lbFDetail }}</label>
+                <textarea id="f_de" rows="2" placeholder="{{ lbFDetailPh }}" style="border:1px solid var(--border);border-radius:var(--r-sm);padding:var(--sp-2);font-size:var(--fs-body);width:100%;resize:vertical;min-height:44px;font-family:var(--sans);line-height:var(--lh-body)"></textarea>
               </div>
             </div>
           </details>
           <!-- PREVIEW BAR -->
-          <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;padding:10px 14px;background:var(--panel);border-radius:10px;border:1px solid var(--border)">
-            <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">{{ lbPvAll }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;margin-top:2px" id="pvAll">$0</div></div>
-            <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">{{ lbPvPct }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;margin-top:2px" id="pvPct">0%</div></div>
-            <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">{{ lbPvAsset }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;margin-top:2px" id="pvAsset">$0</div></div>
-            <div><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">{{ lbPvR }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700;margin-top:2px" id="pvR">0R</div></div>
+          <!-- Bốn số xem trước dùng đúng khuôn nhãn→số của thẻ KPI (.tj-cell) -->
+          <div style="display:flex;gap:var(--sp-5);flex-wrap:wrap;margin-top:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--panel);border-radius:var(--r-md);border:1px solid var(--border)">
+            <div class="tj-cell"><div class="tj-lb">{{ lbPvAll }}</div><div class="tj-num tj-num-lg" id="pvAll">$0</div></div>
+            <div class="tj-cell"><div class="tj-lb">{{ lbPvPct }}</div><div class="tj-num tj-num-lg" id="pvPct">0%</div></div>
+            <div class="tj-cell"><div class="tj-lb">{{ lbPvAsset }}</div><div class="tj-num tj-num-lg" id="pvAsset">$0</div></div>
+            <div class="tj-cell"><div class="tj-lb">{{ lbPvR }}</div><div class="tj-num tj-num-lg" id="pvR">0R</div></div>
           </div>
-          <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
-            <button onclick="{{ saveTrade }}" style="background:var(--accent);color:var(--btn-fg);border:none;border-radius:9px;padding:9px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Be Vietnam Pro',system-ui,sans-serif">{{ btnLabel }}</button>
+          <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-3);align-items:center;flex-wrap:wrap">
+            <button onclick="{{ saveTrade }}" class="tj-abtn" style="background:var(--accent);border-color:var(--accent);color:var(--btn-fg);font-weight:700;font-size:var(--fs-body);padding:0 var(--sp-5)">{{ btnLabel }}</button>
             <sc-if value="{{ showCancel }}" hint-placeholder-val="{{ false }}">
-              <button onclick="{{ cancelEdit }}" style="background:var(--border2);color:var(--text2);border:1px solid var(--border);border-radius:9px;padding:9px 14px;font-weight:600;font-size:13px;cursor:pointer">{{ lbBtnCancel }}</button>
+              <button onclick="{{ cancelEdit }}" class="tj-abtn" style="font-size:var(--fs-body)">{{ lbBtnCancel }}</button>
             </sc-if>
           </div>
         </div>
       </sc-if>
     </div>
 
-    <!-- JOURNAL CARD -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;animation:fadeUp .3s ease .06s both">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
-        <div>
-          <div style="font-size:13px;font-weight:700"><span class="ti ti-h ti-book"></span>{{ lbJournal }} · <span id="cnt">{{ tradeCount }}</span> {{ lbTradeUnit }}</div>
-          <div style="font-size:10px;color:var(--text3);margin-top:1px">{{ lbJournalSub }}</div>
+    <!-- JOURNAL CARD
+         Thanh lọc bên phải tiêu đề: nhóm nút kỳ hạn, ô tìm kiếm và dropdown đều dùng
+         chiều cao --ctl-h nên ba thứ nằm đúng một đường; trước đây chúng cao 28/29/31px
+         (padding tự tính) nên hàng này gợn sóng. -->
+    <div class="tj-card" style="border-radius:var(--r-xl);animation:fadeUp .3s ease .06s both">
+      <div class="tj-cardhd">
+        <div class="tj-cell" style="gap:2px">
+          <div class="tj-hd tj-hd-t"><span class="ti ti-h ti-book"></span><span>{{ lbJournal }} · <span id="cnt">{{ tradeCount }}</span> {{ lbTradeUnit }}</span></div>
+          <div class="tj-cardsub">{{ lbJournalSub }}</div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <div id="tjPeriodBar" style="display:flex;gap:1px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:2px"></div>
-          <input id="search" placeholder="{{ lbSearchPh }}" onchange="{{ onSearch }}" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;width:160px">
-          <select id="filter" onchange="{{ onFilter }}" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">
+        <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;align-items:center">
+          <div id="tjPeriodBar" class="tj-seg"></div>
+          <input id="search" class="tj-ctl" placeholder="{{ lbSearchPh }}" onchange="{{ onSearch }}" style="width:160px">
+          <select id="filter" class="tj-ctl" onchange="{{ onFilter }}">
             <option value="all">{{ lbFilterAll }}</option>
             <option value="win">{{ lbFilterWin }}</option>
             <option value="loss">{{ lbFilterLoss }}</option>
@@ -982,73 +1125,77 @@ details.tjfold>summary:hover::before{color:var(--accent)}
       </div>
       <div style="overflow:auto;max-height:62vh" id="jTblContainer"></div>
     </div>
-    <div style="font-size:11px;color:var(--text3);text-align:center;padding:14px 0 20px;font-style:italic">{{ lbQuote }}</div>
+    <div class="tj-sub3" style="text-align:center;padding:var(--sp-4) 0 var(--sp-5);font-style:italic">{{ lbQuote }}</div>
   </div>
 
   <!-- ═══ RIGHT COL ═══ -->
-  <div style="overflow-y:auto;background:var(--panel);border-left:1px solid var(--border);padding:0 14px 20px">
+  <div style="overflow-y:auto;background:var(--panel);border-left:1px solid var(--border);padding:0 var(--sp-4) var(--sp-5)">
     <!-- TAB NAV (sticky khi cuộn) -->
     <div class="tj-tabbar">
-      <div style="display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:3px;box-shadow:var(--shadow)">
-        <button onclick="{{ goOverview }}" style="{{ tabOverviewStyle }}">{{ lbTabOv }}</button>
-        <button onclick="{{ goWatch }}" style="{{ tabWatchBtnStyle }}">{{ lbTabWl }}</button>
-        <button onclick="{{ goFund }}" style="{{ tabFundBtnStyle }}"><span class="ti ti-flask"></span> {{ lbTabFa }}</button>
-        <button onclick="{{ goTech }}" style="{{ tabTechBtnStyle }}"><span class="ti ti-trend-up"></span> {{ lbTabTa }}</button>
-        <button onclick="{{ goSystem }}" style="{{ tabSystemStyle }}">{{ lbTabSys }}</button>
-        <button onclick="{{ goSetups }}" style="{{ tabSetupsStyle }}">{{ lbTabSu }}</button>
-        <button onclick="{{ goEmotions }}" style="{{ tabEmotionsStyle }}">{{ lbTabEm }}</button>
-        <button onclick="{{ goCalendar }}" style="{{ tabCalendarStyle }}">{{ lbTabCal }}</button>
-        <button onclick="{{ goHeatmap }}" style="{{ tabHeatmapStyle }}">{{ lbTabHm }}</button>
+      <!-- Mỗi tab một icon cùng cỡ, cùng khoảng cách tới chữ (gap trong .tj-tab).
+           Trước đây chỉ 2/9 tab có icon nên hàng tab nhìn như hai nhóm khác nhau. -->
+      <div style="display:flex;gap:0;background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:2px;box-shadow:var(--shadow)">
+        <button class="tj-tab" onclick="{{ goOverview }}" style="{{ tabOverviewStyle }}"><span class="ti ti-chart-eq"></span>{{ lbTabOv }}</button>
+        <button class="tj-tab" onclick="{{ goWatch }}" style="{{ tabWatchBtnStyle }}"><span class="ti ti-eye"></span>{{ lbTabWl }}</button>
+        <button class="tj-tab" onclick="{{ goFund }}" style="{{ tabFundBtnStyle }}"><span class="ti ti-flask"></span>{{ lbTabFa }}</button>
+        <button class="tj-tab" onclick="{{ goTech }}" style="{{ tabTechBtnStyle }}"><span class="ti ti-trend-up"></span>{{ lbTabTa }}</button>
+        <button class="tj-tab" onclick="{{ goSystem }}" style="{{ tabSystemStyle }}"><span class="ti ti-sliders"></span>{{ lbTabSys }}</button>
+        <button class="tj-tab" onclick="{{ goSetups }}" style="{{ tabSetupsStyle }}"><span class="ti ti-puzzle"></span>{{ lbTabSu }}</button>
+        <button class="tj-tab" onclick="{{ goEmotions }}" style="{{ tabEmotionsStyle }}"><span class="ti ti-brain"></span>{{ lbTabEm }}</button>
+        <button class="tj-tab" onclick="{{ goCalendar }}" style="{{ tabCalendarStyle }}"><span class="ti ti-calendar"></span>{{ lbTabCal }}</button>
+        <button class="tj-tab" onclick="{{ goHeatmap }}" style="{{ tabHeatmapStyle }}"><span class="ti ti-bars"></span>{{ lbTabHm }}</button>
       </div>
     </div>
     <!-- KPI GRID đã chuyển sang CỘT TRÁI: đó là tổng quan của cả hành trình, không
          thuộc về tab nào. Bên phải giờ ấn tab nào ra đúng dữ liệu tab đó. -->
 
     <!-- ═ OVERVIEW TAB ═ -->
+    <!-- Bốn panel bên phải dùng chung khuôn .tj-card + .tj-cardhd + .tj-cardbd:
+         cùng bo góc, cùng viền, cùng padding đầu thẻ và thân thẻ. Panel không có phụ
+         đề vẫn giữ đúng chiều cao đầu thẻ nhờ .tj-cell, nên khi cuộn qua bốn panel
+         tiêu đề rơi vào cùng một nhịp. Cụm nút bên phải dùng .tj-seg như mọi nơi khác. -->
     <div style="{{ tabOvStyle }}">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div><div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-chart-eq"></span>{{ lbChartLine }}</div><div style="font-size:9.5px;color:var(--text3);margin-top:1px">{{ lbChartLineSub }}</div></div>
+      <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3)">
+        <div class="tj-cardhd">
+          <div class="tj-cell" style="gap:2px"><div class="tj-hd tj-hd-t"><span class="ti ti-h ti-chart-eq"></span><span>{{ lbChartLine }}</span></div><div class="tj-cardsub">{{ lbChartLineSub }}</div></div>
           <div id="lineControls"></div>
         </div>
-        <div style="padding:12px 14px"><div style="position:relative;width:100%;height:270px"><canvas id="tj_lineCanvas" style="display:block"></canvas></div></div>
+        <div class="tj-cardbd"><div style="position:relative;width:100%;height:270px"><canvas id="tj_lineCanvas" style="display:block"></canvas></div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-pie"></span>{{ lbChartDonut }}</div>
+      <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3)">
+        <div class="tj-cardhd">
+          <div class="tj-hd tj-hd-t"><span class="ti ti-h ti-pie"></span><span>{{ lbChartDonut }}</span></div>
           <div id="donutControls"></div>
         </div>
-        <div style="padding:12px 14px"><div style="position:relative;width:100%;height:200px"><canvas id="tj_donutCanvas" style="display:block"></canvas></div></div>
+        <div class="tj-cardbd"><div style="position:relative;width:100%;height:200px"><canvas id="tj_donutCanvas" style="display:block"></canvas></div></div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
-        <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-coin"></span>{{ lbFundTitle }}</div>
-          <div style="font-size:9.5px;color:var(--text3);margin-top:1px">{{ lbFundSub }}</div>
+      <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3)">
+        <div class="tj-cardhd">
+          <div class="tj-cell" style="gap:2px"><div class="tj-hd tj-hd-t"><span class="ti ti-h ti-coin"></span><span>{{ lbFundTitle }}</span></div><div class="tj-cardsub">{{ lbFundSub }}</div></div>
         </div>
-        <div style="padding:14px">
+        <div class="tj-cardbd">
           <div id="fundBox"></div>
-          <div style="margin-top:14px">
-            <div style="font-size:10.5px;font-weight:700;color:var(--text2);margin-bottom:8px"><span class="ti ti-h ti-cash"></span>{{ lbDepBook }} (<span id="depCnt">0</span> {{ lbDepTimes }})</div>
-            <div class="tj-deprow" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) auto;gap:5px;margin-bottom:8px">
-              <input id="depDate" type="date" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;min-width:0">
-              <input id="depAmt" type="number" step="any" placeholder="{{ lbDepAmtPh }}" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;font-family:'JetBrains Mono',monospace;min-width:0">
-              <input id="depNote" placeholder="{{ lbDepNotePh }}" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;min-width:0">
-              <button onclick="{{ addDep }}" style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap">＋</button>
+          <div style="margin-top:var(--sp-4)">
+            <div class="tj-hd" style="margin-bottom:var(--sp-2)"><span class="ti ti-h ti-cash"></span><span style="font-size:var(--fs-note);font-weight:700;color:var(--text2)">{{ lbDepBook }} (<span id="depCnt">0</span> {{ lbDepTimes }})</span></div>
+            <div class="tj-deprow" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.5fr) auto;gap:var(--sp-1);margin-bottom:var(--sp-2)">
+              <input id="depDate" class="tj-ctl" type="date" style="min-width:0;padding:0 var(--sp-2)">
+              <input id="depAmt" class="tj-ctl" type="number" step="any" placeholder="{{ lbDepAmtPh }}" style="min-width:0;padding:0 var(--sp-2);font-family:var(--mono)">
+              <input id="depNote" class="tj-ctl" placeholder="{{ lbDepNotePh }}" style="min-width:0;padding:0 var(--sp-2)">
+              <button onclick="{{ addDep }}" class="tj-abtn" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700">＋</button>
             </div>
             <div id="depList"></div>
           </div>
         </div>
       </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
-        <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-note"></span>{{ lbNotesTitle }}</div>
-          <div style="font-size:9.5px;color:var(--text3);margin-top:1px">{{ lbNotesSub }}</div>
+      <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3)">
+        <div class="tj-cardhd">
+          <div class="tj-cell" style="gap:2px"><div class="tj-hd tj-hd-t"><span class="ti ti-h ti-note"></span><span>{{ lbNotesTitle }}</span></div><div class="tj-cardsub">{{ lbNotesSub }}</div></div>
         </div>
-        <div style="padding:12px 14px">
-          <div style="display:flex;gap:6px;margin-bottom:8px">
-            <input id="noteDate" type="date" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;min-width:0;flex:0 1 150px">
-            <textarea id="noteTxt" rows="2" placeholder="{{ lbNotesPh }}" style="border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:11.5px;flex:1;min-width:0;resize:none"></textarea>
-            <button onclick="{{ addNote }}" style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap;align-self:flex-end">＋</button>
+        <div class="tj-cardbd">
+          <div style="display:flex;gap:var(--sp-1);margin-bottom:var(--sp-2);align-items:flex-start">
+            <input id="noteDate" class="tj-ctl" type="date" style="min-width:0;flex:0 1 150px;padding:0 var(--sp-2)">
+            <textarea id="noteTxt" rows="2" placeholder="{{ lbNotesPh }}" style="border:1px solid var(--border);border-radius:var(--r-sm);padding:var(--sp-2);font-size:var(--fs-body);flex:1;min-width:0;resize:none;font-family:var(--sans)"></textarea>
+            <button onclick="{{ addNote }}" class="tj-abtn" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700">＋</button>
           </div>
           <div id="noteList"></div>
         </div>
@@ -1596,7 +1743,7 @@ class Component extends DCLogic {
       </div>`;
     }).join('');
     const totR = rows.reduce((s, t) => s + (+t.r || 0), 0);
-    return `<div style="background:var(--card);border:1px solid var(--red);border-radius:14px;overflow:hidden;margin-bottom:12px">
+    return `<div class="tj-card" style="border-color:var(--red);border-radius:var(--r-xl);overflow:hidden;margin-bottom:var(--sp-3)">
       <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
         <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-note"></span>Lý do đã tự bào chữa khi hỏng tiêu chí bắt buộc</div>
         <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${rows.length} lệnh · tổng <b style="color:${totR >= 0 ? 'var(--green)' : 'var(--red)'}">${totR >= 0 ? '+' : ''}${this._fmt(totR, 1)}R</b></div>
@@ -2252,34 +2399,34 @@ class Component extends DCLogic {
           <div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(w.note)}">${esc(w.note)}</div>
           ${stat(w)}
         </div>
-        <span onclick="window._tj.delWatch(${i})" style="cursor:pointer;color:var(--text3);font-size:12px;flex-shrink:0;padding:2px 4px"><span class="ti ti-trash"></span></span>
+        <span onclick="window._tj.delWatch(${i})" class="tj-iact" style="flex-shrink:0"><span class="ti ti-trash"></span></span>
       </div>`).join('') : `<div style="color:var(--text3);font-size:12px;padding:6px 0">${tr.wlEmpty}</div>`;
     el.innerHTML = `
     ${this._regimeBox()}
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
-      <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px">
-        <div style="min-width:0">
-          <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-eye"></span>${tr.wlTitle}</div>
-          <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${tr.wlSub}</div>
+    <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3)">
+      <div class="tj-cardhd">
+        <div class="tj-cell" style="gap:2px">
+          <div class="tj-hd tj-hd-t"><span class="ti ti-h ti-eye"></span><span>${tr.wlTitle}</span></div>
+          <div class="tj-cardsub">${tr.wlSub}</div>
         </div>
-        <div style="display:flex;gap:5px;flex-shrink:0;align-items:center">
-          <button onclick="window._tj.openFA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn"><span class="ti ti-flask"></span> Cơ bản</button>
-          <button onclick="window._tj.openTA('')" style="background:transparent;border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap" title="Bảng chấm kỹ thuật — 4 cửa xác nhận breakout, nền giá VCP, kế hoạch thoát"><span class="ti ti-trend-up"></span> Kỹ thuật</button>
-          <button onclick="window._tj.pushWatchlist()" title="${tr.wlPushTitle}" style="background:var(--accent);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--btn-fg);white-space:nowrap"><span class="ti ti-upload"></span> ${tr.wlPush}</button>
-          <button onclick="window._tj.exportWatchlist()" style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;color:var(--accent);white-space:nowrap"><span class="ti ti-download"></span> ${tr.wlExport}</button>
-          <button onclick="window._tj.reloadScan()" style="background:transparent;border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:12px;cursor:pointer;color:var(--text2)" title="Nạp lại công tắc thị trường + số liệu watchlist"><span class="ti ti-rotate"></span></button>
+        <div style="display:flex;gap:var(--sp-2);flex-shrink:0;align-items:center;flex-wrap:wrap">
+          <button class="tj-abtn" onclick="window._tj.openFA('')" style="background:transparent;border-color:var(--accent);color:var(--accent);font-weight:700" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn"><span class="ti ti-flask"></span> Cơ bản</button>
+          <button class="tj-abtn" onclick="window._tj.openTA('')" style="background:transparent;border-color:var(--accent);color:var(--accent);font-weight:700" title="Bảng chấm kỹ thuật — 4 cửa xác nhận breakout, nền giá VCP, kế hoạch thoát"><span class="ti ti-trend-up"></span> Kỹ thuật</button>
+          <button class="tj-abtn" onclick="window._tj.pushWatchlist()" title="${tr.wlPushTitle}" style="background:var(--accent);border-color:var(--accent);color:var(--btn-fg);font-weight:700"><span class="ti ti-upload"></span> ${tr.wlPush}</button>
+          <button class="tj-abtn" onclick="window._tj.exportWatchlist()" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700"><span class="ti ti-download"></span> ${tr.wlExport}</button>
+          <button class="tj-abtn" onclick="window._tj.reloadScan()" title="Nạp lại công tắc thị trường + số liệu watchlist" style="background:transparent"><span class="ti ti-rotate"></span></button>
         </div>
       </div>
-      <div style="padding:12px 14px">
-        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:5px;margin-bottom:5px">
-          <input id="wlSym" placeholder="${tr.wlSym}" style="${inp};text-transform:uppercase">
-          <input id="wlPivot" type="number" step="any" placeholder="${tr.wlPivot}" style="${inp};font-family:'JetBrains Mono',monospace">
-          <input id="wlStop" type="number" step="any" placeholder="${tr.wlStop}" style="${inp};font-family:'JetBrains Mono',monospace">
-          <button onclick="window._tj.addWatch()" style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--accent)">＋</button>
+      <div class="tj-cardbd">
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:var(--sp-2);margin-bottom:var(--sp-2)">
+          <input id="wlSym" class="tj-ctl" placeholder="${tr.wlSym}" style="min-width:0;text-transform:uppercase">
+          <input id="wlPivot" class="tj-ctl" type="number" step="any" placeholder="${tr.wlPivot}" style="min-width:0;font-family:var(--mono)">
+          <input id="wlStop" class="tj-ctl" type="number" step="any" placeholder="${tr.wlStop}" style="min-width:0;font-family:var(--mono)">
+          <button class="tj-abtn" onclick="window._tj.addWatch()" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700">＋</button>
         </div>
-        <input id="wlNote" placeholder="${tr.wlNote}" style="${inp};width:100%;margin-bottom:8px">
+        <input id="wlNote" class="tj-ctl" placeholder="${tr.wlNote}" style="width:100%;margin-bottom:var(--sp-2)">
         <div>${rows}</div>
-        <div style="font-size:9.5px;color:var(--text3);margin-top:8px;line-height:1.5"><span class="ti ti-h ti-bulb"></span>${tr.wlHint}</div>
+        <div class="tj-sub3" style="font-size:var(--fs-micro);margin-top:var(--sp-2)"><span class="ti ti-h ti-bulb"></span>${tr.wlHint}</div>
       </div>
     </div>`;
     this._loadRegimeData();
@@ -2792,7 +2939,7 @@ class Component extends DCLogic {
     const txt = x => typeof x === 'function' ? x(t) : x;
     const rows = this._taList().map(s => {
       const v = st[s.k] || 0, dis = !t;
-      const btn = (val, icon, col) => `<span onclick="${dis ? '' : `window._tj.markTA('${s.k}',${val})`}" title="${val === 1 ? 'Đạt' : 'Không đạt'}" style="cursor:${dis ? 'default' : 'pointer'};font-size:16px;font-weight:700;line-height:1;padding:5px 11px;border-radius:6px;border:1px solid ${v === val ? col : 'var(--border)'};background:${v === val ? col : 'transparent'};color:${v === val ? 'var(--btn-fg)' : 'var(--text3)'}">${icon}</span>`;
+      const btn = (val, icon, col) => `<span onclick="${dis ? '' : `window._tj.markTA('${s.k}',${val})`}" title="${val === 1 ? 'Đạt' : 'Không đạt'}" class="tj-mark" style="cursor:${dis ? 'default' : 'pointer'};border-color:${v === val ? col : 'var(--border)'};background:${v === val ? col : 'transparent'};color:${v === val ? 'var(--btn-fg)' : 'var(--text3)'}">${icon}</span>`;
       const mk = v === -1 ? { c: 'var(--red)', bg: 'var(--red-soft)' }
                : v === 1 ? { c: 'var(--green)', bg: 'transparent' } : null;
       return `
@@ -2800,7 +2947,7 @@ class Component extends DCLogic {
       <div style="padding:8px 0 8px ${mk ? '9px' : '0'};border-bottom:1px dashed var(--border);border-left:${mk ? '3px solid ' + mk.c : '0'};background:${mk ? mk.bg : 'transparent'};border-radius:${mk ? '0 8px 8px 0' : '0'}">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <a href="${t ? s.u(t) : '#'}" target="_blank" rel="noopener" onclick="${t ? '' : 'return false'}" style="font-size:13px;font-weight:700;color:${t ? 'var(--accent)' : 'var(--text3)'};text-decoration:none;flex:1;min-width:120px">${s.s} ↗</a>
-          ${s.must ? '<span style="font-size:9.5px;font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:5px;padding:1px 5px;flex-shrink:0">BẮT BUỘC</span>' : ''}
+          ${s.must ? '<span class="tj-badge" style="color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber);flex-shrink:0">BẮT BUỘC</span>' : ''}
           <span style="display:flex;gap:4px;flex-shrink:0">${btn(1, '✓', 'var(--green)')}${btn(-1, '✕', 'var(--red)')}</span>
         </div>
         ${t ? this._taData(s.k, t) : ''}
@@ -2814,21 +2961,21 @@ class Component extends DCLogic {
     const chips = this.state.watchlist.map(w => {
       const s = String(w.symbol || '').toUpperCase(); if (!s) return '';
       const on = s === t;
-      return `<span onclick="window._tj.openTA('${esc(s)}')" style="cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;border:1px solid ${on ? 'var(--accent)' : 'var(--border)'};background:${on ? 'var(--accent)' : 'transparent'};color:${on ? 'var(--btn-fg)' : 'var(--text2)'}">${esc(s)}</span>`;
+      return `<span onclick="window._tj.openTA('${esc(s)}')" class="tj-chip" style="cursor:pointer;border-color:${on ? 'var(--accent)' : 'var(--border)'};background:${on ? 'var(--accent)' : 'transparent'};color:${on ? 'var(--btn-fg)' : 'var(--text2)'}">${esc(s)}</span>`;
     }).join('');
 
     host.innerHTML = `
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
+      <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3)">
         <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
           <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-trend-up"></span>Chấm kỹ thuật — 4 cửa xác nhận (VN)</div>
           <div style="font-size:11px;color:${vcol};margin-top:2px;font-weight:700">${verdict}</div>
           <div style="font-size:10px;color:var(--text3);margin-top:3px">Chấm lại mỗi lần định vào lệnh — đồ thị đổi theo phiên, khác bảng cơ bản đổi theo quý.</div>
         </div>
         <div style="padding:10px 14px 4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <input id="taSymInp" value="${esc(t)}" placeholder="Mã…" oninput="window._tj.setTASym(this.value)" style="width:96px;flex-shrink:0;background:var(--bg);border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text);letter-spacing:.06em">
-          <button onclick="window._tj.openAllTA()" ${t ? '' : 'disabled'} style="background:var(--accent);color:var(--btn-fg);border:0;border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0">Mở đồ thị ↗</button>
-          <button onclick="window._tj.openFA('${esc(t)}')" ${t ? '' : 'disabled'} style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:10.5px;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0" title="Mở bảng cơ bản của cùng mã"><span class="ti ti-flask"></span> Cơ bản</button>
-          ${ta.read ? `<button onclick="window._tj.resetTA()" style="background:transparent;color:var(--text3);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:10.5px;cursor:pointer;flex-shrink:0" title="Xoá hết đánh dấu để chấm lại theo đồ thị hôm nay"><span class="ti ti-rotate"></span> Chấm lại</button>` : ''}
+          <input id="taSymInp" value="${esc(t)}" placeholder="Mã…" oninput="window._tj.setTASym(this.value)" class="tj-ctl" style="width:96px;flex-shrink:0;background:var(--bg);border-color:var(--accent);font-family:var(--mono);font-size:var(--fs-title);font-weight:700;letter-spacing:.06em">
+          <button onclick="window._tj.openAllTA()" ${t ? '' : 'disabled'} class="tj-abtn" style="background:var(--accent);border-color:var(--accent);color:var(--btn-fg);font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4}">Mở đồ thị ↗</button>
+          <button onclick="window._tj.openFA('${esc(t)}')" ${t ? '' : 'disabled'} class="tj-abtn" style="background:transparent;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4}" title="Mở bảng cơ bản của cùng mã"><span class="ti ti-flask"></span> Cơ bản</button>
+          ${ta.read ? `<button onclick="window._tj.resetTA()" class="tj-abtn" style="background:transparent;color:var(--text3)" title="Xoá hết đánh dấu để chấm lại theo đồ thị hôm nay"><span class="ti ti-rotate"></span> Chấm lại</button>` : ''}
         </div>
         ${chips ? `<div style="padding:2px 14px 8px;display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="font-size:9.5px;color:var(--text3)">watchlist:</span>${chips}</div>` : ''}
         <div style="padding:0 14px 14px">${rows}
@@ -3401,7 +3548,7 @@ class Component extends DCLogic {
     const txt = x => typeof x === 'function' ? x(t) : x;   // w/p/f có thể là hàm nhận mã
     const rows = this._faList().map(s => {
       const v = st[s.k] || 0, dis = !t;
-      const btn = (val, icon, col) => `<span onclick="${dis ? '' : `window._tj.markFA('${s.k}',${val})`}" title="${val === 1 ? 'Đạt' : 'Không đạt'}" style="cursor:${dis ? 'default' : 'pointer'};font-size:16px;font-weight:700;line-height:1;padding:5px 11px;border-radius:6px;border:1px solid ${v === val ? col : 'var(--border)'};background:${v === val ? col : 'transparent'};color:${v === val ? 'var(--btn-fg)' : 'var(--text3)'}">${icon}</span>`;
+      const btn = (val, icon, col) => `<span onclick="${dis ? '' : `window._tj.markFA('${s.k}',${val})`}" title="${val === 1 ? 'Đạt' : 'Không đạt'}" class="tj-mark" style="cursor:${dis ? 'default' : 'pointer'};border-color:${v === val ? col : 'var(--border)'};background:${v === val ? col : 'transparent'};color:${v === val ? 'var(--btn-fg)' : 'var(--text3)'}">${icon}</span>`;
       // Mục đánh ✕ trước đây bị làm mờ (opacity .55). Sai: mục HỎNG lại đúng là mục
       // cần đọc kỹ nhất — mờ đi thì không đọc nổi hỏng ở chỗ nào. Nay giữ nguyên độ
       // tương phản chữ, phân biệt bằng vạch màu bên trái + nền nhạt.
@@ -3412,7 +3559,7 @@ class Component extends DCLogic {
       <div style="padding:8px 0 8px ${mk ? '9px' : '0'};border-bottom:1px dashed var(--border);border-left:${mk ? '3px solid ' + mk.c : '0'};background:${mk ? mk.bg : 'transparent'};border-radius:${mk ? '0 8px 8px 0' : '0'}">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <a href="${t ? s.u(t) : '#'}" target="_blank" rel="noopener" onclick="${t ? '' : 'return false'}" style="font-size:13px;font-weight:700;color:${t ? 'var(--accent)' : 'var(--text3)'};text-decoration:none;flex:1;min-width:120px">${s.s} ↗</a>
-          ${s.must ? '<span style="font-size:9.5px;font-weight:700;color:var(--amber);border:1px solid var(--amber);border-radius:5px;padding:1px 5px;flex-shrink:0">BẮT BUỘC</span>' : ''}
+          ${s.must ? '<span class="tj-badge" style="color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber);flex-shrink:0">BẮT BUỘC</span>' : ''}
           <span style="display:flex;gap:4px;flex-shrink:0">${btn(1, '✓', 'var(--green)')}${btn(-1, '✕', 'var(--red)')}</span>
         </div>
         ${t ? this._faData(s.k, t) + this._faCalcBox(s.k, t) : ''}
@@ -3427,7 +3574,7 @@ class Component extends DCLogic {
     const chips = this.state.watchlist.map(w => {
       const s = String(w.symbol || '').toUpperCase(); if (!s) return '';
       const on = s === t;
-      return `<span onclick="window._tj.openFA('${esc(s)}')" style="cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;border:1px solid ${on ? 'var(--accent)' : 'var(--border)'};background:${on ? 'var(--accent)' : 'transparent'};color:${on ? 'var(--btn-fg)' : 'var(--text2)'}">${esc(s)}</span>`;
+      return `<span onclick="window._tj.openFA('${esc(s)}')" class="tj-chip" style="cursor:pointer;border-color:${on ? 'var(--accent)' : 'var(--border)'};background:${on ? 'var(--accent)' : 'transparent'};color:${on ? 'var(--btn-fg)' : 'var(--text2)'}">${esc(s)}</span>`;
     }).join('');
 
     // Máy đã tự kiểm chưa — trả lời thẳng câu "số này có đáng tin không"
@@ -3437,17 +3584,17 @@ class Component extends DCLogic {
       : `<div style="font-size:10px;color:var(--red);margin-top:3px"><span class="ti ti-ban"></span> Bảng cân đối KHÔNG khớp (lệch ${this._fmt(ck.bs_dev_pct || 0, 2)}%) — máy không chấm mã này, đọc tay hoàn toàn</div>`;
 
     host.innerHTML = `
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
+      <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3)">
         <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
           <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-flask"></span>Đọc yếu tố cơ bản — SEPA ${this._scanMkt() === 'VN' ? 'nguồn Việt Nam' : 'nguồn Mỹ'}</div>
           <div style="font-size:11px;color:${vcol};margin-top:2px;font-weight:700">${verdict}</div>
           ${checkLine}
         </div>
         <div style="padding:10px 14px 4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <input id="faSymInp" value="${esc(t)}" placeholder="Mã…" oninput="window._tj.setFASym(this.value)" style="width:96px;flex-shrink:0;background:var(--bg);border:1px solid var(--accent);border-radius:7px;padding:6px 9px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text);letter-spacing:.06em">
-          <button onclick="window._tj.openAllFA()" ${t ? '' : 'disabled'} style="background:var(--accent);color:var(--btn-fg);border:0;border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0">Mở tất cả ↗</button>
-          ${nAuto ? `<button onclick="window._tj.applyFAAuto()" style="background:var(--green-soft);color:var(--green);border:1px solid var(--green);border-radius:7px;padding:6px 10px;font-size:10.5px;font-weight:700;cursor:pointer;flex-shrink:0" title="Đánh dấu ✓/✕ theo gợi ý của máy cho ${nAuto} mục — vẫn sửa lại từng mục được"><span class="ti ti-zap"></span> Gợi ý máy (${nAuto})</button>` : ''}
-          <button onclick="window._tj.faToNote()" ${t ? '' : 'disabled'} style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:10.5px;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4};flex-shrink:0" title="Ghi kết quả vào ghi chú của mã trong watchlist">→ Ghi chú</button>
+          <input id="faSymInp" value="${esc(t)}" placeholder="Mã…" oninput="window._tj.setFASym(this.value)" class="tj-ctl" style="width:96px;flex-shrink:0;background:var(--bg);border-color:var(--accent);font-family:var(--mono);font-size:var(--fs-title);font-weight:700;letter-spacing:.06em">
+          <button onclick="window._tj.openAllFA()" ${t ? '' : 'disabled'} class="tj-abtn" style="background:var(--accent);border-color:var(--accent);color:var(--btn-fg);font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4}">Mở tất cả ↗</button>
+          ${nAuto ? `<button onclick="window._tj.applyFAAuto()" class="tj-abtn" style="background:var(--green-soft);border-color:var(--green);color:var(--green);font-weight:700" title="Đánh dấu ✓/✕ theo gợi ý của máy cho ${nAuto} mục — vẫn sửa lại từng mục được"><span class="ti ti-zap"></span> Gợi ý máy (${nAuto})</button>` : ''}
+          <button onclick="window._tj.faToNote()" ${t ? '' : 'disabled'} class="tj-abtn" style="background:transparent;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4}" title="Ghi kết quả vào ghi chú của mã trong watchlist">→ Ghi chú</button>
         </div>
         ${chips ? `<div style="padding:2px 14px 8px;display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="font-size:9.5px;color:var(--text3)">watchlist:</span>${chips}</div>` : ''}
         ${t && !this._fund(t) ? `<div style="padding:0 14px 8px;font-size:11px;color:var(--text3);line-height:1.6">Chưa có số máy điền cho ${esc(t)} — chạy <b>python automation/fund_vn.py ${esc(t)}</b> (mã trong watchlist thì bot tự chạy).</div>` : ''}
@@ -3519,7 +3666,7 @@ class Component extends DCLogic {
       ? 'Vẫn chỉ vào lệnh đúng pivot đã đặt trong watchlist, stop −6% (backtest: tốt hơn cả −8% lẫn −10%).'
       : 'Giữ tiền mặt. Watchlist dưới đây chỉ để theo dõi nền giá — không phải tín hiệu mua.';
     const at = d.checked_at ? `<span style="color:var(--text3)"> · cập nhật ${esc(d.checked_at)}</span>` : '';
-    return `<div style="background:${bg};border:1px solid ${col};border-radius:9px;padding:8px 11px;margin-bottom:8px;line-height:1.5"
+    return `<div style="background:${bg};border:1px solid ${col};border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-2);line-height:1.5"
         title="Quy tắc: VN-Index &gt; MA50 VÀ MA50 &gt; MA200. Không đạt cả hai thì đứng ngoài.">
       <div style="font-size:11px;font-weight:700;color:${col}">${head}</div>
       <div style="font-size:10px;color:var(--text2);margin-top:2px">${esc(r.reason || '')}${at}</div>
@@ -3567,7 +3714,7 @@ class Component extends DCLogic {
     const d = this._regimeCache;
     if (d === undefined) return '';                       // chưa nạp xong
     if (!d || !d.regime) {
-      return `<div style="background:var(--amber-soft);border:1px solid var(--amber);border-radius:9px;padding:8px 11px;margin-bottom:8px;font-size:10px;color:var(--text2);line-height:1.5">
+      return `<div style="background:var(--amber-soft);border:1px solid var(--amber);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-2);font-size:10px;color:var(--text2);line-height:1.5">
         <span class="ti ti-dot" style="color:var(--amber)"></span> Chưa có dữ liệu công tắc thị trường — coi như <b>đứng ngoài</b>.
         Chạy: <code>python automation/regime.py</code></div>`;
     }
@@ -3584,7 +3731,7 @@ class Component extends DCLogic {
       const entries = n[d].map((e, i) => `
         <div style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-bottom:1px dashed var(--border)">
           <div style="flex:1;font-size:11.5px;color:var(--text2);line-height:1.6">${e.txt}</div>
-          <span onclick="window._tj.delNote('${d}',${i})" style="cursor:pointer;color:var(--text3);font-size:12px;flex-shrink:0;padding:2px 4px"><span class="ti ti-trash"></span></span>
+          <span onclick="window._tj.delNote('${d}',${i})" class="tj-iact" style="flex-shrink:0"><span class="ti ti-trash"></span></span>
         </div>`).join('');
       return `<div style="margin-bottom:8px"><div style="font-size:9.5px;font-weight:700;color:var(--accent);font-family:'JetBrains Mono',monospace;margin-bottom:3px">${d}</div>${entries}</div>`;
     }).join('');
@@ -3593,14 +3740,16 @@ class Component extends DCLogic {
   _renderKPI() {
     const el = document.getElementById('kpiGrid'); if (!el) return;
     const s = this._stats(), tr = this._tr();
+    // Thẻ KPI lớn: nhãn → số → ghi chú, khoảng cách dọc do .tj-cell (gap 4px) quyết
+    // định nên ba phần luôn cách nhau bằng nhau ở mọi thẻ. Padding lấy từ thang 4px.
     const card = (l, v, col, sub, flag) => `
-      <div style="background:var(--card);border:1px solid ${flag ? 'var(--amber)' : 'var(--border)'};border-radius:11px;padding:10px 12px">
-        <div style="font-size:8.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:700">${l}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;margin-top:3px;color:${col};letter-spacing:-.02em;line-height:1.1">${v}</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:3px">${sub}</div>
+      <div class="tj-card tj-cell" style="border-color:${flag ? 'var(--amber)' : 'var(--border)'};padding:var(--sp-3)">
+        <div class="tj-lb">${l}</div>
+        <div class="tj-num tj-num-hero" style="color:${col}">${v}</div>
+        <div class="tj-sub">${sub}</div>
       </div>`;
     const sgn = v => v >= 0 ? '+' : '';
-    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px">
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2)">
       ${card(tr.kpiROI, sgn(s.totNet)+this._fmt(s.capNow?s.totNet/s.capNow*100:0,1)+'%', s.totNet>=0?'var(--green)':'var(--red)', `${tr.kpiOnCap} · ${this.state.deposits.length} ${tr.kpiTimes}`, false)}
       ${card(tr.kpiDD, this._fmt(s.maxDD,1)+'%', 'var(--red)', `${tr.kpiPeak} ${this._m(s.peak,0)} · ${s.win}W / ${s.loss}L`, false)}
     </div>${this._advStripHTML(s, tr)}`;
@@ -3645,28 +3794,32 @@ class Component extends DCLogic {
     if (!(sl > 0) || !(rk > 0) || !(eq > 0)) { el.innerHTML = ''; return; }
     const d = this.state.ccy === 'VND' ? 0 : 2;
     const maxPos = eq * (rk / 100) / (sl / 100), one = maxPos / 3, oneR = eq * rk / 100;
+    // Ba hộp là flex-column: dòng "cộng dồn" đẩy xuống đáy bằng margin-top:auto nên
+    // nó nằm cùng một độ cao ở cả ba hộp, dù phần mô tả ở giữa dài ngắn khác nhau.
+    // Số thứ tự nằm trong ô vuông cố định 18×18 → cùng kích thước và căn giữa cả hai
+    // trục so với con số bên cạnh, không phụ thuộc font hệ thống vẽ ①②③ to nhỏ ra sao.
     const cell = (n, head, when, cum, rTxt) => `
-      <div style="padding:8px 11px;border-left:3px solid var(--accent);background:var(--panel);border-radius:0 9px 9px 0">
-        <div style="display:flex;align-items:baseline;gap:6px">
-          <span style="color:var(--accent);font-weight:700;font-size:13px;flex-shrink:0">${n}</span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--accent);line-height:1.1">${this._m(one, d)}</span>
+      <div class="tj-trbox">
+        <div style="display:flex;align-items:center;gap:var(--sp-2)">
+          <span class="tj-trnum">${n}</span>
+          <span class="tj-num tj-num-lg" style="color:var(--accent)">${this._m(one, d)}</span>
         </div>
-        <div style="font-size:11.5px;color:var(--text);font-weight:700;margin-top:3px">${head}</div>
-        <div style="font-size:11px;color:var(--text2);line-height:1.5;margin-top:1px">${when}</div>
-        <div style="font-size:10.5px;color:var(--text3);margin-top:4px;border-top:1px dashed var(--border);padding-top:3px">cộng dồn <b>${this._m(cum, d)}</b> · <b>${rTxt}</b></div>
+        <div style="font-size:var(--fs-body);color:var(--text);font-weight:700;line-height:1.35;margin-top:var(--sp-2)">${head}</div>
+        <div class="tj-sub" style="margin-top:var(--sp-1)">${when}</div>
+        <div class="tj-trfoot">cộng dồn <b>${this._m(cum, d)}</b> · <b>${rTxt}</b></div>
       </div>`;
     el.innerHTML = `
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:9px 11px">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:7px">
-          <span style="font-size:12px;font-weight:700;color:var(--text)"><span class="ti ti-h ti-puzzle"></span>Chia 3 nhịp — mỗi nhịp <span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${this._m(one, d)}</span></span>
-          <span style="font-size:10.5px;color:var(--text3)">trần ${this._m(maxPos, d)} là <b>tổng cả 3 nhịp</b> · 1R = ${this._m(oneR, d)}</span>
+      <div class="tj-card" style="padding:var(--sp-3)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);flex-wrap:wrap;margin-bottom:var(--sp-3)">
+          <span class="tj-hd tj-hd-t"><span class="ti ti-h ti-puzzle"></span><span>Chia 3 nhịp — mỗi nhịp <span style="font-family:var(--mono);color:var(--accent)">${this._m(one, d)}</span></span></span>
+          <span class="tj-sub3">trần ${this._m(maxPos, d)} là <b>tổng cả 3 nhịp</b> · 1R = ${this._m(oneR, d)}</span>
         </div>
-        <div class="tj-tranche" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px">
+        <div class="tj-tranche" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2)">
           ${cell('①', 'Phiên breakout', 'ATC hoặc cuối phiên chiều, đủ 4 cửa xác nhận.', one, '0,33R')}
           ${cell('②', 'Hàng về T+2', 'Hoặc retest pivot khối lượng thấp — giá vẫn trên pivot, không có phiên phân phối.', one * 2, '0,67R')}
           ${cell('③', 'Nền tiếp theo', 'Thoát nền kế tiếp, hoặc phần trước đã lãi ≥ 1R. Chỉ thêm khi ĐANG LÃI.', maxPos, '1,00R')}
         </div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.6;margin-top:7px">
+        <div class="tj-sub3" style="line-height:var(--lh-loose);margin-top:var(--sp-3)">
           Mua thêm ở giá cao hơn mà <b>giữ nguyên giá cắt lỗ</b> thì tổng lỗ vượt 1R — sau nhịp ② hãy kéo stop nhịp ① lên hoà vốn. Không đủ điều kiện nhịp ② thì <b>dừng ở 1/3 là kết quả đúng</b>, không phải làm dở.
         </div>
       </div>`;
@@ -3682,10 +3835,10 @@ class Component extends DCLogic {
     const open = localStorage.getItem('tj_fold_' + key) === '1';
     const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     return `<details class="tjfold" ${open ? 'open' : ''} ontoggle="window._tj.saveFold('${key}',this.open)"
-        style="${boxStyle};border-radius:11px;padding:9px 13px;font-size:12.5px;color:var(--text2);line-height:1.65"
+        style="${boxStyle};border-radius:var(--r-lg);padding:var(--sp-3);font-size:var(--fs-body);color:var(--text2);line-height:var(--lh-loose)"
         title="${esc(title)}">
       <summary style="cursor:pointer;outline:none;user-select:none">${summaryHtml}</summary>
-      <div style="margin-top:5px">${bodyHtml}</div>
+      <div style="margin-top:var(--sp-2)">${bodyHtml}</div>
     </details>`;
   }
   saveFold = (k, v) => { try { localStorage.setItem('tj_fold_' + k, v ? '1' : '0'); } catch (e) {} }
@@ -3724,12 +3877,16 @@ class Component extends DCLogic {
     const cur = s.curStreak;
     const curTxt = cur > 0 ? `${cur}${tr.mWinShort}` : cur < 0 ? `${-cur}${tr.mLossShort}` : '0';
     const curCol = cur > 0 ? 'var(--green)' : cur < 0 ? 'var(--red)' : 'var(--text3)';
+    // Bốn thẻ nhỏ dùng đúng nhịp dọc của hai thẻ lớn (.tj-cell), chỉ khác bậc cỡ số.
+    // Ô không có ghi chú vẫn giữ chỗ trống để chiều cao 4 thẻ bằng nhau, số không bị
+    // đẩy lên so le với thẻ bên cạnh.
     const mini = (l, v, col, sub) => `
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 11px">
-        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700;white-space:nowrap">${l}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;margin-top:3px;color:${col};line-height:1.1">${v}</div>${sub ? '<div style="font-size:9.5px;color:var(--text2);margin-top:2px;white-space:nowrap">'+sub+'</div>' : ''}
+      <div class="tj-card tj-cell" style="padding:var(--sp-3)">
+        <div class="tj-lb">${l}</div>
+        <div class="tj-num tj-num-lg" style="color:${col}">${v}</div>
+        <div class="tj-sub" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sub || '&nbsp;'}</div>
       </div>`;
-    return `<div class="tj-ministrip" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:7px">
+    return `<div class="tj-ministrip" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-2);margin-top:var(--sp-2)">
       ${mini(tr.mExpect, sgn(s.expectancy)+this._m(s.expectancy,1), s.expectancy>=0?'var(--green)':'var(--red)', `PF ${this._fmt(s.pf)} · Avg ${sgn(s.avgR)}${this._fmt(s.avgR,2)}R`)}
       ${mini(tr.mAvgWin, this._m(s.avgWin,1), 'var(--green)')}
       ${mini(tr.mAvgLoss, '-'+this._m(s.avgLoss,1), 'var(--red)')}
@@ -3753,22 +3910,25 @@ class Component extends DCLogic {
     const gcol = g => g === 'g' ? 'var(--green)' : g === 'a' ? 'var(--amber)' : g === 'r' ? 'var(--red)' : 'var(--text3)';
     const gsoft = g => g === 'g' ? 'var(--green-soft)' : g === 'a' ? 'var(--amber-soft)' : g === 'r' ? 'var(--red-soft)' : 'var(--border2)';
     const grade3 = (v, hi, lo) => v == null ? 'n' : v === Infinity ? 'g' : v >= hi ? 'g' : v >= lo ? 'a' : 'r';
-    const badge = (g, txt) => `<span style="background:${gsoft(g)};color:${gcol(g)};border-radius:99px;padding:2px 8px;font-size:8.5px;font-weight:700;white-space:nowrap">${txt}</span>`;
+    // Badge/thẻ/tiêu đề dùng chung đúng các class của toàn site, không tự đặt số riêng
+    const badge = (g, txt) => `<span class="tj-badge" style="background:${gsoft(g)};color:${gcol(g)}">${txt}</span>`;
     const row = (label, val, g, tgt, sub) => `
-      <div style="padding:8px 0;border-bottom:1px dashed var(--border)">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-          <span style="font-size:11.5px;color:var(--text2)">${label}</span>
-          <span style="display:inline-flex;align-items:center;gap:7px">${tgt ? badge(g, tgt) : ''}<b style="font-family:'JetBrains Mono',monospace;font-size:15px;color:${gcol(g)}">${val}</b></span>
+      <div style="padding:var(--sp-2) 0;border-bottom:1px dashed var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2)">
+          <span style="font-size:var(--fs-body);color:var(--text2)">${label}</span>
+          <span style="display:inline-flex;align-items:center;gap:var(--sp-2)">${tgt ? badge(g, tgt) : ''}<b class="tj-num tj-num-lg" style="color:${gcol(g)}">${val}</b></span>
         </div>
-        ${sub ? `<div style="font-size:9.5px;color:var(--text3);margin-top:2px">${sub}</div>` : ''}
+        ${sub ? `<div class="tj-cardsub" style="margin-top:2px">${sub}</div>` : ''}
       </div>`;
     const card = (title, sub, inner) => `
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:12px">
-        <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div style="font-size:12px;font-weight:700">${title}</div>
-          ${sub ? `<div style="font-size:9.5px;color:var(--text3);margin-top:1px">${sub}</div>` : ''}
+      <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3)">
+        <div class="tj-cardhd" style="justify-content:flex-start">
+          <div class="tj-cell" style="gap:2px">
+            <div class="tj-hd tj-hd-t">${title}</div>
+            ${sub ? `<div class="tj-cardsub">${sub}</div>` : ''}
+          </div>
         </div>
-        <div style="padding:8px 14px 12px">${inner}</div>
+        <div class="tj-cardbd">${inner}</div>
       </div>`;
 
     const gDD = s.curDD <= 10 ? 'g' : s.curDD <= 20 ? 'a' : 'r';
@@ -3819,14 +3979,14 @@ class Component extends DCLogic {
         <div style="font-size:10.5px;color:var(--text2);margin-top:3px;line-height:1.5">${tierSub}</div>
         ${posTxt ? `<div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${gcol(tierG)};margin-top:5px">${posTxt}</div>` : ''}
       </div>
-      <div style="display:flex;gap:7px;margin-top:8px">
-        <div style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:7px 10px">
-          <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">${tr.expoWr}</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;margin-top:2px;color:${s.wr10 >= 50 ? 'var(--green)' : 'var(--red)'}">${this._fmt(s.wr10, 0)}%</div>
+      <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-2)">
+        <div class="tj-cell" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3)">
+          <div class="tj-lb">${tr.expoWr}</div>
+          <div class="tj-num tj-num-md" style="color:${s.wr10 >= 50 ? 'var(--green)' : 'var(--red)'}">${this._fmt(s.wr10, 0)}%</div>
         </div>
-        <div style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:7px 10px">
-          <div style="font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;font-weight:700">${tr.expoSumR}</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;margin-top:2px;color:${s.sumR10 >= 0 ? 'var(--green)' : 'var(--red)'}">${s.sumR10 >= 0 ? '+' : ''}${this._fmt(s.sumR10, 1)}R</div>
+        <div class="tj-cell" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3)">
+          <div class="tj-lb">${tr.expoSumR}</div>
+          <div class="tj-num tj-num-md" style="color:${s.sumR10 >= 0 ? 'var(--green)' : 'var(--red)'}">${s.sumR10 >= 0 ? '+' : ''}${this._fmt(s.sumR10, 1)}R</div>
         </div>
       </div>`;
 
@@ -3861,9 +4021,10 @@ class Component extends DCLogic {
     const el = document.getElementById('tjPeriodBar'); if (!el) return;
     const tr = this._tr(), cur = this.state.period || 'all';
     const opts = [['all', tr.pAll], ['year', tr.pYear], ['month', tr.pMonth], ['week', tr.pWeek]];
+    // Hình khối nút do .tj-seg quyết định (giống hệt cụm T/Q/N và Kết quả/Setup/Cảm xúc)
     el.innerHTML = opts.map(([k, lbl]) => {
       const on = cur === k;
-      return `<button type="button" onclick="window._tj.setPeriod('${k}')" style="background:${on ? 'var(--accent-soft)' : 'transparent'};border:none;border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;color:${on ? 'var(--accent)' : 'var(--text3)'};font-family:'Be Vietnam Pro',system-ui,sans-serif">${lbl}</button>`;
+      return `<button type="button" onclick="window._tj.setPeriod('${k}')" style="background:${on ? 'var(--accent-soft)' : 'transparent'};color:${on ? 'var(--accent)' : 'var(--text3)'}">${lbl}</button>`;
     }).join('');
   }
 
@@ -3883,18 +4044,25 @@ class Component extends DCLogic {
       if (fl === 'notplan' && t.su !== 'NOT IN PLAN' && !t.np) return false;
       return true;
     });
-    const TH = (t, r, c) => `<th style="text-align:${c?'center':r?'right':'left'};padding:7px 8px;font-size:8.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:1;white-space:nowrap">${t}</th>`;
-    const head = `<thead><tr>${TH('#')}${TH(tr.thDate)}${TH(tr.thSymbol)}${TH(tr.thBS,0,1)}${TH(tr.thSetup)}${TH(tr.thNet+' '+this._ccySym(),1)}${TH(tr.thR,1)}${TH(tr.thAsset,1)}${TH(tr.thEmo,0,1)}${TH('<span class="ti ti-camera"></span>',0,1)}${TH('')}</tr></thead>`;
+    // Căn của ô tiêu đề luôn khớp với căn của dữ liệu bên dưới (cùng tham số r/c),
+    // nhờ vậy chữ "NET đ" nằm đúng trên mép phải của cột số.
+    const TH = (t, r, c) => `<th class="tj-th" style="text-align:${c?'center':r?'right':'left'}">${t}</th>`;
+    const head = `<thead><tr>${TH('#')}${TH(tr.thDate)}${TH(tr.thSymbol)}${TH(tr.thBS,0,1)}${TH(tr.thSetup)}${TH(tr.thNet+' '+this._ccySym(),1)}${TH(tr.thR,1)}${TH(tr.thAsset,1)}${TH(tr.thEmo,0,1)}${TH('<span class="ti ti-camera"></span>',0,1)}${TH('',0,1)}</tr></thead>`;
     const body = rows.length ? rows.map(t => {
       const num = a.indexOf(t) + 1, blow = t._all < -500;
       const isEditing = t._i === this.state.editIdx;
       const nc = t._all >= 0 ? 'var(--green)' : 'var(--red)';
       const rc = (+t.r || 0) >= 0 ? 'var(--green)' : 'var(--red)';
-      const imgs = [(t.io?`<a href="${t.io}" target="_blank" style="color:var(--accent);font-size:13px;margin-right:3px">▣</a>`:''), (t.ic?`<a href="${t.ic}" target="_blank" style="color:var(--accent);font-size:13px">▢</a>`:'')].filter(Boolean).join('') || '<span style="color:var(--text3)">—</span>';
+      // Ô ảnh: có ảnh hay không, ô vẫn là hai khung 22×22 nên dấu "—" của hàng rỗng
+      // đứng đúng chỗ icon thật, cột không bị so le
+      const imgs = [
+        t.io ? `<a href="${t.io}" target="_blank" class="tj-iact" style="color:var(--accent)" onclick="event.stopPropagation()">▣</a>` : '',
+        t.ic ? `<a href="${t.ic}" target="_blank" class="tj-iact" style="color:var(--accent)" onclick="event.stopPropagation()">▢</a>` : '',
+      ].filter(Boolean).join('') || '<span class="tj-iact-off">—</span>';
       const suBadge = t.su === 'NOT IN PLAN'
-        ? `<span style="background:var(--red-soft);color:var(--red);border-radius:99px;padding:1px 6px;font-size:8.5px;font-weight:700">NIP</span>`
-        : `<span style="color:var(--text2);font-size:11.5px">${t.su||''}</span>`
-          + (t.np ? `<span title="Vào lệnh khi mã không có trong watchlist / thị trường đang đứng ngoài" style="margin-left:4px;background:var(--red-soft);color:var(--red);border-radius:99px;padding:1px 5px;font-size:8px;font-weight:700">NGOÀI KH</span>` : '');
+        ? `<span class="tj-badge" style="background:var(--red-soft);color:var(--red)">NIP</span>`
+        : `<span style="color:var(--text2);font-size:var(--fs-body)">${t.su||''}</span>`
+          + (t.np ? `<span class="tj-badge" title="Vào lệnh khi mã không có trong watchlist / thị trường đang đứng ngoài" style="margin-left:var(--sp-1);background:var(--red-soft);color:var(--red)">NGOÀI KH</span>` : '');
       const emoColors = {
         'Confident (Tự tin)':['var(--green-soft)','var(--green)'],
         'FEAR (Sợ hãi)':['var(--amber-soft)','var(--amber)'],'GREED (Tham lam)':['var(--red-soft)','var(--red)'],
@@ -3903,12 +4071,12 @@ class Component extends DCLogic {
       };
       const ec = emoColors[t.e] || ['var(--border2)','var(--text3)'];
       const emoLabel = (t.e || '').replace(/ *\(.*?\)/g,'').trim() || '—';
-      const emoBadge = `<span style="background:${ec[0]};color:${ec[1]};border-radius:99px;padding:1px 7px;font-size:8.5px;font-weight:700;white-space:nowrap">${emoLabel}</span>`;
+      const emoBadge = `<span class="tj-badge" style="background:${ec[0]};color:${ec[1]}">${emoLabel}</span>`;
       const expanded = this.state.expandedRow === t._i;
       let detail = '';
       if (expanded) {
-        detail = `<tr style="background:var(--panel)"><td colspan="10" style="padding:10px 14px;border-bottom:1px solid var(--border)">
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px 14px;font-size:11.5px;line-height:1.6">
+        detail = `<tr style="background:var(--panel)"><td colspan="11" style="padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border)">
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2) var(--sp-4);font-size:var(--fs-body);line-height:var(--lh-loose)">
             <div><span style="color:var(--text3)">${tr.dEntry}</span> <span style="color:var(--text2)">${t.en||'—'}</span></div>
             <div><span style="color:var(--text3)">${tr.dExit}</span> <span style="color:var(--text2)">${t.ex||'—'}</span></div>
             <div><span style="color:var(--text3)">${tr.dEmo}</span> <span style="color:var(--text2)">${t.e||'—'}</span></div>
@@ -3930,23 +4098,25 @@ class Component extends DCLogic {
       return `<tr style="background:${rowBg};border-bottom:${rowBorder};cursor:pointer;outline:${isEditing?'1px solid var(--accent)':'none'};outline-offset:-1px"
         onmouseenter="if(!${blow}&&!${isEditing})this.style.background='var(--border2)'" onmouseleave="if(!${blow}&&!${isEditing})this.style.background='${rowBg}'"
         onclick="window._tj.toggleRow(${t._i})">
-        <td style="padding:6px 8px;font-size:11px;color:var(--text3)">${isEditing?'<span class="ti ti-pencil"></span>':num}</td>
-        <td style="padding:6px 8px;font-size:11px;color:var(--text3);white-space:nowrap">${t.d||''}</td>
-        <td style="padding:6px 8px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${blow?'var(--red)':isEditing?'var(--accent)':'var(--text)'}">${t.s||''}</td>
-        <td style="padding:6px 8px;text-align:center"><span style="background:${t.a==='Buy'?'var(--green-soft)':'var(--red-soft)'};color:${t.a==='Buy'?'var(--green)':'var(--red)'};border-radius:99px;padding:1px 6px;font-size:8.5px;font-weight:700">${t.a}</span></td>
-        <td style="padding:6px 8px">${suBadge}</td>
-        <td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${nc};white-space:nowrap">${t._all>=0?'+':''}${this._m(t._all)}</td>
-        <td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:${rc};white-space:nowrap">${(+t.r||0)>=0?'+':''}${this._fmt(t.r)}R</td>
-        <td style="padding:6px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">${this._m(t._as,0)}</td>
-        <td style="padding:6px 8px;text-align:center">${emoBadge}</td>
-        <td style="padding:6px 8px;text-align:center">${imgs}</td>
-        <td style="padding:6px 4px;text-align:center;white-space:nowrap">
-          <span onclick="event.stopPropagation();window._tj.editTrade(${t._i})" style="cursor:pointer;color:${isEditing?'var(--accent)':'var(--text3)'};padding:3px 4px;font-size:13px"><span class="ti ti-pencil"></span></span>
-          <span onclick="event.stopPropagation();window._tj.delTrade(${t._i})" style="cursor:pointer;color:var(--text3);padding:3px 4px;font-size:13px"><span class="ti ti-trash"></span></span>
+        <td class="tj-td tj-td-dim">${isEditing?'<span class="ti ti-pencil"></span>':num}</td>
+        <td class="tj-td tj-td-dim" style="white-space:nowrap">${t.d||''}</td>
+        <td class="tj-td tj-td-sym" style="color:${blow?'var(--red)':isEditing?'var(--accent)':'var(--text)'}">${t.s||''}</td>
+        <td class="tj-td" style="text-align:center"><span class="tj-badge" style="background:${t.a==='Buy'?'var(--green-soft)':'var(--red-soft)'};color:${t.a==='Buy'?'var(--green)':'var(--red)'}">${t.a}</span></td>
+        <td class="tj-td">${suBadge}</td>
+        <td class="tj-td tj-td-num" style="font-weight:700;color:${nc}">${t._all>=0?'+':''}${this._m(t._all)}</td>
+        <td class="tj-td tj-td-num" style="font-weight:600;color:${rc}">${(+t.r||0)>=0?'+':''}${this._fmt(t.r)}R</td>
+        <td class="tj-td tj-td-num">${this._m(t._as,0)}</td>
+        <td class="tj-td" style="text-align:center">${emoBadge}</td>
+        <td class="tj-td" style="text-align:center"><span class="tj-iacts">${imgs}</span></td>
+        <td class="tj-td" style="text-align:center;white-space:nowrap">
+          <span class="tj-iacts">
+            <span class="tj-iact" onclick="event.stopPropagation();window._tj.editTrade(${t._i})" style="${isEditing?'color:var(--accent)':''}"><span class="ti ti-pencil"></span></span>
+            <span class="tj-iact" onclick="event.stopPropagation();window._tj.delTrade(${t._i})"><span class="ti ti-trash"></span></span>
+          </span>
         </td>
       </tr>${detail}`;
-    }).join('') : `<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:26px;font-size:13px">${tr.noTrades}</td></tr>`;
-    el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">${head}<tbody>${body}</tbody></table>`;
+    }).join('') : `<tr><td colspan="11" style="text-align:center;color:var(--text3);padding:var(--sp-6);font-size:var(--fs-title)">${tr.noTrades}</td></tr>`;
+    el.innerHTML = `<table class="tj-table">${head}<tbody>${body}</tbody></table>`;
     const cnt = document.getElementById('cnt'); if (cnt) cnt.textContent = this.state.trades.length;
   }
 
@@ -3975,7 +4145,7 @@ class Component extends DCLogic {
         <span style="color:var(--text3);font-family:'JetBrains Mono',monospace;white-space:nowrap">${x.d||''}</span>
         <span style="flex:1;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.note||''}</span>
         <b style="color:var(--green);font-family:'JetBrains Mono',monospace;white-space:nowrap">+${this._m(this._cv(+x.amt||0,x),0)}</b>
-        <span onclick="window._tj.delDep(${i})" style="cursor:pointer;color:var(--text3);font-size:12px;padding:2px 4px"><span class="ti ti-trash"></span></span>
+        <span onclick="window._tj.delDep(${i})" class="tj-iact"><span class="ti ti-trash"></span></span>
       </div>`;
     }).join('') || `<div style="color:var(--text3);padding:8px 2px;font-size:12px">${tr.noDeposits}</div>`;
   }
@@ -3987,19 +4157,21 @@ class Component extends DCLogic {
 
   _statsTableHtml(data, title, icon, colDefs) {
     const tr = this._tr();
-    const ths = colDefs.map(c => `<th style="text-align:${c.r?'right':'left'};padding:7px 8px;font-size:8.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap">${c.t}</th>`).join('');
+    // Cùng .tj-th/.tj-td với bảng nhật ký → tiêu đề cột, chiều cao hàng và cách canh
+    // số của tab Setups / Cảm xúc khớp hệt bảng lệnh bên trái
+    const ths = colDefs.map(c => `<th class="tj-th" style="text-align:${c.r?'right':'left'}">${c.t}</th>`).join('');
     const tbody = data.map(x => {
       const tds = colDefs.map(c => {
         const v = c.get(x), col = c.col ? c.col(x) : 'var(--text)';
-        return `<td style="padding:6px 8px;text-align:${c.r?'right':'left'};font-size:${c.mono?'11.5px':'12px'};font-family:${c.mono?"'JetBrains Mono',monospace":'inherit'};color:${col};line-height:1.5">${v}</td>`;
+        return `<td class="tj-td${c.mono?' tj-td-num':''}" style="text-align:${c.r?'right':'left'};color:${col}">${v}</td>`;
       }).join('');
       return `<tr style="border-bottom:1px solid var(--border2)">${tds}</tr>`;
     }).join('');
-    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px">
-      <div style="padding:10px 14px;border-bottom:1px solid var(--border)"><div style="font-size:12px;font-weight:700">${icon} ${title}</div></div>
-      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+    return `<div class="tj-card" style="border-radius:var(--r-xl);overflow:hidden;margin-bottom:var(--sp-3)">
+      <div class="tj-cardhd"><div class="tj-hd tj-hd-t">${icon} ${title}</div></div>
+      <div style="overflow-x:auto"><table class="tj-table">
         <thead><tr>${ths}</tr></thead>
-        <tbody>${tbody||`<tr><td colspan="99" style="padding:20px;text-align:center;color:var(--text3)">${tr.noData}</td></tr>`}</tbody>
+        <tbody>${tbody||`<tr><td colspan="99" style="padding:var(--sp-5);text-align:center;color:var(--text3)">${tr.noData}</td></tr>`}</tbody>
       </table></div>
     </div>`;
   }
@@ -4071,13 +4243,13 @@ class Component extends DCLogic {
         <div style="font-size:10.5px;font-weight:${isToday?'700':'500'};color:${isToday?'var(--accent)':color}">${d}</div>${marker}
       </div>`);
     }
-    el.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">
-        <button onclick="window._tj.calPrev()" style="background:var(--border2);border:1px solid var(--border);border-radius:7px;padding:4px 12px;cursor:pointer;color:var(--text2);font-size:15px;font-weight:700">‹</button>
-        <div style="font-size:13px;font-weight:700">${tr.calMonths[calMonth]} ${calYear}</div>
-        <button onclick="window._tj.calNext()" style="background:var(--border2);border:1px solid var(--border);border-radius:7px;padding:4px 12px;cursor:pointer;color:var(--text2);font-size:15px;font-weight:700">›</button>
+    el.innerHTML = `<div class="tj-card" style="border-radius:var(--r-xl);overflow:hidden">
+      <div class="tj-cardhd">
+        <button class="tj-abtn" onclick="window._tj.calPrev()" style="font-size:var(--fs-title);font-weight:700">‹</button>
+        <div class="tj-hd-t">${tr.calMonths[calMonth]} ${calYear}</div>
+        <button class="tj-abtn" onclick="window._tj.calNext()" style="font-size:var(--fs-title);font-weight:700">›</button>
       </div>
-      <div style="padding:12px">
+      <div class="tj-cardbd">
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">${tr.calDays.map(d=>`<div style="text-align:center;font-size:8.5px;font-weight:700;color:var(--text3);padding:2px 0">${d}</div>`).join('')}</div>
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${cells.join('')}</div>
       </div>
@@ -4109,7 +4281,7 @@ class Component extends DCLogic {
       }).join('');
       return `<div style="display:contents"><div style="font-size:10px;font-weight:700;color:var(--text3);display:flex;align-items:center;padding-right:5px">${ms}</div>${cells}</div>`;
     }).join('');
-    el.innerHTML = `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    el.innerHTML = `<div class="tj-card" style="border-radius:var(--r-xl);overflow:hidden">
       <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
         <div style="font-size:12px;font-weight:700"><span class="ti ti-h ti-calendar"></span>${tr.hmTitle}</div>
         <div style="font-size:9.5px;color:var(--text3);margin-top:1px">${tr.hmSub}</div>
@@ -4125,8 +4297,10 @@ class Component extends DCLogic {
 
   _renderChartControls() {
     const { lineMode, donutMode } = this.state, tr = this._tr();
-    const sb = (txt, active, fn) => `<button onclick="window._tj.${fn}()" style="background:${active?'var(--border2)':'transparent'};border:none;border-radius:5px;padding:3px 9px;font-size:10.5px;font-weight:700;cursor:pointer;color:${active?'var(--accent)':'var(--text3)'};font-family:'Be Vietnam Pro',system-ui,sans-serif">${txt}</button>`;
-    const wrap = inner => `<div style="display:flex;background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:2px;gap:1px">${inner}</div>`;
+    // Dùng chung .tj-seg với thanh kỳ hạn của bảng nhật ký → cùng chiều cao, cùng
+    // padding, cùng bo góc; trước đây mỗi cụm nút tự đặt số riêng nên cao thấp lệch nhau
+    const sb = (txt, active, fn) => `<button onclick="window._tj.${fn}()" style="background:${active?'var(--border2)':'transparent'};color:${active?'var(--accent)':'var(--text3)'}">${txt}</button>`;
+    const wrap = inner => `<div class="tj-seg">${inner}</div>`;
     const lc = document.getElementById('lineControls');
     if (lc) lc.innerHTML = wrap(sb('T',lineMode==='m','setLineM')+sb('Q',lineMode==='q','setLineQ')+sb('N',lineMode==='y','setLineY'));
     const dc = document.getElementById('donutControls');
@@ -4237,7 +4411,8 @@ class Component extends DCLogic {
         layout:{ padding:{top:24,right:12,bottom:4,left:4} },
         interaction:{ mode:'index', intersect:false },
         plugins: {
-          legend:{ display:true, position:'top', align:'end', labels:{color:c.text2,font:{size:9,weight:'600'},boxWidth:14,padding:8} },
+          // Chú giải hai biểu đồ dùng chung một cỡ ô màu và một cỡ chữ (xem donut bên dưới)
+          legend:{ display:true, position:'top', align:'end', labels:{color:c.text2,font:{size:10,weight:'600'},boxWidth:12,boxHeight:12,padding:10} },
           tooltip: {
             backgroundColor:c.card, borderColor:c.tick, borderWidth:1, padding:10, cornerRadius:9, titleColor:c.text2, bodyColor:c.text2,
             callbacks: { label: x => {
@@ -4284,7 +4459,7 @@ class Component extends DCLogic {
       options: {
         responsive:false, maintainAspectRatio:false, cutout:'60%', animation:false,
         plugins: {
-          legend:{ position:'right', labels:{boxWidth:10,font:{size:10.5},color:c.text2,padding:10} },
+          legend:{ position:'right', labels:{boxWidth:12,boxHeight:12,font:{size:10,weight:'600'},color:c.text2,padding:10} },
           tooltip: { backgroundColor:c.card, borderColor:c.tick, borderWidth:1, padding:9, cornerRadius:9, bodyColor:c.text2,
             callbacks:{ label: x => { const total=x.chart.data.datasets[0].data.reduce((s,v)=>s+(+v||0),0), pct=total?(x.parsed/total*100).toFixed(1):0; return `${x.label}: ${x.parsed} (${pct}%)`; } }
           }
@@ -4493,15 +4668,17 @@ class Component extends DCLogic {
   renderVals() {
     const s = this.state, st = this._stats(), tr = this._tr();
     const sgn = v => v >= 0 ? '+' : '';
+    // Hình khối của tab (chiều cao, padding, cỡ chữ, icon) nằm ở class .tj-tab trong
+    // <style> — ở đây chỉ còn phần THAY ĐỔI theo trạng thái. Trước kia mọi thuộc tính
+    // đều là style inline nên không cách nào bắt cả hàng tab cao bằng nhau từ CSS.
+    // Nhãn tab không được xuống dòng: "Kỹ thuật" gãy làm đôi thì cả hàng tab cao gấp
+    // rưỡi và icon rớt khỏi chữ. Chật thì để thanh tab cuộn ngang (giống mobile).
     const tabSt = name => ({
-      flex:1, background:s.rightTab===name?'var(--accent-soft)':'transparent',
-      border:'none', borderRadius:'7px', padding:'7px 2px', fontSize:'10px',
-      // Nhãn tab không được xuống dòng: "Kỹ thuật" gãy làm đôi thì cả hàng tab cao gấp
-      // rưỡi và icon rớt khỏi chữ. Chật thì để thanh tab cuộn ngang (giống mobile).
-      fontWeight:700, cursor:'pointer', whiteSpace:'nowrap', fontFamily:"'Be Vietnam Pro',system-ui,sans-serif",
-      color:s.rightTab===name?'var(--accent)':'var(--text3)', transition:'all .15s',
+      background: s.rightTab===name?'var(--accent-soft)':'transparent',
+      color: s.rightTab===name?'var(--accent)':'var(--text3)',
     });
-    const monoSt = col => ({ fontFamily:"'JetBrains Mono',monospace", fontSize:'14px', fontWeight:700, lineHeight:1.2, color:col });
+    // Chỉ còn màu: font/cỡ/line-height của 5 chỉ số header do class .tj-num-lg quyết định
+    const monoSt = col => ({ color: col });
     return {
       // Lang
       langBtn: s.lang === 'vi' ? 'EN' : 'VI',
@@ -4536,7 +4713,7 @@ class Component extends DCLogic {
         ? { background:'var(--amber-soft)', color:'var(--amber)', boxShadow:'inset 0 0 0 1px var(--amber)' }
         : { background:'transparent', color:'var(--text2)' }; })(),
       actionsToggleIcon: s.actionsOpen?'✕':'⋯',
-      actionsStyle: { display: (window.innerWidth>600||s.actionsOpen)?'flex':'none', gap:'6px', flexShrink:0 },
+      actionsStyle: { display: (window.innerWidth>600||s.actionsOpen)?'flex':'none', alignItems:'center', gap:'var(--sp-2)', flexShrink:0 },
       // Position sizing labels
       lbOneR: tr.oneR, lbMaxRiskSub: tr.maxRiskSub, lbDivSL: tr.divSL, lbMaxPos: tr.maxPos, lbMaxPosSub: tr.maxPosSub,
       // Position sizing values
