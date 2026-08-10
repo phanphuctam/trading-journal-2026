@@ -664,6 +664,7 @@ details.tjfold>summary:hover::before{color:var(--accent)}
   .tj-formgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .tj-deprow{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .tj-ministrip{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .tj-tranche{grid-template-columns:minmax(0,1fr)!important}
   #tjGrid>div{padding-left:12px!important;padding-right:12px!important;max-width:100vw}
   .tj-tabbar{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}
   .tj-tabbar>div{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -755,6 +756,12 @@ details.tjfold>summary:hover::before{color:var(--accent)}
         <div style="font-size:11.5px;color:var(--text3);margin-top:4px">{{ lbMaxPosSub }}</div>
       </div>
     </div>
+    <!-- CHIA 3 NHỊP — thêm 2026-08-10.
+         Trần vị thế ở trên là con số của CẢ LỆNH, không phải của lần bấm đầu tiên.
+         Lỗi dễ mắc nhất là dồn hết trần vào nhịp 1 rồi hết đạn khi cổ phiếu chạy.
+         Quy trình 3 nhịp (mục 5.3) sinh ra vì T+2: 2,5 phiên đầu không cắt được,
+         nên chỉ đặt 1/3 rủi ro vào chỗ chưa xác nhận được gì. -->
+    <div id="tjTrancheBox" style="margin:-6px 0 10px"></div>
     <!-- KỊCH BẢN 3 PHIÊN SÀN — thêm 2026-08-09.
          Thẻ định cỡ ở trên trả lời "được mua bao nhiêu". Nó KHÔNG trả lời câu đắt hơn:
          "nếu ngay sau khi mua có 3 phiên sàn liên tiếp thì mất bao nhiêu?". Ở VN câu
@@ -3546,6 +3553,7 @@ class Component extends DCLogic {
   _renderFloorBox(s) {
     const el = document.getElementById('tjFloorBox'); if (!el) return;
     const sl = this.state.slPct, rk = this.state.riskPct, eq = s.eq;
+    this._renderTrancheBox(s);
     if (!(sl > 0) || !(rk > 0) || !(eq > 0)) { el.innerHTML = ''; this._renderExitBox(); return; }
     const posPct = rk / sl * 100;           // trần vị thế = %rủi ro ÷ %cắt lỗ
     const floorPct = posPct * 0.196;
@@ -3563,6 +3571,43 @@ class Component extends DCLogic {
       ${bad ? `— vượt ngưỡng 2% NAV. Muốn về dưới 2% thì <b>hạ rủi ro/lệnh xuống ≤ ${this._fmt(safeRisk, 2)}%</b> (đừng nới ô cắt lỗ — nó phải nói đúng chỗ bạn thật sự cắt).` : '— trong ngưỡng 2% NAV của kịch bản xấu nhất.'}
       <div style="font-size:11.5px;color:var(--text3);margin-top:4px;line-height:1.6">Cắt lỗ ${this._fmt(sl, 1)}% là con số của <b>backtest_vn_params.py</b> (HOSE 2018-2026: stop 6% → CAGR 10,1% / sụt giảm −19,1%, tốt hơn stop 8% và 10%). Tài liệu SEPA bản Việt hoá khuyến nghị 8-10% theo giá đóng cửa và rủi ro 0,5-0,75% NAV/lệnh — <b>giữ cắt lỗ theo backtest vì nó chạy trên đúng dữ liệu sàn này</b>, thu nhỏ vị thế bằng ô rủi ro.</div>`);
     this._renderExitBox();
+  }
+
+  // ══ CHIA 3 NHỊP ══
+  // Trần vị thế là tổng của cả ba lần bấm, không phải của lần đầu. Hộp này chia sẵn
+  // để lúc vào lệnh không phải nhẩm — và để thấy rõ sau nhịp 1 mới gánh 1/3 rủi ro.
+  // Cột "cộng dồn" quan trọng hơn cột "mỗi nhịp": nó là con số phải so với sổ lệnh.
+  _renderTrancheBox(s) {
+    const el = document.getElementById('tjTrancheBox'); if (!el) return;
+    const sl = this.state.slPct, rk = this.state.riskPct, eq = s.eq;
+    if (!(sl > 0) || !(rk > 0) || !(eq > 0)) { el.innerHTML = ''; return; }
+    const d = this.state.ccy === 'VND' ? 0 : 2;
+    const maxPos = eq * (rk / 100) / (sl / 100), one = maxPos / 3, oneR = eq * rk / 100;
+    const cell = (n, head, when, cum, rTxt) => `
+      <div style="padding:8px 11px;border-left:3px solid var(--accent);background:var(--panel);border-radius:0 9px 9px 0">
+        <div style="display:flex;align-items:baseline;gap:6px">
+          <span style="color:var(--accent);font-weight:700;font-size:13px;flex-shrink:0">${n}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:var(--accent);line-height:1.1">${this._m(one, d)}</span>
+        </div>
+        <div style="font-size:11.5px;color:var(--text);font-weight:700;margin-top:3px">${head}</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.5;margin-top:1px">${when}</div>
+        <div style="font-size:10.5px;color:var(--text3);margin-top:4px;border-top:1px dashed var(--border);padding-top:3px">cộng dồn <b>${this._m(cum, d)}</b> · <b>${rTxt}</b></div>
+      </div>`;
+    el.innerHTML = `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:11px;padding:9px 11px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:7px">
+          <span style="font-size:12px;font-weight:700;color:var(--text)">🧩 Chia 3 nhịp — mỗi nhịp <span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${this._m(one, d)}</span></span>
+          <span style="font-size:10.5px;color:var(--text3)">trần ${this._m(maxPos, d)} là <b>tổng cả 3 nhịp</b> · 1R = ${this._m(oneR, d)}</span>
+        </div>
+        <div class="tj-tranche" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px">
+          ${cell('①', 'Phiên breakout', 'ATC hoặc cuối phiên chiều, đủ 4 cửa xác nhận.', one, '0,33R')}
+          ${cell('②', 'Hàng về T+2', 'Hoặc retest pivot khối lượng thấp — giá vẫn trên pivot, không có phiên phân phối.', one * 2, '0,67R')}
+          ${cell('③', 'Nền tiếp theo', 'Thoát nền kế tiếp, hoặc phần trước đã lãi ≥ 1R. Chỉ thêm khi ĐANG LÃI.', maxPos, '1,00R')}
+        </div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.6;margin-top:7px">
+          Mua thêm ở giá cao hơn mà <b>giữ nguyên giá cắt lỗ</b> thì tổng lỗ vượt 1R — sau nhịp ② hãy kéo stop nhịp ① lên hoà vốn. Không đủ điều kiện nhịp ② thì <b>dừng ở 1/3 là kết quả đúng</b>, không phải làm dở.
+        </div>
+      </div>`;
   }
 
   // ══ HỘP GẤP LẠI ĐƯỢC ══
