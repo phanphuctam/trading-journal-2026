@@ -740,6 +740,29 @@ details.tjfold[open]>summary::before{transform:rotate(90deg)}
 details.tjfold>summary:hover::before{color:var(--accent)}
 .tj-actions-break{display:none}
 .tj-actions-toggle{display:none}
+/* ── Dòng châm ngôn chạy trên header ────────────────────────────────────────
+   Chỗ trống giữa hàng chỉ số và hàng nút. Băng chữ được nhân đôi trong JS rồi
+   dịch đúng 50% bề rộng nên vòng lặp liền mạch, không có khoảng hụt giữa hai
+   vòng. Tốc độ (giây) do JS tính theo bề rộng thật để chữ luôn trôi cùng một
+   vận tốc px/giây dù danh sách trích dẫn dài ngắn khác nhau. */
+/* flex-basis PHẢI là 0: băng chữ dài hàng chục nghìn px, để basis:auto thì nó đòi
+   đúng bề rộng nội dung và bóp nát hàng chỉ số bên trái. */
+.tj-mq{flex:1 1 0;min-width:0;height:52px;overflow:hidden;position:relative;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 32px,#000 calc(100% - 32px),transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 32px,#000 calc(100% - 32px),transparent 100%)}
+.tj-mq-track{display:flex;align-items:center;height:100%;width:max-content;will-change:transform;
+  animation:tjmq var(--tj-mq-dur,60s) linear infinite}
+.tj-mq:hover .tj-mq-track{animation-play-state:paused}
+.tj-mq-item{display:inline-flex;align-items:baseline;gap:var(--sp-2);padding:0 var(--sp-6);white-space:nowrap;
+  font-size:var(--fs-body);line-height:1;font-weight:600;color:var(--text)}
+.tj-mq-item b{font-weight:600;color:var(--text)}
+.tj-mq-au{font-size:var(--fs-eyebrow);font-weight:700;letter-spacing:var(--ls-eyebrow);text-transform:uppercase;color:var(--accent)}
+.tj-mq-sep{color:var(--accent);opacity:.55;font-weight:700}
+/* Chiều chạy: 'left' = chữ trôi sang trái, vào từ mép phải (mặc định);
+   'right' = trôi sang phải. Đổi bằng hằng TJ_MQ_DIR trong phần JS. */
+@keyframes tjmq{from{transform:translate3d(-50%,0,0)}to{transform:translate3d(0,0,0)}}
+@keyframes tjmq-left{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+@media(prefers-reduced-motion:reduce){.tj-mq-track{animation:none}}
 .tj-tabbar{position:sticky;top:0;z-index:40;margin:0 calc(var(--sp-4)*-1) var(--sp-3);padding:var(--sp-2) var(--sp-4);background:var(--panel);border-bottom:1px solid var(--border)}
 /* Tab khong xuong dong nen khi cot phai hep thi cho cuon ngang, khong cho tran */
 .tj-tabbar>div{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -771,6 +794,9 @@ details.tjfold>summary:hover::before{color:var(--accent)}
 #tjResizer::after{content:'';position:absolute;top:0;bottom:0;left:5px;width:1px;background:transparent;transition:background .15s,width .15s}
 #tjResizer:hover::after,#tjResizer.tj-dragging::after{background:var(--accent);width:3px;left:4px}
 @media(min-width:901px){#tjResizer{display:block}}
+/* Dưới 1320px khe còn lại hẹp hơn ~300px, chữ chạy qua quá nhanh để đọc kịp →
+   giấu hẳn và trả flex:1 lại cho hàng chỉ số (nếu không ô VỐN NẠP bị bóp mất chữ). */
+@media(max-width:1320px){.tj-mq{display:none!important}.tj-stats{flex:1 1 auto!important}}
 @media(max-width:900px){#tjResizer{display:none!important}#tjGrid{grid-template-columns:minmax(0,1fr)!important;overflow:visible!important;height:auto!important}#tjGrid>div{overflow-y:visible!important}html,body{overflow-x:hidden!important;overflow-y:auto!important}.tj-tabbar{top:52px}}
 @media(max-width:600px){
   html,body{overflow-x:hidden!important}
@@ -883,13 +909,17 @@ details.tjfold>summary:hover::before{color:var(--accent)}
     <div class="tj-lb" style="font-weight:400">{{ lbSubtitle }}</div>
   </div>
   <div style="width:1px;height:var(--sp-6);background:var(--border);flex-shrink:0"></div>
-  <div class="tj-stats" style="display:flex;align-items:flex-start;gap:var(--sp-5);flex:1;overflow:hidden;min-width:0">
+  <div class="tj-stats" style="display:flex;align-items:flex-start;gap:var(--sp-5);flex:0 0 auto;overflow:hidden;min-width:0">
     <div class="tj-cell"><div class="tj-lb">{{ lbAssets }}</div><div class="tj-num tj-num-lg" style="color:var(--accent)">{{ topBal }}</div></div>
     <div class="tj-cell"><div class="tj-lb">{{ lbTotalPL }}</div><div class="tj-num tj-num-lg" style="{{ topPLStyle }}">{{ topPL }}</div></div>
     <div class="tj-cell"><div class="tj-lb">{{ lbWinrate }}</div><div class="tj-num tj-num-lg" style="{{ topWRStyle }}">{{ topWR }}</div></div>
     <div class="tj-cell"><div class="tj-lb">{{ lbTotalR }}</div><div class="tj-num tj-num-lg" style="{{ topRStyle }}">{{ topR }}</div></div>
     <div class="tj-cell"><div class="tj-lb">{{ lbCapital }}</div><div class="tj-num tj-num-lg" style="color:var(--text2)">{{ topCapNow }}</div></div>
   </div>
+  <!-- Dòng châm ngôn Minervini / O'Neil — nội dung do _initMarquee() bơm MỘT lần
+       rồi thôi, không nằm trong vòng render, nên đổi tab / đổi tháng không làm
+       băng chữ nhảy về đầu. -->
+  <div class="tj-mq" id="tj_mq" title="Châm ngôn Minervini · O'Neil — rê chuột để dừng"><div class="tj-mq-track" id="tj_mqTrack"></div></div>
   <button class="tj-actions-toggle" onclick="{{ toggleActions }}" style="background:var(--border2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text2);cursor:pointer">{{ actionsToggleIcon }}</button>
   <div class="tj-actions" style="{{ actionsStyle }}">
     <button class="tj-abtn tj-abtn-accent" onclick="{{ toggleLang }}">{{ langBtn }}</button>
@@ -1250,6 +1280,44 @@ const TJ_NORM = a => (Array.isArray(a) ? a : []).map(t => {
 });
 const TJ_MILES = [900,1800,5000,10000,50000];
 const TJ_PAL = ['#D1BEFF','#BEFFCB','#FF6B6D','#7A5AD9','#1E8743','#FFB49B','#85806D','#C4ADFF','#969696'];
+// ── Châm ngôn chạy trên header ───────────────────────────────────────────────
+// Trích từ vault Obsidian (Desktop/CLAUDE CODE/Obsidian/01 Sách/Trading - Đầu tư).
+// Số trang ghi kèm để tra lại nguyên văn khi cần; câu nào Minervini/O'Neil dẫn của
+// người khác thì để tên người nói thật, không gán nhầm cho hai ông.
+const TJ_MQ_DIR = 'left';    // 'left' = chữ trôi sang trái (vào từ mép phải) · 'right' = ngược lại
+const TJ_MQ_SPEED = 42;      // px mỗi giây — nhỏ hơn thì chạy chậm hơn
+const TJ_QUOTES = [
+  ['Tôi luôn bắt đầu bằng câu hỏi "tôi có thể mất bao nhiêu tiền", chứ không phải "tôi có thể kiếm được bao nhiêu".','Minervini'],
+  ['Thua đúng còn hơn là thắng may.','Minervini'],
+  ['Vứt bỏ cái tôi đi và tập trung kiếm tiền.','Minervini'],
+  ['Trên thị trường chứng khoán, hoặc là bạn kiếm tiền hoặc là đưa ra lời xin lỗi — không thể làm cả hai.','Minervini'],
+  ['Mấu chốt không phải là biết cổ phiếu sẽ làm gì tiếp theo, mà là biết được bạn nên làm điều gì.','Minervini'],
+  ['Chỉ có một cách duy nhất để bảo vệ danh mục khỏi lỗ lớn: cắt sớm khi khoản lỗ còn nhỏ. Đừng để bông tuyết nhỏ thành quả cầu tuyết khổng lồ.','Minervini'],
+  ['Tôi muốn sở hữu quả bóng tennis, không phải quả trứng gà.','Minervini'],
+  ['Nếu trên đời tồn tại Chén Thánh, đó chính là sự thu hẹp độ biến động — VCP.','Minervini'],
+  ['Chỉ có một cách duy nhất để một cổ phiếu trở thành siêu hạng: nó phải liên tục thiết lập đỉnh cao mới.','Minervini'],
+  ['Đừng bao giờ tin vào mức giá đầu tiên trừ khi vị thế đó có lãi.','Minervini'],
+  ['Một hệ thống giao dịch cũng giống như đám cưới. Nếu bạn không chung thủy, đừng hy vọng nó mang lại hạnh phúc.','Minervini'],
+  ['Tôi chỉ vào lệnh khi hội đủ: cơ bản tốt, hành động giá xác nhận, khối lượng ủng hộ và thị trường chung thuận lợi.','Minervini'],
+  ['Hãy tháo chạy trước và đặt câu hỏi sau. Đừng tranh cãi với bảng điện.','Minervini'],
+  ['Bất kỳ khi nào bạn nhìn thấy một nơi rõ ràng để đặt lệnh dừng lỗ, thì mọi người cũng nhìn thấy nó.','Minervini'],
+  ['Luyện tập nhiều không giúp bạn giỏi. Chỉ luyện tập đúng mới giúp bạn giỏi.','Vince Lombardi'],
+  ['Losers average losers — chỉ kẻ thua cuộc mới bình quân giá xuống vị thế đang lỗ.','Paul Tudor Jones'],
+  ['Không có cổ phiếu tốt — tất cả chúng đều tồi, trừ khi chúng lên giá.',"O'Neil"],
+  ['Thực tế luôn luôn tốt hơn quan điểm của đa số mọi người.',"O'Neil"],
+  ['Bạn không thể mua một chiếc Mercedes với giá của một chiếc Chevrolet.',"O'Neil"],
+  ['Thu lợi 20–25% khi có thể; cắt lỗ tối đa 7–8% dưới giá mua.',"O'Neil"],
+  ['Tỉ lệ biến động của EPS là yếu tố riêng rẽ quan trọng nhất trong việc chọn lựa cổ phiếu.',"O'Neil"],
+  ['Trên chiến trường thị trường chứng khoán, cũng chỉ có những người quyết đoán và những xác chết mà thôi.',"O'Neil"],
+  ['Chưa từng có chu kỳ tăng trưởng nào bắt đầu mà không có ngày bùng nổ theo đà về cả giá lẫn khối lượng.',"O'Neil"],
+  ['Đừng lung lạc trước sự nổi tiếng và phổ biến rộng rãi của một cổ phiếu.',"O'Neil"],
+  ['Gần một nửa biến động giá của một cổ phiếu đến từ nhóm ngành của nó.',"O'Neil"],
+  ['Bò làm ra tiền, gấu cũng làm ra tiền, chỉ có lũ heo là bị mổ thịt.','Ngạn ngữ Phố Wall'],
+  ['Chỉ có kẻ ngốc mới giữ cổ phiếu để chờ giá lên đến đỉnh.','Joe Kennedy'],
+  ['Thị trường không bao giờ sai, chỉ có quan điểm đánh giá của bạn là thường xuyên sai lầm.','Jesse Livermore'],
+  ['Tiền là của bạn. Nó chỉ ở lại với bạn chừng nào bạn còn bảo vệ nó.','Jesse Livermore'],
+  ['Đoán đúng 3–4 trên 10 lần vẫn đem lại cả gia tài, nếu biết cắt lỗ thật nhanh khi phát hiện mình sai.','Bernard Baruch'],
+];
 const TJ_TR = {
   vi: {
     subtitle:'2026–2036 · 1R = {r}% tài sản',
@@ -4308,9 +4376,19 @@ class Component extends DCLogic {
   }
 
   _drawChartWhenReady(fn) { if (typeof Chart === 'undefined') { setTimeout(() => this._drawChartWhenReady(fn), 30); return; } fn(); }
-  _drawLineChart() { clearTimeout(this._lineTimer); this._lineTimer = setTimeout(() => this._drawChartWhenReady(() => this._drawLineChartInner()), 120); }
+  // anim=true → vẽ lại kèm hiệu ứng quét từ trái sang phải. Chỉ bật ở những lần
+  // NGƯỜI DÙNG gây ra (mở app, đổi T/Q/N, quay lại tab Overview); vẽ lại do kéo
+  // chia cột hay resize cửa sổ thì thôi, không thì đường tài sản nháy liên tục.
+  // Cờ cộng dồn vì một thao tác có thể gọi hàm này hai lần (setState + callback),
+  // chỉ có lần vẽ cuối trong 120ms debounce là thật.
+  _drawLineChart(anim) {
+    this._lineAnim = this._lineAnim || !!anim;
+    clearTimeout(this._lineTimer);
+    this._lineTimer = setTimeout(() => this._drawChartWhenReady(() => this._drawLineChartInner()), 120);
+  }
   _drawLineChartInner() {
     const canvas = document.getElementById('tj_lineCanvas'); if (!canvas) return;
+    if (this._lineRaf) { cancelAnimationFrame(this._lineRaf); this._lineRaf = 0; }
     try { if (this.lineChart) this.lineChart.destroy(); } catch(e) {}
     this.lineChart = null;
     const par = canvas.parentElement;
@@ -4397,8 +4475,33 @@ class Component extends DCLogic {
         } catch(_) {}
       }
     };
+    // ── Hiệu ứng quét: cắt (clip) vùng vẽ theo bề rộng đang lớn dần ──────────
+    // Không dùng animation sẵn của Chart.js vì ở đây có hai plugin tự vẽ (nhãn giá
+    // trị, vạch milestone) — clip cả khung mới làm chúng lộ ra đồng thời với đường.
+    // Plugin đứng CUỐI mảng: beforeDatasetsDraw chạy sau cùng nên clip bọc trọn
+    // phần dữ liệu, afterDraw cũng chạy sau msPlugin nên vạch milestone nằm trong
+    // clip. Trục và lưới vẽ trước đó, không bị cắt — khung luôn đứng yên đủ hình.
+    const anim = this._lineAnim && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this._lineAnim = false;
+    // rev là biến bao (closure), phải tồn tại TRƯỚC new Chart() vì lần vẽ đầu tiên
+    // xảy ra ngay trong hàm dựng — gắn thuộc tính lên chart sau đó thì đã muộn.
+    const rev = { p: anim ? 0 : 1, clipped: false };
+    const revealPlugin = {
+      id:'tjReveal',
+      beforeDatasetsDraw(chart) {
+        if (rev.p >= 1) return;
+        const { ctx:cx, chartArea:ca } = chart; if (!ca) return;
+        cx.save(); cx.beginPath();
+        cx.rect(0, 0, ca.left + (ca.right - ca.left) * rev.p + 1, chart.height); cx.clip();
+        rev.clipped = true;
+      },
+      afterDraw(chart) {
+        if (!rev.clipped) return;
+        chart.ctx.restore(); rev.clipped = false;
+      }
+    };
     this.lineChart = new Chart(ctx, {
-      type:'line', plugins:[labelPlugin, msPlugin],
+      type:'line', plugins:[labelPlugin, msPlugin, revealPlugin],
       data: {
         labels,
         datasets: [
@@ -4432,6 +4535,19 @@ class Component extends DCLogic {
         }
       }
     });
+    // Vòng lặp quét — easeOutCubic để đoạn cuối chậm lại, nhìn có điểm dừng rõ.
+    // Dừng ngay nếu biểu đồ đã bị thay bằng bản vẽ khác giữa chừng.
+    if (anim) {
+      const ch = this.lineChart, dur = 900, t0 = performance.now();
+      const step = now => {
+        if (this.lineChart !== ch) return;
+        const k = Math.min(1, (now - t0) / dur);
+        rev.p = 1 - Math.pow(1 - k, 3);
+        try { ch.draw(); } catch(e) { rev.p = 1; return; }
+        this._lineRaf = k < 1 ? requestAnimationFrame(step) : 0;
+      };
+      this._lineRaf = requestAnimationFrame(step);
+    }
   }
 
   _drawDonutChart() { clearTimeout(this._donutTimer); this._donutTimer = setTimeout(() => this._drawChartWhenReady(() => this._drawDonutChartInner()), 120); }
@@ -4541,9 +4657,9 @@ class Component extends DCLogic {
       addSetup: ()=>this.addSetup(),
       calPrev: ()=>this.setState(s=>{let m=s.calMonth-1,y=s.calYear;if(m<0){m=11;y--;}return{calMonth:m,calYear:y};}),
       calNext: ()=>this.setState(s=>{let m=s.calMonth+1,y=s.calYear;if(m>11){m=0;y++;}return{calMonth:m,calYear:y};}),
-      setLineM: ()=>this.setState({lineMode:'m'},()=>{this._renderChartControls();this._drawLineChart();}),
-      setLineQ: ()=>this.setState({lineMode:'q'},()=>{this._renderChartControls();this._drawLineChart();}),
-      setLineY: ()=>this.setState({lineMode:'y'},()=>{this._renderChartControls();this._drawLineChart();}),
+      setLineM: ()=>this.setState({lineMode:'m'},()=>{this._renderChartControls();this._drawLineChart(true);}),
+      setLineQ: ()=>this.setState({lineMode:'q'},()=>{this._renderChartControls();this._drawLineChart(true);}),
+      setLineY: ()=>this.setState({lineMode:'y'},()=>{this._renderChartControls();this._drawLineChart(true);}),
       setDonutRes: ()=>this.setState({donutMode:'res'},()=>{this._renderChartControls();this._drawDonutChart();}),
       setDonutSetup: ()=>this.setState({donutMode:'setup'},()=>{this._renderChartControls();this._drawDonutChart();}),
       setDonutEmo: ()=>this.setState({donutMode:'emo'},()=>{this._renderChartControls();this._drawDonutChart();}),
@@ -4584,13 +4700,16 @@ class Component extends DCLogic {
     if (this.state.rightTab==='overview') {
       const lineDirty = ps.trades!==this.state.trades||ps.deposits!==this.state.deposits||ps.lineMode!==this.state.lineMode||ps.rightTab!==this.state.rightTab||langChanged;
       const donutDirty = ps.trades!==this.state.trades||ps.donutMode!==this.state.donutMode||ps.rightTab!==this.state.rightTab||langChanged;
-      if (lineDirty) this._drawLineChart();
+      // Quét lại chỉ khi đổi T/Q/N hoặc vừa quay về tab Overview — sửa một dòng
+      // trong nhật ký thì vẽ thẳng, không bắt xem hoạt ảnh lần nữa.
+      if (lineDirty) this._drawLineChart(ps.lineMode!==this.state.lineMode||ps.rightTab!==this.state.rightTab);
       if (donutDirty) this._drawDonutChart();
     }
   }
 
   componentWillUnmount() {
     clearTimeout(this._lineTimer); clearTimeout(this._donutTimer);
+    if (this._lineRaf) { cancelAnimationFrame(this._lineRaf); this._lineRaf = 0; }
     if (this.lineChart) { this.lineChart.destroy(); this.lineChart=null; }
     if (this.donutChart) { this.donutChart.destroy(); this.donutChart=null; }
     delete window._tj;
@@ -4659,10 +4778,38 @@ class Component extends DCLogic {
     this._drawLineChart(); this._drawDonutChart();
   }
 
+  // ══ DÒNG CHÂM NGÔN CHẠY TRÊN HEADER ═══════════════════════════════════════
+  // Bơm nội dung đúng một lần (cờ _tjSetup). Băng chữ gồm HAI bản danh sách nối
+  // nhau, animation dịch đúng 50% bề rộng → hết bản thứ nhất là bản thứ hai đã
+  // nằm đúng vị trí cũ, mắt không thấy điểm nối. Thứ tự trích dẫn xáo mỗi lần mở
+  // để không phải lúc nào cũng đọc đúng mấy câu đầu.
+  _initMarquee() {
+    const track = document.getElementById('tj_mqTrack');
+    if (!track || track._tjSetup) return;
+    track._tjSetup = true;
+    const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const qs = TJ_QUOTES.slice();
+    for (let i = qs.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [qs[i],qs[j]] = [qs[j],qs[i]]; }
+    const strip = qs.map(q =>
+      '<span class="tj-mq-item"><span class="tj-mq-sep">&ldquo;</span><b>' + esc(q[0]) +
+      '</b><span class="tj-mq-au">' + esc(q[1]) + '</span></span>'
+    ).join('');
+    track.innerHTML = strip + strip;
+    if (TJ_MQ_DIR === 'left') track.style.animationName = 'tjmq-left';
+    // Đo bề rộng MỘT bản (nửa băng) rồi quy ra thời lượng, để tốc độ px/giây không
+    // đổi khi thêm bớt câu. requestAnimationFrame để chờ font Be Vietnam Pro xong.
+    const setDur = () => {
+      const half = track.scrollWidth / 2;
+      if (half > 10) track.style.setProperty('--tj-mq-dur', Math.round(half / TJ_MQ_SPEED) + 's');
+    };
+    requestAnimationFrame(setDur);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(setDur).catch(()=>{});
+  }
+
   _initAll() {
-    this._initResizer();
+    this._initResizer(); this._initMarquee();
     this._renderKPI(); this._renderTable(); this._renderFund(); this._renderNotes();
-    this._renderChartControls(); this._drawLineChart(); this._drawDonutChart(); this._updatePreview();
+    this._renderChartControls(); this._drawLineChart(true); this._drawDonutChart(); this._updatePreview();
   }
 
   renderVals() {
@@ -4777,7 +4924,7 @@ class Component extends DCLogic {
       doExportCSV: this.doExportCSV, doBackup: this.doBackup, doRestore: this.doRestore, doImportCSV: this.doImportCSV, doDriveBackup: this.doDriveBackup, doDriveRestore: this.doDriveRestore,
       onSearch: () => { this._cache=null; this.forceUpdate(); },
       onFilter: () => { this._cache=null; this.forceUpdate(); },
-      goOverview: () => this.setState({rightTab:'overview'},()=>{this._renderFund();this._renderNotes();this._renderChartControls();this._drawLineChart();this._drawDonutChart();}),
+      goOverview: () => this.setState({rightTab:'overview'},()=>{this._renderFund();this._renderNotes();this._renderChartControls();this._drawLineChart(true);this._drawDonutChart();}),
       goSetups: () => this.setState({rightTab:'setups'},()=>this._renderSetupStats()),
       goEmotions: () => this.setState({rightTab:'emotions'},()=>this._renderEmotionStats()),
       goCalendar: () => this.setState({rightTab:'calendar'},()=>this._renderCalendar()),
