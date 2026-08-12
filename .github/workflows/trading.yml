@@ -4,7 +4,16 @@ on:
   schedule:
     - cron: '0 2 * * 6'          # 09:00 sang thu Bay VN — so lieu watchlist + check watchlist
     - cron: '*/30 2-8 * * 1-5'   # phien HOSE (09:00-15:00 VN = 02:00-08:00 UTC); script tu bo qua ngoai gio
-  workflow_dispatch: {}
+  # Bam tay tu journal (nut "Cap nhat ngay" / "Cham bang may"). Cron cua GitHub tren
+  # ban mien phi bi tri hoan 1-1,5 tieng va bo bot lan chay — nen phai co duong bam tay,
+  # neu khong thi cong tac tong hien so lieu cua hom qua ma nguoi dung khong lam gi duoc.
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'regime = chi cong tac tong VN-Index (~1 phut) | full = them so lieu watchlist + co ban (~10-30 phut)'
+        type: choice
+        options: [regime, full]
+        default: regime
 
 permissions:
   contents: write
@@ -43,12 +52,12 @@ jobs:
       # Cong tac tong: chi 1 request (VN-Index) nen chay ca trong phien, khong doi
       # den thu Bay. Cong chan lenh trong journal doc file nay, no phai luon tuoi.
       - name: Cong tac tong VN-Index (trong phien)
-        if: github.event.schedule == '*/30 2-8 * * 1-5'
+        if: github.event.schedule == '*/30 2-8 * * 1-5' || (github.event_name == 'workflow_dispatch' && inputs.mode != 'full')
         continue-on-error: true
         run: python automation/regime.py
 
       - name: So lieu watchlist + check watchlist (9h sang thu Bay VN)
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 2 * * 6'
+        if: github.event.schedule == '0 2 * * 6' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full')
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

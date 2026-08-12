@@ -1997,9 +1997,16 @@ class Component extends DCLogic {
     if (!this.state.watchlist.some(x => String(x.symbol || '').toUpperCase() === sym)) {
       w.push(`• ${sym} KHÔNG có trong watchlist — đây là lệnh ngoài kế hoạch.`);
     }
-    const reg = this._regimeCache && this._regimeCache.regime;
-    if (t.a === 'Buy' && reg && reg.state !== 'ON') {
-      w.push(`• Thị trường đang ĐỨNG NGOÀI: ${reg.reason}. VN không cho bán khống — lúc này giữ tiền mặt.`);
+    // Công tắc tay (nếu có) đè lên công tắc máy — nhưng vẫn phải để lại dấu vết trong
+    // cảnh báo: "tôi tự bật" là một quyết định, và quyết định thì phải đọc lại được.
+    const eff = this._regimeEff();
+    if (t.a === 'Buy' && eff.state && eff.state !== 'ON') {
+      w.push(eff.manual === 'OFF'
+        ? `• Bạn đã tự đặt công tắc tổng sang ĐỨNG NGOÀI hôm nay. VN không cho bán khống — lúc này giữ tiền mặt.`
+        : `• Thị trường đang ĐỨNG NGOÀI: ${eff.auto.reason}. VN không cho bán khống — lúc này giữ tiền mặt.`);
+    }
+    if (t.a === 'Buy' && eff.manual === 'ON' && eff.auto && eff.auto.state !== 'ON') {
+      w.push(`• Công tắc tổng đang BẬT BẰNG TAY: máy vẫn chấm đứng ngoài (${eff.auto.reason}). Bạn tự chịu trách nhiệm cho lệnh này.`);
     }
     // Yếu tố cơ bản (thêm 2026-08-08). Trước đây bảng Cơ bản chỉ là tờ giấy nháp:
     // đánh ✕ vào "kiểm toán ngoại trừ" xong vẫn ghi lệnh mua được, không một tiếng động.
@@ -2373,19 +2380,31 @@ class Component extends DCLogic {
     this._toast(this._tr().wlToastExport, 'var(--accent)');
   }
 
-  // ── Đẩy watchlist thẳng lên GitHub (bỏ bước Downloads + .bat) ──
-  pushWatchlist = async () => {
-    const tr = this._tr();
+  // ── PAT dùng chung cho mọi việc gọi GitHub ──
+  // Đẩy watchlist chỉ cần Contents RW. Bấm chạy bot cần thêm Actions RW — token cũ
+  // sẽ trả 403 ở đúng chỗ đó và app nói thẳng phải bật quyền nào.
+  _ghPat() {
     let pat = (localStorage.getItem('tj_gh_pat') || '').trim();
     if (!pat) {
-      pat = (prompt(tr.ghPatPrompt) || '').trim();
-      if (!pat) return;
+      pat = (prompt(this._tr().ghPatPrompt) || '').trim();
+      if (!pat) return '';
       localStorage.setItem('tj_gh_pat', pat);
     }
+    return pat;
+  }
+
+  _ghHdrs(pat) { return { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json' }; }
+
+  // ── Đẩy watchlist thẳng lên GitHub (bỏ bước Downloads + .bat) ──
+  // quiet = gọi từ nút "Chấm bằng máy" (đẩy watchlist chỉ là bước 1, đừng nhảy toast
+  // giữa chừng). Trả true nếu watchlist trên GitHub đã khớp với máy này.
+  pushWatchlist = async (quiet) => {
+    const tr = this._tr();
+    const pat = this._ghPat(); if (!pat) return false;
     const api = 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_WL_PATH;
-    const hdrs = { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json' };
+    const hdrs = this._ghHdrs(pat);
     try {
-      this._toast(tr.wlPushing, 'var(--accent)');
+      if (!quiet) this._toast(tr.wlPushing, 'var(--accent)');
       const g = await fetch(api + '?ref=' + GH_BRANCH, { headers: hdrs, cache: 'no-store' });
       let sha = null, oldB64 = null;
       if (g.status === 200) { const j = await g.json(); sha = j.sha; oldB64 = (j.content || '').replace(/\s/g, ''); }
@@ -2394,7 +2413,7 @@ class Component extends DCLogic {
       const data = this.state.watchlist.map(w => ({ symbol: w.symbol, pivot: w.pivot, stop: w.stop == null ? null : w.stop, note: w.note || '', cc: w.cc || 'USD' }));
       const body = JSON.stringify(data, null, 2) + '\n';
       const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(body)));
-      if (oldB64 && oldB64 === b64) { this._toast(tr.wlPushNoChange, 'var(--accent)'); return; }
+      if (oldB64 && oldB64 === b64) { if (!quiet) this._toast(tr.wlPushNoChange, 'var(--accent)'); return true; }
       const put = await fetch(api, { method: 'PUT', headers: hdrs, body: JSON.stringify({
         message: 'Cap nhat watchlist tu journal ' + new Date().toISOString().slice(0, 16).replace('T', ' '),
         content: b64, branch: GH_BRANCH, ...(sha ? { sha } : {}) }) });
@@ -2403,8 +2422,134 @@ class Component extends DCLogic {
         const e = await put.json().catch(() => ({}));
         throw new Error('HTTP ' + put.status + (e.message ? ' — ' + e.message : ''));
       }
-      this._toast(tr.wlPushed, 'var(--green)');
-    } catch (e) { alert(tr.wlPushErr + '\n' + ((e && e.message) || e)); }
+      if (!quiet) this._toast(tr.wlPushed, 'var(--green)');
+      return true;
+    } catch (e) { alert(tr.wlPushErr + '\n' + ((e && e.message) || e)); return false; }
+  }
+
+  // ══ BẤM CHẠY BOT TRÊN GITHUB ACTIONS ══
+  // Vì sao cần nút này: cron của GitHub bản miễn phí KHÔNG đúng giờ. Lịch đặt 30 phút/lần
+  // trong phiên (13 lần/ngày) nhưng thực tế chỉ chạy 5-6 lần, mỗi lần trễ 1-1,5 tiếng, và
+  // có ngày không chạy lần nào — sáng 12/08/2026 công tắc tổng vẫn hiện số của 16:28 hôm
+  // trước trong khi VN-Index đã vượt MA50. Cron là lịch "cố gắng", không phải cam kết.
+  //
+  // Nút này không biến app thành thời gian thực (xem _regimeAge: mọi nguồn dữ liệu VN
+  // miễn phí đều chặn CORS nên trình duyệt không tự lấy giá được). Nó đưa độ trễ từ
+  // "một ngày" về "vài phút", và phần còn lại thì để người tự quyết bằng công tắc tay.
+  //
+  // PAT phải bật thêm quyền Actions: Read and write. Token cũ chỉ có Contents RW sẽ 403.
+  async _ghRunBot(mode, label) {
+    const pat = this._ghPat(); if (!pat) return;
+    const hdrs = this._ghHdrs(pat);
+    const base = 'https://api.github.com/repos/' + GH_REPO;
+    const badPerm = 'GitHub từ chối (403). Token cần bật thêm quyền "Actions: Read and write" '
+      + '— vào github.com/settings/personal-access-tokens, sửa token của repo trading-journal-2026, '
+      + 'thêm Actions: Read and write rồi bấm lại. (Contents RW chỉ đủ để đẩy watchlist.)';
+    this._botMsg(label + '…', 'var(--accent)');
+    try {
+      const t0 = Date.now();
+      const r = await fetch(base + '/actions/workflows/trading.yml/dispatches', {
+        method: 'POST', headers: hdrs,
+        body: JSON.stringify({ ref: GH_BRANCH, inputs: { mode } }) });
+      if (r.status === 403) throw new Error(badPerm);
+      if (r.status === 401) { localStorage.removeItem('tj_gh_pat'); throw new Error(this._tr().ghBadToken); }
+      if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error('HTTP ' + r.status + (e.message ? ' — ' + e.message : '')); }
+
+      // Chờ chạy xong. regime chỉ 1 request VN-Index (~1 phút); full phải tải OHLCV +
+      // BCTC cho cả watchlist, vnstock bản cộng đồng giới hạn 20 request/phút nên lâu.
+      const limit = mode === 'full' ? 40 * 60000 : 6 * 60000;
+      let run = null;
+      while (Date.now() - t0 < limit) {
+        // 6 giây trong 2 phút đầu (lúc còn xếp hàng, muốn biết ngay), sau đó 20 giây —
+        // hỏi 6 giây/lần suốt 40 phút là 400 lượt gọi API cho một câu trả lời không đổi.
+        await new Promise(s => setTimeout(s, Date.now() - t0 < 120000 ? 6000 : 20000));
+        const q = await fetch(base + '/actions/runs?event=workflow_dispatch&per_page=5',
+          { headers: hdrs, cache: 'no-store' });
+        if (!q.ok) continue;
+        const j = await q.json();
+        const cand = (j.workflow_runs || []).find(x => new Date(x.created_at).getTime() >= t0 - 60000);
+        if (cand) run = cand;
+        const mins = Math.round((Date.now() - t0) / 60000);
+        this._botMsg(`${label}… ${run ? run.status === 'in_progress' ? 'đang chạy' : run.status : 'đang xếp hàng'}`
+          + (mins ? ` (${mins} phút)` : ''), 'var(--accent)');
+        if (run && run.status === 'completed') break;
+      }
+      if (!run || run.status !== 'completed') throw new Error('Quá thời gian chờ — mở github.com/' + GH_REPO + '/actions để xem.');
+      if (run.conclusion !== 'success') throw new Error('Lần chạy kết thúc "' + run.conclusion + '" — mở github.com/' + GH_REPO + '/actions để xem log.');
+
+      const n = await this._ghFetchScans(pat);
+      this._botMsg(n ? 'Xong — đã lấy số liệu mới.' : 'Bot chạy xong nhưng số liệu không đổi.',
+        n ? 'var(--green)' : 'var(--amber)');
+      setTimeout(() => this._botMsg(''), 6000);
+    } catch (e) {
+      this._botMsg('');
+      alert('Không chạy được bot.\n\n' + ((e && e.message) || e));
+    }
+  }
+
+  // Lấy scans/*.json qua Contents API thay vì đường dẫn tương đối.
+  // Lý do: file trong repo được cập nhật ngay khi bot commit, nhưng bản trên GitHub Pages
+  // phải chờ Pages build lại (1-2 phút) — bấm nút xong mà vẫn thấy số cũ thì vô nghĩa.
+  async _ghFetchScans(pat) {
+    const hdrs = { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github.raw' };
+    const one = async (p) => {
+      try {
+        const r = await fetch('https://api.github.com/repos/' + GH_REPO + '/contents/' + p + '?ref=' + GH_BRANCH,
+          { headers: hdrs, cache: 'no-store' });
+        return r.ok ? JSON.parse(await r.text()) : null;
+      } catch (e) { return null; }
+    };
+    const before = (this._regimeCache && this._regimeCache.checked_at) || '';
+    const [reg, st, fu] = await Promise.all([
+      one('scans/regime_vn.json'), one('scans/watch_stats.json'), one('scans/fund_vn.json')]);
+    if (reg) this._regimeCache = reg;
+    if (st) this._statsCache = st;
+    if (fu) this._fundCache = fu;
+    this._renderFA(); this._renderTA(); this._renderWatchlist();
+    return reg && reg.checked_at !== before;
+  }
+
+  // Dòng trạng thái dùng chung cho mọi nút gọi bot (công tắc tổng, cơ bản, kỹ thuật).
+  _botMsg(txt, col) {
+    this._botState = txt ? { txt, col: col || 'var(--text3)' } : null;
+    const els = document.querySelectorAll('[data-botmsg]');
+    // Tab Cơ bản / Kỹ thuật chỉ chèn ô trạng thái khi có việc đang chạy — lần gọi đầu
+    // chưa có chỗ để ghi, phải vẽ lại bảng một lần rồi các lần sau mới cập nhật tại chỗ.
+    if (!els.length) { this._renderFA(); this._renderTA(); this._renderWatchlist(); return; }
+    els.forEach(el => {
+      el.innerHTML = txt ? `<span class="ti ti-rotate"></span> ${txt}` : '';
+      el.style.color = (this._botState && this._botState.col) || 'var(--text3)';
+    });
+  }
+
+  _botMsgHtml() {
+    const b = this._botState;
+    return `<span data-botmsg style="font-size:10px;color:${b ? b.col : 'var(--text3)'}">${
+      b ? `<span class="ti ti-rotate"></span> ${b.txt}` : ''}</span>`;
+  }
+
+  runBotRegime = () => this._ghRunBot('regime', 'Đang cập nhật công tắc tổng')
+
+  // Chấm bằng máy = đẩy watchlist lên trước (mã mới thêm chưa có trên GitHub thì bot
+  // không biết đường tính), rồi chạy watch_stats.py + fund_vn.py cho cả watchlist.
+  runBotScore = async () => {
+    const ok = await this.pushWatchlist(true);
+    if (!ok) return;
+    await this._ghRunBot('full', 'Đang chấm bằng máy (tải giá + BCTC)');
+  }
+
+  // Nút "Chấm bằng máy" dùng chung cho tab Cơ bản và tab Kỹ thuật.
+  // Bot chỉ tính cho các mã trong watchlist.json, nên mã gõ tay mà chưa thêm vào
+  // watchlist thì bấm cũng không ra số — nói thẳng ra thay vì hiện nút chết.
+  _botScoreBtn(t) {
+    if (!t) return '';
+    if (!this.state.watchlist.some(w => String(w.symbol || '').toUpperCase() === t)) {
+      return `<span style="font-size:10px;color:var(--text3);line-height:1.5">Thêm <b>${t}</b> vào watchlist rồi mới chấm được bằng máy.</span>`;
+    }
+    const has = !!this._fund(t) || !!this._wstat(t);
+    return `<button onclick="window._tj.runBotScore()" class="tj-abtn"
+      style="background:${has ? 'transparent' : 'var(--accent)'};border-color:var(--accent);color:${has ? 'var(--accent)' : 'var(--btn-fg)'};font-weight:700"
+      title="Đẩy watchlist lên GitHub rồi chạy watch_stats.py + fund_vn.py cho toàn bộ watchlist, xong thì nạp số về đây. Mất 10-30 phút vì vnstock bản cộng đồng giới hạn 20 request/phút — cứ để tab mở."><span class="ti ti-zap"></span> ${has ? 'Chấm lại' : 'Chấm'} bằng máy</button>`;
   }
 
   _renderWatchlist() {
@@ -2930,7 +3075,7 @@ class Component extends DCLogic {
     const w = this.state.watchlist.find(x => String(x.symbol || '').toUpperCase() === t);
     if (k === 'taliq') {
       const s = this._wstat(t);
-      if (!s) return box('var(--text3)', `Chưa có số liệu cho ${t} — chạy <b>python automation/watch_stats.py</b> (mã trong watchlist thì bot tự chạy).`);
+      if (!s) return box('var(--text3)', `Chưa có số liệu cho ${t}. Bấm <b>Chấm bằng máy</b> ở đầu bảng, hoặc chạy <b>python automation/watch_stats.py</b>. (Bot tự chạy 9h sáng thứ Bảy cho mọi mã trong watchlist — thêm mã giữa tuần thì phải bấm tay.)`);
       const thin = s.adtv < 20;
       return box(thin ? 'var(--red)' : 'var(--green)',
         `GTGD TB20: <b style="color:${thin ? 'var(--red)' : 'var(--green)'}">${this._fmt(s.adtv, 1)} tỷ/phiên</b> ${thin ? '— DƯỚI ngưỡng 20 tỷ, sổ lệnh quá mỏng' : '— đạt ngưỡng 20 tỷ'}`
@@ -3044,10 +3189,12 @@ class Component extends DCLogic {
           <button onclick="window._tj.openAllTA()" ${t ? '' : 'disabled'} class="tj-abtn" style="background:var(--accent);border-color:var(--accent);color:var(--btn-fg);font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4}">Mở đồ thị ↗</button>
           <button onclick="window._tj.openFA('${esc(t)}')" ${t ? '' : 'disabled'} class="tj-abtn" style="background:transparent;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4}" title="Mở bảng cơ bản của cùng mã"><span class="ti ti-flask"></span> Cơ bản</button>
           ${ta.read ? `<button onclick="window._tj.resetTA()" class="tj-abtn" style="background:transparent;color:var(--text3)" title="Xoá hết đánh dấu để chấm lại theo đồ thị hôm nay"><span class="ti ti-rotate"></span> Chấm lại</button>` : ''}
+          ${this._botScoreBtn(t)}
         </div>
+        ${this._botState ? `<div style="padding:0 14px 6px">${this._botMsgHtml()}</div>` : ''}
         ${chips ? `<div style="padding:2px 14px 8px;display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="font-size:9.5px;color:var(--text3)">watchlist:</span>${chips}</div>` : ''}
         <div style="padding:0 14px 14px">${rows}
-          <div style="font-size:11px;color:var(--text3);line-height:1.6;margin-top:12px">Tối thiểu để vào lệnh: <b>${ta.mustTotal} cửa BẮT BUỘC</b> đều đạt${t && ta.mustLeft > 0 ? ` — <b style="color:var(--amber)">còn ${ta.mustLeft} cửa chưa chấm</b>` : ''}. Cổng chặn lệnh sẽ hỏi lại nếu bạn mua mã chưa đủ cửa.<br><b>Bảng này không có gợi ý máy</b> — nền giá và hành vi nến phải nhìn bằng mắt trên đồ thị, đó là lý do việc chọn cổ phiếu đã chuyển sang lọc tay từ 07/08/2026.</div>
+          <div style="font-size:11px;color:var(--text3);line-height:1.6;margin-top:12px">Tối thiểu để vào lệnh: <b>${ta.mustTotal} cửa BẮT BUỘC</b> đều đạt${t && ta.mustLeft > 0 ? ` — <b style="color:var(--amber)">còn ${ta.mustLeft} cửa chưa chấm</b>` : ''}. Cổng chặn lệnh sẽ hỏi lại nếu bạn mua mã chưa đủ cửa.<br><b>Máy chỉ điền được cửa 2 (thanh khoản)</b> — nền giá và hành vi nến phải nhìn bằng mắt trên đồ thị, đó là lý do việc chọn cổ phiếu đã chuyển sang lọc tay từ 07/08/2026. Nút "Chấm bằng máy" chạy watch_stats.py + fund_vn.py, không chấm hộ ba cửa còn lại.</div>
         </div>
       </div>`;
     const i = document.getElementById('taSymInp');
@@ -3663,9 +3810,11 @@ class Component extends DCLogic {
           <button onclick="window._tj.openAllFA()" ${t ? '' : 'disabled'} class="tj-abtn" style="background:var(--accent);border-color:var(--accent);color:var(--btn-fg);font-weight:700;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4}">Mở tất cả ↗</button>
           ${nAuto ? `<button onclick="window._tj.applyFAAuto()" class="tj-abtn" style="background:var(--green-soft);border-color:var(--green);color:var(--green);font-weight:700" title="Đánh dấu ✓/✕ theo gợi ý của máy cho ${nAuto} mục — vẫn sửa lại từng mục được"><span class="ti ti-zap"></span> Gợi ý máy (${nAuto})</button>` : ''}
           <button onclick="window._tj.faToNote()" ${t ? '' : 'disabled'} class="tj-abtn" style="background:transparent;cursor:${t ? 'pointer' : 'default'};opacity:${t ? 1 : .4}" title="Ghi kết quả vào ghi chú của mã trong watchlist">→ Ghi chú</button>
+          ${this._botScoreBtn(t)}
         </div>
+        ${this._botState ? `<div style="padding:0 14px 6px">${this._botMsgHtml()}</div>` : ''}
         ${chips ? `<div style="padding:2px 14px 8px;display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="font-size:9.5px;color:var(--text3)">watchlist:</span>${chips}</div>` : ''}
-        ${t && !this._fund(t) ? `<div style="padding:0 14px 8px;font-size:11px;color:var(--text3);line-height:1.6">Chưa có số máy điền cho ${esc(t)} — chạy <b>python automation/fund_vn.py ${esc(t)}</b> (mã trong watchlist thì bot tự chạy).</div>` : ''}
+        ${t && !this._fund(t) ? `<div style="padding:0 14px 8px;font-size:11px;color:var(--text3);line-height:1.6">Chưa có số máy điền cho ${esc(t)}. Bấm <b>Chấm bằng máy</b> ở trên, hoặc chạy <b>python automation/fund_vn.py ${esc(t)}</b>. (Bot tự chạy 9h sáng thứ Bảy cho mọi mã trong watchlist — thêm mã giữa tuần thì phải bấm tay.)</div>` : ''}
         <div style="padding:0 14px 14px">${rows}
           <div style="font-size:11px;color:var(--text3);line-height:1.6;margin-top:12px">Tối thiểu để vào lệnh: <b>${fa.mustTotal} mục BẮT BUỘC</b> đều đạt${t && fa.mustLeft > 0 ? ` — <b style="color:var(--amber)">còn ${fa.mustLeft} mục chưa đọc</b>` : ''}. Đánh dấu ✓/✕ lưu trên máy bạn theo từng mã, và cổng chặn lệnh sẽ hỏi lại nếu bạn mua mã chưa đạt.<br><b>Máy chỉ gợi ý</b> — nó áp ngưỡng trong sách vào số trong báo cáo, không hiểu câu chuyện của doanh nghiệp. Bấm link nguồn ở mỗi bước để tự kiểm.</div>
         </div>
@@ -3715,31 +3864,116 @@ class Component extends DCLogic {
 
   reloadScan = () => { this._regimeCache = undefined; this._loadRegimeData(); }
 
+  // ══ SỐ LIỆU CÔNG TẮC TỔNG CŨ ĐẾN ĐÂU ══
+  // Không có cách nào lấy VN-Index thời gian thực từ trang tĩnh: TCBS đứng sau Cloudflare
+  // challenge, VNDirect không phản hồi, SSI/DNSE không trả Access-Control-Allow-Origin —
+  // trình duyệt bị CORS chặn hết. Nên thay vì giả vờ tươi, app nói thẳng số liệu cũ bao lâu.
+  _vnNow() { return new Date(Date.now() + (new Date().getTimezoneOffset() + 420) * 60000); }
+
+  _vnDate() {
+    const n = this._vnNow();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+  }
+
+  _regimeAge(d) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec((d && d.checked_at) || '');
+    if (!m) return null;
+    const at = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+    const now = this._vnNow();
+    const mins = Math.max(0, Math.round((now - at) / 60000));
+    // Phiên HOSE 09:00-15:00, thứ Hai đến thứ Sáu. Ngoài phiên thì số liệu của phiên
+    // gần nhất vẫn đúng — chỉ trong phiên mới có chuyện chỉ số đã đổi mà bảng chưa đổi.
+    const h = now.getHours() + now.getMinutes() / 60;
+    const inSession = now.getDay() >= 1 && now.getDay() <= 5 && h >= 9 && h <= 15;
+    const sameDay = at.toDateString() === now.toDateString();
+    return { mins, inSession, sameDay,
+      stale: !sameDay || (inSession && mins > 45),
+      txt: mins < 60 ? `${mins} phút trước`
+         : mins < 1440 ? `${Math.floor(mins / 60)} giờ trước`
+         : `${Math.floor(mins / 1440)} ngày trước` };
+  }
+
+  // ══ CÔNG TẮC TAY ══
+  // Máy chấm bằng GIÁ ĐÓNG CỬA phiên gần nhất, mà cron GitHub thì trễ hàng tiếng. Khi
+  // người ngồi trước đồ thị thấy chỉ số đã vượt MA50 còn bảng thì chưa, người đúng.
+  // Chỉ có giá trị TRONG NGÀY: sáng mai công tắc tay tự hết hạn và máy cầm lái lại —
+  // một cái "cho phép vào lệnh" bấm tuần trước còn hiệu lực thì đúng bằng không có cổng.
+  _regimeManual() {
+    try {
+      const v = JSON.parse(localStorage.getItem('tj_regime_manual') || 'null');
+      if (v && v.d === this._vnDate() && (v.v === 'ON' || v.v === 'OFF')) return v.v;
+    } catch (e) {}
+    return null;
+  }
+
+  setRegimeManual = (v) => {
+    if (!v) localStorage.removeItem('tj_regime_manual');
+    else localStorage.setItem('tj_regime_manual', JSON.stringify({ v, d: this._vnDate() }));
+    this._renderWatchlist();
+  }
+
+  // Trạng thái CÓ HIỆU LỰC với cổng chặn lệnh: tay đè lên máy, không có tay thì theo máy.
+  _regimeEff() {
+    const auto = (this._regimeCache && this._regimeCache.regime) || null;
+    const manual = this._regimeManual();
+    return { auto, manual, state: manual || (auto && auto.state) || null };
+  }
+
   // ── Công tắc tổng: VN không cho bán khống, thị trường giảm thì lựa chọn duy nhất
   //    là giữ tiền mặt. Chọn đúng thời điểm ăn đứt chọn đúng cổ phiếu ở HOSE. ──
   _regimeBanner(d, esc) {
     const r = d.regime;
     if (!r || !r.state) return '';
-    const on = r.state === 'ON', unknown = r.state === 'UNKNOWN';
+    const eff = this._regimeEff(), man = eff.manual;
+    const on = eff.state === 'ON', unknown = eff.state === 'UNKNOWN';
     const col = on ? 'var(--green)' : unknown ? 'var(--amber)' : 'var(--red)';
     const bg = on ? 'var(--green-soft)' : unknown ? 'var(--amber-soft)' : 'var(--red-soft)';
     const dot = '<span class="ti ti-dot"></span> ';
-    const head = on ? dot + 'ĐƯỢC PHÉP VÀO LỆNH'
+    const head = (on ? dot + 'ĐƯỢC PHÉP VÀO LỆNH'
       : unknown ? dot + 'CHƯA XÁC ĐỊNH ĐƯỢC TRẠNG THÁI — coi như đứng ngoài'
-      : dot + 'ĐỨNG NGOÀI — KHÔNG VÀO LỆNH NÀO';
+      : dot + 'ĐỨNG NGOÀI — KHÔNG VÀO LỆNH NÀO')
+      + (man ? ' <span class="tj-badge" style="color:' + col + ';box-shadow:inset 0 0 0 1px ' + col + '">BẠN TỰ ĐẶT</span>' : '');
     // Độ rộng thị trường đã bỏ cùng lúc với bảng scan: tính nó phải quét cả sàn
     // (~151 mã, 8 phút gọi API) trong khi nó vốn được ghi rõ là "chỉ để tham khảo,
     // không tham gia quyết định". Trả 8 phút lấy một dòng chữ không dùng đến.
     const tail = on
       ? 'Vẫn chỉ vào lệnh đúng pivot đã đặt trong watchlist, stop −6% (backtest: tốt hơn cả −8% lẫn −10%).'
       : 'Giữ tiền mặt. Watchlist dưới đây chỉ để theo dõi nền giá — không phải tín hiệu mua.';
-    const at = d.checked_at ? `<span style="color:var(--text3)"> · cập nhật ${esc(d.checked_at)}</span>` : '';
+
+    // Số liệu cũ đến đâu — thứ trước đây thiếu. "cập nhật 2026-08-11 16:28" đọc lướt
+    // trông như vừa cập nhật, trong khi thực tế là số của phiên hôm trước.
+    const age = this._regimeAge(d);
+    const at = !d.checked_at ? '' :
+      `<span style="color:${age && age.stale ? 'var(--amber)' : 'var(--text3)'}"> · máy chấm ${esc(d.checked_at)}${
+        age ? ` (${age.txt}${age.stale ? ', ĐÃ CŨ' : ''})` : ''}</span>`;
+
+    // Dòng "máy đang nói gì" khi công tắc tay đang đè lên — vẫn phải thấy được số máy,
+    // nếu không thì công tắc tay biến thành cái nút bấm cho sướng tay.
+    const autoLine = !man ? '' :
+      `<div style="font-size:9.5px;color:var(--text3);margin-top:3px">Máy đang chấm: <b>${
+        r.state === 'ON' ? 'được phép' : r.state === 'OFF' ? 'đứng ngoài' : 'chưa rõ'
+      }</b> — ${esc(r.reason || '')}. Công tắc tay chỉ có hiệu lực HÔM NAY, sáng mai máy cầm lái lại.</div>`;
+
+    const mbtn = (v, txt, c) => `<button onclick="window._tj.setRegimeManual(${v ? `'${v}'` : 'null'})" class="tj-abtn"
+      style="background:${man === v || (!man && !v) ? c : 'transparent'};border-color:${c};color:${man === v || (!man && !v) ? 'var(--btn-fg)' : c};font-size:10px;padding:3px 8px;font-weight:700">${txt}</button>`;
+
     return `<div style="background:${bg};border:1px solid ${col};border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-2);line-height:1.5"
-        title="Quy tắc: VN-Index &gt; MA50 VÀ MA50 &gt; MA200. Không đạt cả hai thì đứng ngoài.">
+        title="Quy tắc máy: VN-Index &gt; MA50 VÀ MA50 &gt; MA200 theo GIÁ ĐÓNG CỬA phiên gần nhất. Không đạt cả hai thì đứng ngoài.">
       <div style="font-size:11px;font-weight:700;color:${col}">${head}</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:2px">${esc(r.reason || '')}${at}</div>
+      <div style="font-size:10px;color:var(--text2);margin-top:2px">${esc(man ? (man === 'ON' ? 'Bạn tự đánh giá: được phép vào lệnh' : 'Bạn tự đánh giá: đứng ngoài') : (r.reason || ''))}${man ? '' : at}</div>
+      ${autoLine}
       ${this._regimeEarly(r, esc)}
       <div style="font-size:9.5px;color:var(--text3);margin-top:4px">${tail}</div>
+      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px dashed ${col}">
+        <button onclick="window._tj.runBotRegime()" class="tj-abtn" style="background:transparent;border-color:${col};color:${col};font-size:10px;padding:3px 8px;font-weight:700"
+          title="Bấm bot chạy lại regime.py trên GitHub rồi nạp số mới về (~1-2 phút). Cron của GitHub trễ 1-1,5 tiếng và có ngày bỏ chạy, nên đây là đường bấm tay."><span class="ti ti-rotate"></span> Cập nhật ngay</button>
+        <span style="font-size:9.5px;color:var(--text3);margin-left:4px">Tôi tự đánh giá:</span>
+        ${mbtn(null, 'Theo máy', 'var(--text3)')}
+        ${mbtn('ON', 'Cho phép', 'var(--green)')}
+        ${mbtn('OFF', 'Đứng ngoài', 'var(--red)')}
+        ${this._botMsgHtml()}
+      </div>
+      <div style="font-size:9.5px;color:var(--text3);margin-top:5px">Máy chấm theo <b>giá đóng cửa</b>, không phải giá đang chạy — trong phiên chỉ số vượt MA50 rồi tụt lại dưới là chuyện thường. Trình duyệt không tự lấy giá VN thời gian thực được (mọi nguồn miễn phí đều chặn CORS), nên khi bạn đang nhìn đồ thị mà thấy khác bảng này thì dùng công tắc tay ở trên.</div>
     </div>`;
   }
 
@@ -3784,7 +4018,11 @@ class Component extends DCLogic {
     if (!d || !d.regime) {
       return `<div style="background:var(--amber-soft);border:1px solid var(--amber);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-2);font-size:10px;color:var(--text2);line-height:1.5">
         <span class="ti ti-dot" style="color:var(--amber)"></span> Chưa có dữ liệu công tắc thị trường — coi như <b>đứng ngoài</b>.
-        Chạy: <code>python automation/regime.py</code></div>`;
+        Chạy: <code>python automation/regime.py</code>
+        <div style="margin-top:6px;display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <button onclick="window._tj.runBotRegime()" class="tj-abtn" style="background:transparent;border-color:var(--amber);color:var(--amber);font-size:10px;padding:3px 8px;font-weight:700"><span class="ti ti-rotate"></span> Cập nhật ngay</button>
+          ${this._botMsgHtml()}
+        </div></div>`;
     }
     return this._regimeBanner(d, esc);
   }
@@ -4647,6 +4885,8 @@ class Component extends DCLogic {
       delNote: (d,i)=>this.delNote(d,i),
       addWatch: ()=>this.addWatch(), delWatch: i=>this.delWatch(i), pushWatchlist: ()=>this.pushWatchlist(), exportWatchlist: ()=>this.exportWatchlist(),
       reloadScan: ()=>this.reloadScan(), setScanMarket: m=>this.setScanMarket(m),
+      runBotRegime: ()=>this.runBotRegime(), runBotScore: ()=>this.runBotScore(),
+      setRegimeManual: v=>this.setRegimeManual(v),
       openFA: s=>this.openFA(s), closeFA: ()=>this.closeFA(), setFASym: v=>this.setFASym(v),
       markFA: (k,v)=>this.markFA(k,v), openAllFA: ()=>this.openAllFA(), faToNote: ()=>this.faToNote(),
       setFANum: (s,r,i,v,u)=>this.setFANum(s,r,i,v,u), clearFANum: s=>this.clearFANum(s), applyFAAuto: ()=>this.applyFAAuto(),
