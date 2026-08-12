@@ -3636,6 +3636,26 @@ class Component extends DCLogic {
       return '';
     };
     const stamp = f ? `<div style="font-size:11.5px;color:var(--text3);font-family:inherit;margin-top:3px"><span class="ti ti-bars"></span> ${(this._fundCache || {}).checked_at || ''} · vnstock</div>` : '';
+    const rv = a => (a || []).slice().reverse();      // vnstock trả mới nhất trước
+
+    // Dãy số theo kỳ, mỗi kỳ MỘT CỘT. Trước đây in một dòng dài rồi để dòng kỳ ở dưới:
+    // số không bao giờ thẳng cột với kỳ của nó, muốn biết 70,7 là quý nào phải đếm
+    // bằng mắt — mà đếm nhầm một ô thì đọc sai cả xu hướng.
+    // Không đặt min-width:max-content — cột phải của journal kéo hẹp được, mà bắt cuộn
+    // ngang để đọc bốn con số thì thà quay lại một dòng dài. Để cột tự co, chỉ cuộn khi
+    // hẹp thật.
+    const grid = (periods, rows, unit) => {
+      // Cột số có SÀN 48px: để minmax(0,1fr) thì trên điện thoại các cột co lại đến mức
+      // "105,2 70,7 72,2" dính liền nhau, đọc không ra. Chạm sàn thì khối tự cuộn ngang.
+      const gt = `display:grid;grid-template-columns:minmax(0,max-content) repeat(${periods.length},minmax(48px,1fr));gap:3px 8px;font-size:12.5px`;
+      const th = `<div></div>` + periods.map(p =>
+        `<div style="text-align:right;color:var(--text3);font-size:11px">${p}</div>`).join('');
+      const tb = rows.map(r => `<div style="line-height:1.35;padding-right:2px">${r.lab}${
+        r.sub ? `<br><span style="color:var(--text3);font-size:10.5px">${r.sub}</span>` : ''}</div>` +
+        r.vals.map(v => `<div style="text-align:right;color:${r.col || 'inherit'}">${v}</div>`).join('')).join('');
+      return `<div style="overflow-x:auto"><div style="${gt}">${th}${tb}</div></div>`
+        + (unit ? `<div style="color:var(--text3);font-size:11px;margin-top:4px">đơn vị: ${unit}</div>` : '');
+    };
 
     // Bước 1: khối này chỉ TRÌNH BÀY số máy. Phép chia nằm ở _faCalcBox ngay dưới,
     // vì bước nào cũng cần cùng một cái máy tính hai kỳ.
@@ -3647,11 +3667,13 @@ class Component extends DCLogic {
       // hai dòng "công ty mẹ" / "cổ đông không kiểm soát" — PET Q3/2025 CafeF ghi mẹ
       // 40,0 và CĐTS 105,2, còn VCI lẫn KBS đều ghi mẹ 105,2 và CĐTS 40,0. Tổng thì cả
       // ba nguồn khớp nhau, nên nó là điểm tựa để biết mình đang so đúng cột hay không.
-      // vnstock trả kỳ mới nhất trước; đảo lại để đọc xuôi thời gian như mọi khối khác.
-      const rv = a => (a || []).slice().reverse();
-      const tot = q.npat_tot && q.npat_tot.some(v => v != null)
-        ? `<br><span style="color:var(--text3)">LNST tổng: ${rv(q.npat_tot).map(n1).join(' → ')} tỷ (gồm cả cổ đông không kiểm soát)</span>` : '';
-      const series = `LNST 4 quý: ${rv(q.npat).map(n1).join(' → ')} tỷ${tot}<br>D.thu 4 quý: ${rv(q.rev).map(n0).join(' → ')} tỷ<br><span style="color:var(--text3)">${rv(f.q_periods).join(' → ')}</span>`;
+      const series = grid(rv(f.q_periods), [
+        { lab: 'LNST mẹ', vals: rv(q.npat).map(n1) },
+        ...(q.npat_tot && q.npat_tot.some(v => v != null)
+          ? [{ lab: 'LNST tổng', sub: 'gồm cả CĐ không kiểm soát',
+               vals: rv(q.npat_tot).map(n1), col: 'var(--text3)' }] : []),
+        { lab: 'Doanh thu', vals: rv(q.rev).map(n0) },
+      ], 'tỷ đồng');
       const machine = auto
         ? `<div style="color:var(--green)">Máy tính được YoY: LNST ${pc(f.calc.npat_yoy_q)} · D.thu ${pc(f.calc.rev_yoy_q)}</div>`
         : `<div style="color:var(--amber)">Máy chỉ lấy được 4 quý gần nhất nên chưa có cùng kỳ năm trước — gõ số ở khối dưới</div>`;
@@ -3668,8 +3690,9 @@ class Component extends DCLogic {
     // Chỉ còn DÃY SỐ ở đây. Ba kết luận (tăng trưởng, ROE, bẫy phục hồi giả) đã
     // chuyển xuống khối máy tính bên dưới — in hai lần thì lần nào cũng bị lướt qua.
     if (k === 'vnnam' && f.y)
-      return box(`LNST năm: ${f.y.npat.slice().reverse().map(n0).join(' → ')} tỷ
-        <br><span style="color:var(--text3)">${(f.y_periods || []).slice().reverse().join(' → ')}</span>${verdict()}${stamp}`);
+      return box(grid(rv(f.y_periods), [
+        { lab: 'LNST mẹ', vals: rv(f.y.npat).map(n0) },
+      ], 'tỷ đồng') + verdict() + stamp);
 
     if (k === 'vnsec' && c.bank)
       return box(`Tăng trưởng cho vay: <b>${pc(c.bank.loans_growth)}</b> · tiền gửi: <b>${pc(c.bank.deposit_growth)}</b>
@@ -3688,15 +3711,16 @@ class Component extends DCLogic {
     if (k === 'vncf') {
       if (f.sector === 'bank') return box(`<span style="color:var(--text3);font-family:inherit">Ngân hàng: OCF bị chi phối bởi dòng tiền gửi và giải ngân cho vay, không phản ánh chất lượng lợi nhuận — máy không chấm bước này.</span>`);
       if (!f.q) return '';
-      const rv = a => (a || []).slice().reverse();
-      return box(`OCF 4 quý: ${rv(f.q.ocf).map(n0).join(' → ')} tỷ
-        <br>LNST 4 quý: ${rv(f.q.npat).map(n0).join(' → ')} tỷ
-        <br><span style="color:var(--text3)">${rv(f.q_periods).join(' → ')}</span>${verdict()}${stamp}`);
+      return box(grid(rv(f.q_periods), [
+        { lab: 'OCF', sub: 'tiền thuần từ HĐKD', vals: rv(f.q.ocf).map(n0) },
+        { lab: 'LNST mẹ', vals: rv(f.q.npat).map(n0) },
+      ], 'tỷ đồng') + verdict() + stamp);
     }
 
     if (k === 'vndil' && f.y)
-      return box(`Số CP lưu hành: ${f.y.shares_m.slice().reverse().map(n1).join(' → ')} triệu
-        <br><span style="color:var(--text3)">${(f.y_periods || []).slice().reverse().join(' → ')} · suy từ vốn góp, mệnh giá 10.000đ</span>${verdict()}${stamp}`);
+      return box(grid(rv(f.y_periods), [
+        { lab: 'Số CP', sub: 'suy từ vốn góp, mệnh giá 10.000đ', vals: rv(f.y.shares_m).map(n1) },
+      ], 'triệu cổ phiếu') + verdict() + stamp);
 
     return '';
   }
