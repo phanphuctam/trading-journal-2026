@@ -1,0 +1,276 @@
+{
+  "app": "trading-journal",
+  "market": "VN",
+  "checked_at": "2026-08-12 18:16",
+  "source": "vnstock/VCI · overview + co dong + su kien + tin",
+  "room_tight": 1.0,
+  "cal_soon_days": 14,
+  "profiles": {
+    "PET": {
+      "overview": {
+        "name": "Dịch vụ Tổng hợp Dầu khí",
+        "sector": "Retail",
+        "icb2": "5300",
+        "icb4": "5379",
+        "listing_date": "2007-09-12",
+        "market_cap_ty": 6174.3,
+        "shares_m": 154.7,
+        "free_float_pct": 70.0,
+        "state_pct": 0.0,
+        "foreign_pct": 0.77,
+        "foreign_max_pct": null,
+        "room_left_pct": null,
+        "room_full": false,
+        "target_price": null,
+        "upside_pct": null,
+        "analyst": null
+      },
+      "holders": {
+        "n": 15,
+        "top1_pct": 19.0,
+        "top5_pct": 51.78,
+        "top": [
+          {
+            "name": "Công ty TNHH MTV Quản Lý Quỹ Ngân Hàng Thương Mại Cổ phần Công Thương Việt Nam",
+            "pct": 19.0
+          },
+          {
+            "name": "Công ty Cổ phần Quản lý quỹ HD",
+            "pct": 18.74
+          },
+          {
+            "name": "Công ty Cổ phần Quản lý quỹ Đầu tư Sài Gòn - Hà Nội",
+            "pct": 6.14
+          },
+          {
+            "name": "Công ty Cổ phần Chứng khoán SSI",
+            "pct": 4.09
+          },
+          {
+            "name": "Deutsche Bank Aktiengesellchaft, London Branch",
+            "pct": 3.81
+          },
+          {
+            "name": "Công ty Cổ phần Chứng khoán Thành phố Hồ Chí Minh",
+            "pct": 3.36
+          },
+          {
+            "name": "Phùng Tuấn Hà",
+            "pct": 2.94
+          },
+          {
+            "name": "KITMC Worldwide Vietnam RSP Balanced Fund",
+            "pct": 2.76
+          }
+        ]
+      },
+      "events": {
+        "soon": [],
+        "dilute": [
+          {
+            "name": "Niêm yết thêm",
+            "title": "PET - Niêm yết bổ sung 48.021.628 cổ phiếu",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null
+          },
+          {
+            "name": "Phát hành cổ phiếu",
+            "title": "Phát hành cổ phiếu - Cổ phiếu thưởng tỉ lệ 40.0%",
+            "exright": "2026-07-09",
+            "record": "2026-07-10",
+            "public": "2026-07-03",
+            "ratio": 0.4,
+            "value_per_share": null
+          },
+          {
+            "name": "Phát hành cổ phiếu",
+            "title": "Phát hành cổ phiếu - Trả Cổ tức bằng Cổ phiếu tỉ lệ 5.0%",
+            "exright": "2026-07-09",
+            "record": "2026-07-10",
+            "public": "2026-07-03",
+            "ratio": 0.05,
+            "value_per_share": null
+          },
+          {
+            "name": "Phát hành cổ phiếu",
+            "title": "Phát hành cổ phiếu - Quyền mua CP cho Cổ đông hiện hữu tỉ lệ 100.0%",
+            "exright": null,
+            "record": null,
+            "public": "2026-04-28",
+            "ratio": 1.0,
+            "value_per_share": null
+          }
+        ],
+        "insider": [
+          {
+            "name": "Giao dịch nội bộ: Giao dịch tổ chức",
+            "title": "Công ty TNHH MTV Quản Lý Quỹ Ngân Hàng Thương Mại Cổ phần Công Thương Việt Nam - Đăng kí Mua PET",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-03",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch tổ chức",
+            "title": "Công ty Cổ phần Quản lý quỹ HD - Đăng kí Mua PET",
+            "exright": null,
+            "record": null,
+            "public": "2026-07-31",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch tổ chức",
+            "title": "Công ty TNHH MTV Quản Lý Quỹ Ngân Hàng Thương Mại Cổ phần Công Thương Việt Nam - Đăng kí Mua PET",
+            "exright": null,
+            "record": null,
+            "public": "2026-07-27",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch tổ chức",
+            "title": "Công ty TNHH MTV Quản Lý Quỹ Ngân Hàng Thương Mại Cổ phần Công Thương Việt Nam - Đăng kí Mua PET",
+            "exright": null,
+            "record": null,
+            "public": "2026-06-09",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          }
+        ],
+        "cash_div": [
+          {
+            "name": "Phát hành cổ phiếu",
+            "title": "Phát hành cổ phiếu - Trả Cổ tức bằng Cổ phiếu tỉ lệ 5.0%",
+            "exright": "2026-07-09",
+            "record": "2026-07-10",
+            "public": "2026-07-03",
+            "ratio": 0.05,
+            "value_per_share": null
+          },
+          {
+            "name": "Trả cổ tức bằng tiền mặt",
+            "title": "Trả cổ tức bằng tiền mặt - Cả năm 2024 - 500 VND",
+            "exright": "2026-01-12",
+            "record": "2026-01-13",
+            "public": "2025-12-31",
+            "ratio": 0.05,
+            "value_per_share": 500.0
+          },
+          {
+            "name": "Phát hành cổ phiếu",
+            "title": "Phát hành cổ phiếu - Trả Cổ tức bằng Cổ phiếu tỉ lệ 8.0%",
+            "exright": "2023-08-09",
+            "record": "2023-08-10",
+            "public": "2023-08-01",
+            "ratio": 0.08,
+            "value_per_share": null
+          },
+          {
+            "name": "Phát hành cổ phiếu",
+            "title": "Phát hành cổ phiếu - Trả Cổ tức bằng Cổ phiếu tỉ lệ 10.0%",
+            "exright": "2023-01-18",
+            "record": "2023-01-19",
+            "public": "2023-01-10",
+            "ratio": 0.1,
+            "value_per_share": null
+          }
+        ],
+        "n_sell": 0,
+        "n_buy": 4
+      },
+      "news": {
+        "n": 50,
+        "red": [],
+        "amber": [],
+        "recent": [
+          {
+            "t": "PET: Nghị quyết HĐQT về việc điều chỉnh tăng hạn mức bảo lãnh cho PSD được cấp tín dụng tại PFS",
+            "d": "2026-08-11"
+          },
+          {
+            "t": "PET: Quyết định của HĐQT về việc ban hành bản cập nhật Điều lệ công ty (kèm điều lệ)",
+            "d": "2026-08-10"
+          },
+          {
+            "t": "PET: Giấy chứng nhận đăng ký doanh nghiệp thay đổi lần thứ 25",
+            "d": "2026-08-10"
+          },
+          {
+            "t": "Quản lý quỹ HD mua vào hơn 2,9 triệu cổ phiếu Petrosetco (PET)",
+            "d": "2026-08-05"
+          },
+          {
+            "t": "PET: Thông báo về việc niêm yết và giao dịch chứng khoán thay đổi niêm yết",
+            "d": "2026-08-04"
+          },
+          {
+            "t": "PET: Công ty TNHH MTV Quản lý quỹ NHTMCP Công thương VN tăng tỷ lệ sở hữu lên 19%",
+            "d": "2026-08-03"
+          },
+          {
+            "t": "Petrosetco (PET): Áp lực vốn cho chiến lược mở rộng",
+            "d": "2026-08-03"
+          },
+          {
+            "t": "PET: Báo cáo thay đổi sở hữu của cổ đông HDCapital",
+            "d": "2026-07-31"
+          },
+          {
+            "t": "PET: Giải trình biến động KQKD HN và Riêng quý 2/2026 so với cùng kỳ năm trước",
+            "d": "2026-07-31"
+          },
+          {
+            "t": "PET: Quyết định về việc thay đổi đăng ký niêm yết",
+            "d": "2026-07-31"
+          },
+          {
+            "t": "Nửa đầu năm 2026, Petrosetco (PET) ghi nhận lãi tăng mạnh, dòng tiền kinh doanh chính âm hơn 1.050 tỷ đồng",
+            "d": "2026-07-31"
+          },
+          {
+            "t": "PET: Báo cáo tình hình quản trị công ty 06 tháng đầu năm 2026",
+            "d": "2026-07-30"
+          }
+        ]
+      },
+      "auto": {
+        "vndisc": 0,
+        "vnfo": 0,
+        "vndil": -1,
+        "vnins": 1,
+        "vncald": 0
+      },
+      "manual": [
+        {
+          "k": "vndisc",
+          "why": "máy chỉ quét TIÊU ĐỀ của 50 tin gần nhất và không thấy từ khoá báo động — đây KHÔNG phải kết luận “sạch”. Ý kiến kiểm toán nằm trong file BCTC chứ không nằm ở tiêu đề tin",
+          "where": "CafeF · tin doanh nghiệp + BCTC kiểm toán năm gần nhất"
+        },
+        {
+          "k": "vnfo",
+          "why": "nguồn không có TRẦN ROOM của mã này (ngoại đang giữ 0.77%) — máy không biết mã có kín room hay không",
+          "where": "HOSE · danh sách tỷ lệ sở hữu nước ngoài tối đa"
+        },
+        {
+          "k": "vndil",
+          "why": "có 4 sự kiện làm tăng số cổ phiếu trong 12 tháng (niêm yết thêm / phát hành / cổ tức bằng cổ phiếu). Máy không biết cái nào ĐÃ xong và cái nào còn là kế hoạch treo trên đầu",
+          "where": "Vietstock · Hồ sơ doanh nghiệp + nghị quyết ĐHCĐ"
+        },
+        {
+          "k": "vncald",
+          "why": "ngày công bố BCTC quý KHÔNG có trong bảng sự kiện — ở VN nó không được ấn định trước, chỉ có hạn chót 20-30 ngày sau khi chốt quý",
+          "where": "canh cuối tháng 1/4/7/10"
+        }
+      ]
+    }
+  }
+}

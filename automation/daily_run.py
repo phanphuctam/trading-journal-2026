@@ -3,7 +3,8 @@
   1. Cong tac tong VN-Index -> scans/regime_vn.json (duoc phep vao lenh hay khong)
   2. So lieu phong thu cho ma trong watchlist -> scans/watch_stats.json
   3. So lieu CO BAN cho ma trong watchlist -> scans/fund_vn.json
-  4. Check watchlist voi gia dong cua phien gan nhat -> bao pivot/stop
+  4. HO SO doanh nghiep (room ngoai, su kien, noi bo, tin) -> scans/profile_vn.json
+  5. Check watchlist voi gia dong cua phien gan nhat -> bao pivot/stop
 
 Viec CHON CO PHIEU khong con o day: da chuyen sang loc bang mat tren TradingView
 (xem AGENTS.md). Ba buoc tren la nhung thu TradingView khong lam duoc.
@@ -23,4 +24,8 @@ subprocess.run([py, str(BASE / "watch_stats.py")], timeout=900)
 # dong cua vnstock chi tra 4 ky gan nhat: chay deu thi fund_hist.json tich luy dan,
 # sau ~4 quy la tu so duoc quy voi CUNG KY NAM TRUOC ma khong phai tra tien.
 subprocess.run([py, str(BASE / "fund_vn.py")], timeout=1800)
+# Ho so: room ngoai, su kien sap toi (GDKHQ!), phat hanh them, giao dich noi bo, tin.
+# Chay HANG NGAY chu khong theo quy nhu BCTC — su kien la thu doi tung ngay, va cai
+# dat gia nhat trong do (ngay GDKHQ) chi co gia tri khi biet TRUOC no vai ngay.
+subprocess.run([py, str(BASE / "profile_vn.py")], timeout=1800)
 subprocess.run([py, str(BASE / "alert_watcher.py"), "--force"], timeout=300)

@@ -12,6 +12,8 @@ name: Trading bot
 #                         dem ngay phan phoi tren mot cay nen chua dong la dem sai.
 #   · watch_stats.py    — tran vi the + co doi lai, can 60 phien lich su.
 #   · fund_vn.py        — BCTC, khong co nguon nao khac.
+#   · profile_vn.py     — room ngoai, lich su kien (GDKHQ!), phat hanh them chua thuc
+#                         hien, giao dich noi bo, quet tin. Khong nguon nao khac.
 #   · fetch_fx.py       — ty gia, 1 request. Ngay 1 lan la du, khong can 13 lan.
 
 on:
@@ -93,6 +95,7 @@ jobs:
           python automation/regime.py --telegram
           python automation/watch_stats.py
           python automation/fund_vn.py
+          python automation/profile_vn.py
           python automation/alert_watcher.py --force --market vn
 
       # ── COMMIT ──
@@ -113,7 +116,8 @@ jobs:
           # file nay la noi tich luy dan de sau ~4 quy tu so duoc quy voi cung ky nam truoc.
           # Mat file = mat toan bo lich su, bat dau lai tu dau.
           FILES="scans/regime_vn.json scans/watch_stats.json scans/fx.json \
-                 scans/fund_vn.json scans/fund_hist.json automation/state.json"
+                 scans/fund_vn.json scans/fund_hist.json scans/profile_vn.json \
+                 automation/state.json"
           for i in 1 2 3 4 5; do
             git fetch -q origin "${GITHUB_REF_NAME}"
             git reset -q --mixed FETCH_HEAD

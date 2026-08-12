@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-12 15:29",
+  "checked_at": "2026-08-12 18:16",
   "source": "vnstock/VCI · ban cong dong chi tra 4 ky gan nhat",
   "thresholds": {
     "y_growth": 20.0,
@@ -14,11 +14,37 @@
   "funds": {
     "PET": {
       "sector": "corp",
+      "manual": [
+        {
+          "k": "vnq",
+          "why": "số CÙNG KỲ NĂM TRƯỚC là suy ngược từ chuỗi luỹ kế 4 quý chứ không đọc thẳng từ BCTC — dùng để vào lệnh thì nên đối chiếu một lần",
+          "where": "CafeF · KQKD quý, đổi năm trên URL về năm trước"
+        },
+        {
+          "k": "vnmar",
+          "why": "biên ròng cùng kỳ năm trước tính từ số suy ngược (đối chiếu lệch 0.0% ở lợi nhuận, 0.0% ở doanh thu) — đủ chắc để thấy xu hướng, chưa đủ chắc để cãi nhau về vài phần mười điểm",
+          "where": "CafeF · KQKD quý cùng kỳ năm trước"
+        },
+        {
+          "k": "vnbs",
+          "why": "máy chỉ so TỔNG tồn kho với doanh thu. Nguyên vật liệu tăng có thể là tin TỐT (gom hàng giá rẻ trước chu kỳ), chỉ thành phẩm tăng mới là hàng ế — máy không tách được hai cái đó",
+          "where": "CafeF · Thuyết minh hàng tồn kho"
+        },
+        {
+          "k": "vndil",
+          "why": "số cổ phiếu suy từ VỐN GÓP nên chỉ thấy phần ĐÃ phát hành xong. Kế hoạch phát hành riêng lẻ / ESOP đã thông qua nhưng CHƯA thực hiện không hiện ở đây",
+          "where": "danh sách sự kiện ngay bên dưới + Vietstock · Hồ sơ doanh nghiệp"
+        }
+      ],
       "check": {
         "bs_dev_pct": 0.0,
         "ok": true,
         "npat_basis": "parent",
-        "npat_basis_q": "parent"
+        "npat_basis_q": "parent",
+        "backfilled": 8,
+        "ttm_dev_npat": 0.0,
+        "ttm_dev_rev": 0.0,
+        "ttm_dev_max": 1.0
       },
       "q_periods": [
         "2026-Q2",
@@ -103,8 +129,33 @@
         ]
       },
       "calc": {
-        "npat_yoy_q": null,
-        "rev_yoy_q": null,
+        "npat_yoy_q": 29.2,
+        "rev_yoy_q": 47.8,
+        "yoy_src": "ttm",
+        "gm_q": [
+          6.16,
+          5.88,
+          4.33,
+          5.01
+        ],
+        "nm_q": [
+          0.86,
+          1.18,
+          0.93,
+          1.92
+        ],
+        "nm_ly": 0.98,
+        "nm_delta": -0.12,
+        "val": {
+          "as_of": "2026-Q2",
+          "pe": 20.1,
+          "pb": 2.48,
+          "roe_ttm": 12.71,
+          "roa_ttm": 2.34,
+          "div_yield": 0.0,
+          "debt_to_equity": 3.93,
+          "market_cap_ty": 6174.3
+        },
         "y_growth": [
           72.5,
           34.3,
@@ -122,11 +173,13 @@
         "bank": null
       },
       "auto": {
+        "vnq": 1,
         "vnone": -1,
         "vnnam": -1,
         "vnbs": 0,
         "vncf": -1,
-        "vndil": 1
+        "vndil": 1,
+        "vnmar": 0
       }
     }
   }

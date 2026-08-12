@@ -13,6 +13,8 @@ TradingView: trực quan hơn, nhìn thẳng vào đồ thị, linh hoạt hơn 
 | ⚑ Cờ đội lái (`watch_stats.py`) | Chống lại đúng điểm mù của việc nhìn mắt: đồ thị bị làm giá **trông rất đẹp**, đó là mục đích của làm giá. Đếm 4 phiên trần rải trong 60 phiên thì mắt không làm nổi |
 | Trần vị thế (`watch_stats.py`) | Số học từ GTGD, mắt không tính được. Chỉ lên tiếng với mã mỏng |
 | Cảnh báo nhiều mã (`alert_watcher.py`) | TradingView bản free giới hạn số alert; ở đây không giới hạn, và bắn thẳng Telegram |
+| Lịch GDKHQ (`profile_vn.py`) | Ngày giao dịch không hưởng quyền làm giá bị điều chỉnh giảm đúng bằng phần cổ tức/thưởng. Trên đồ thị **giá thô** nó giống hệt một phiên sập thủng nền → cắt lỗ oan. Phải biết **trước**, và không đồ thị nào nói trước cho bạn |
+| Phát hành chưa thực hiện (`profile_vn.py`) | Nghị quyết ĐHCĐ đã thông qua nhưng chưa phát hành thì **chưa** nằm trong vốn góp — bảng cân đối mù, đồ thị mù. Chỉ bảng sự kiện thấy |
 
 Định nghĩa VCP-3 (từng là cửa vào lệnh của scan) nay chỉ còn trong
 `backtest_vn_params.py` — giữ vì đó là **bằng chứng**: lý do biết VCP-3 nén ăn tiền
@@ -24,7 +26,8 @@ còn RS/Trend Template thì không. Muốn dựng lại scan cũ: `git log -- au
 |---|---|
 | `regime.py` | **Công tắc tổng** VN-Index (MA50/MA200 + ngày phân phối + FTD) → `scans/regime_vn.json`. Chỉ 1 request |
 | `watch_stats.py` | Trần vị thế + 🔒 đóng trần + ⚑ đội lái cho **mã trong watchlist** → `scans/watch_stats.json` |
-| `fund_vn.py` | **Số liệu cơ bản** (LNST năm, ROE, OCF/LNST, pha loãng, phải thu/tồn kho, chỉ số ngân hàng) cho mã trong watchlist → `scans/fund_vn.json`. Bảng 🔬 Cơ bản trong journal đọc file này và điền sẵn số |
+| `fund_vn.py` | **Số liệu cơ bản** (LNST quý YoY, LNST năm, ROE, biên lợi nhuận, P/E–P/B, OCF/LNST, pha loãng, phải thu/tồn kho, NPL/LLR/NIM/CIR/CAR/CASA của ngân hàng) → `scans/fund_vn.json` + `scans/fund_hist.json`. Bảng 🔬 Cơ bản đọc file này và điền sẵn số |
+| `profile_vn.py` | **Hồ sơ doanh nghiệp**: room ngoại (kín room ⇒ bước 6 mất hiệu lực), cổ đông lớn, sự kiện sắp tới (**GDKHQ**, ĐHCĐ), phát hành thêm chưa thực hiện, giao dịch nội bộ, quét tiêu đề tin → `scans/profile_vn.json`. Chấm các bước 0 / 5 / 6 / 10 / 11 |
 | `alert_watcher.py` | Theo dõi watchlist, báo Telegram khi **vượt pivot / gần pivot / chạm stop** |
 | `scan_trend_template.py` | Scan **Trend Template Minervini + RS Rating** thị trường Mỹ (tạm gác, xem `US-DORMANT.md`) |
 | `watchlist.json` | Danh sách mã theo dõi (xuất từ tab **Watch** trong journal) |
