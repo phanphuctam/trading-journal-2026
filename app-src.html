@@ -3432,10 +3432,11 @@ class Component extends DCLogic {
       cols: [0, 1, 2, 3].map(i => PY[i] || ['Năm gần nhất', 'N-1', 'N-2', 'N-3'][i]),
       rows: [
         { k: 'npat', lab: 'LNST cổ đông mẹ', fill: [0, 1, 2, 3].map(i => at(y && y.npat, i)) },
-        { k: 'eq', lab: 'VCSH của cổ đông mẹ', sub: 'để tính ROE — chỉ cần 2 cột đầu', fill: [0, 1, 2, 3].map(i => at(y && y.equity, i)) },
+        { k: 'eq', lab: 'VCSH của cổ đông mẹ', sub: 'để tính ROE — chỉ cần 2 năm gần nhất', fill: [0, 1, 2, 3].map(i => at(y && y.equity, i)) },
       ],
       out: V => {
-        const L = [0, 1, 2].map(i => gl(`${PY[i] || 'N-' + i} so ${PY[i + 1] || 'N-' + (i + 1)}`, G(V.npat[i], V.npat[i + 1]), T.y_growth));
+        // Xuôi thời gian như bảng số ở trên: 2023 so 2022 trước, năm gần nhất sau cùng.
+        const L = [2, 1, 0].map(i => gl(`${PY[i] || 'N-' + i} so ${PY[i + 1] || 'N-' + (i + 1)}`, G(V.npat[i], V.npat[i + 1]), T.y_growth));
         const e0 = V.eq[0], e1 = V.eq[1];
         const base = e0 == null ? null : (e1 == null ? e0 : (e0 + e1) / 2);
         if (V.npat[0] != null && base && base > 0) {
@@ -3581,11 +3582,15 @@ class Component extends DCLogic {
     const res = (sp.out(V) || []).filter(Boolean);
     const col = v => v == null ? 'var(--text3)' : v > 0 ? 'var(--green)' : v < 0 ? 'var(--red)' : 'var(--amber)';
     const gt = `grid-template-columns:minmax(0,1.5fr) repeat(${sp.cols.length},minmax(0,1fr));gap:5px`;
+    // vnstock (và cả CafeF) trả kỳ MỚI NHẤT TRƯỚC, đọc ngược chiều thời gian. Đảo lại
+    // để cũ → mới từ trái sang phải. Chỉ đảo lúc VẼ: mọi phép tính trong sp.out() vẫn
+    // đánh chỉ số 0 = kỳ gần nhất, đổi cái đó thì hỏng hết tăng trưởng và ROE.
+    const ord = sp.cols.map((_, i) => sp.cols.length - 1 - i);
     const head = `<div style="display:grid;${gt};align-items:end;font-size:10px;color:var(--text3);font-family:inherit">
-      <div></div>${sp.cols.map(c => `<div style="text-align:center;line-height:1.25">${c}</div>`).join('')}</div>`;
+      <div></div>${ord.map(i => `<div style="text-align:center;line-height:1.25">${sp.cols[i]}</div>`).join('')}</div>`;
     const rows = sp.rows.map(r => {
       const n = r.n || sp.cols.length;
-      const cells = sp.cols.map((_, i) => {
+      const cells = ord.map((i) => {
         if (i >= n) return '<div></div>';
         const u = raw(r, i), a = (r.fill || [])[i] ?? null;
         return `<input id="fn_${k}_${r.k}_${i}" type="text" inputmode="decimal" autocomplete="off"
@@ -3642,9 +3647,11 @@ class Component extends DCLogic {
       // hai dòng "công ty mẹ" / "cổ đông không kiểm soát" — PET Q3/2025 CafeF ghi mẹ
       // 40,0 và CĐTS 105,2, còn VCI lẫn KBS đều ghi mẹ 105,2 và CĐTS 40,0. Tổng thì cả
       // ba nguồn khớp nhau, nên nó là điểm tựa để biết mình đang so đúng cột hay không.
+      // vnstock trả kỳ mới nhất trước; đảo lại để đọc xuôi thời gian như mọi khối khác.
+      const rv = a => (a || []).slice().reverse();
       const tot = q.npat_tot && q.npat_tot.some(v => v != null)
-        ? `<br><span style="color:var(--text3)">LNST tổng: ${q.npat_tot.map(n1).join(' · ')} tỷ (gồm cả cổ đông không kiểm soát)</span>` : '';
-      const series = `LNST 4 quý: ${q.npat.map(n1).join(' · ')} tỷ${tot}<br>D.thu 4 quý: ${q.rev.map(n0).join(' · ')} tỷ<br><span style="color:var(--text3)">${(f.q_periods || []).join(' · ')}</span>`;
+        ? `<br><span style="color:var(--text3)">LNST tổng: ${rv(q.npat_tot).map(n1).join(' → ')} tỷ (gồm cả cổ đông không kiểm soát)</span>` : '';
+      const series = `LNST 4 quý: ${rv(q.npat).map(n1).join(' → ')} tỷ${tot}<br>D.thu 4 quý: ${rv(q.rev).map(n0).join(' → ')} tỷ<br><span style="color:var(--text3)">${rv(f.q_periods).join(' → ')}</span>`;
       const machine = auto
         ? `<div style="color:var(--green)">Máy tính được YoY: LNST ${pc(f.calc.npat_yoy_q)} · D.thu ${pc(f.calc.rev_yoy_q)}</div>`
         : `<div style="color:var(--amber)">Máy chỉ lấy được 4 quý gần nhất nên chưa có cùng kỳ năm trước — gõ số ở khối dưới</div>`;
@@ -3681,8 +3688,10 @@ class Component extends DCLogic {
     if (k === 'vncf') {
       if (f.sector === 'bank') return box(`<span style="color:var(--text3);font-family:inherit">Ngân hàng: OCF bị chi phối bởi dòng tiền gửi và giải ngân cho vay, không phản ánh chất lượng lợi nhuận — máy không chấm bước này.</span>`);
       if (!f.q) return '';
-      return box(`OCF 4 quý: ${f.q.ocf.map(n0).join(' · ')} tỷ
-        <br>LNST 4 quý: ${f.q.npat.map(n0).join(' · ')} tỷ${verdict()}${stamp}`);
+      const rv = a => (a || []).slice().reverse();
+      return box(`OCF 4 quý: ${rv(f.q.ocf).map(n0).join(' → ')} tỷ
+        <br>LNST 4 quý: ${rv(f.q.npat).map(n0).join(' → ')} tỷ
+        <br><span style="color:var(--text3)">${rv(f.q_periods).join(' → ')}</span>${verdict()}${stamp}`);
     }
 
     if (k === 'vndil' && f.y)
