@@ -2442,16 +2442,30 @@ class Component extends DCLogic {
     const pat = this._ghPat(); if (!pat) return;
     const hdrs = this._ghHdrs(pat);
     const base = 'https://api.github.com/repos/' + GH_REPO;
-    const badPerm = 'GitHub từ chối (403). Token cần bật thêm quyền "Actions: Read and write" '
-      + '— vào github.com/settings/personal-access-tokens, sửa token của repo trading-journal-2026, '
-      + 'thêm Actions: Read and write rồi bấm lại. (Contents RW chỉ đủ để đẩy watchlist.)';
+    // Hai loại token, hai chỗ bật quyền khác nhau — đoán sai thì người dùng đi sửa nhầm
+    // trang. Nên in nguyên câu GitHub trả về rồi mới hướng dẫn cả hai đường.
+    const badPerm = (msg) => 'GitHub từ chối (403)'
+      + (msg ? ':\n"' + msg + '"' : '.') + '\n\nToken chưa có quyền chạy Actions. Tuỳ loại token:\n\n'
+      + '• Token fine-grained (github.com/settings/personal-access-tokens):\n'
+      + '  sửa token của repo trading-journal-2026 → Repository permissions →\n'
+      + '  Actions: Read and write. (Contents RW chỉ đủ để đẩy watchlist.)\n\n'
+      + '• Token classic (github.com/settings/tokens):\n'
+      + '  tick thêm scope "workflow".\n\n'
+      + 'Sửa xong bấm nút này lại — app sẽ hỏi lại token mới.\n\n'
+      + 'Không muốn động vào token thì bấm tay thẳng trên GitHub:\n'
+      + 'github.com/' + GH_REPO + '/actions/workflows/trading.yml → nút "Run workflow" → chọn mode → Run.\n'
+      + '(Chạy xong quay lại đây bấm nút ⟳ để nạp số mới.)';
     this._botMsg(label + '…', 'var(--accent)');
     try {
       const t0 = Date.now();
       const r = await fetch(base + '/actions/workflows/trading.yml/dispatches', {
         method: 'POST', headers: hdrs,
         body: JSON.stringify({ ref: GH_BRANCH, inputs: { mode } }) });
-      if (r.status === 403) throw new Error(badPerm);
+      if (r.status === 403) {
+        const e = await r.json().catch(() => ({}));
+        localStorage.removeItem('tj_gh_pat');   // buộc nhập lại, khỏi bấm mãi bằng token cũ
+        throw new Error(badPerm(e.message || ''));
+      }
       if (r.status === 401) { localStorage.removeItem('tj_gh_pat'); throw new Error(this._tr().ghBadToken); }
       if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error('HTTP ' + r.status + (e.message ? ' — ' + e.message : '')); }
 
