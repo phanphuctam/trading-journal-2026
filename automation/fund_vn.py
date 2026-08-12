@@ -180,6 +180,12 @@ def build(sym, d, hist):
 
     rev_q = row(iq, K_REV, pq)
     npat_q, basis_q = npat_of(iq, pq)
+    # LNST TONG di kem de nguoi doi chieu tay khong bi lac. CafeF danh nhan hai dong
+    # "cong ty me" / "co dong khong kiem soat" CO LUC NGUOC NHAU: PET Q3/2025 CafeF ghi
+    # me 40,0 va CDTS 105,2, trong khi ca VCI lan KBS deu ghi me 105,2 va CDTS 40,0.
+    # Tong thi ba nguon giong het (145,2) — nen hien ca tong la co diem tua de doi chieu,
+    # thay vi bat nguoi tin mot con so le loi.
+    npat_tot_q = row(iq, K_NPAT_TOTAL, pq)
     pbt_q = row(iq, K_PBT, pq)
     ocf_q = row(cq, K_OCF, periods_of(cq))
     recv_q = row(bq, K_RECV, periods_of(bq))
@@ -329,6 +335,7 @@ def build(sym, d, hist):
         "q_periods": pq,
         "y_periods": py,
         "q": {"rev": [ty(v) for v in rev_q], "npat": [ty(v) for v in npat_q],
+              "npat_tot": [ty(v) for v in npat_tot_q],
               "ocf": [ty(v) for v in ocf_q[:len(pq)]],
               "recv": [ty(v) for v in recv_q[:len(pq)]],
               "inv": [ty(v) for v in inv_q[:len(pq)]],

@@ -2744,7 +2744,7 @@ class Component extends DCLogic {
     { k: 'vnq', g: '1 · Lợi nhuận quý (chữ C của CAN SLIM)', must: 1, s: 'CafeF · Kết quả kinh doanh (quý)',
       src: "O'Neil Ch.1 tr.24–36 · Minervini Ch.7 tr.145–172",
       u: t => this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh'),
-      w: t => `Trang mặc định hiện <b>4 quý gần nhất</b>. Đọc <b>Doanh thu thuần</b> và <b>Lợi nhuận sau thuế</b>.<br><span class="ti ti-warn"></span> Phải so với <b>CÙNG QUÝ NĂM TRƯỚC</b>, không phải quý liền trước — mùa vụ ở VN rất mạnh (bán lẻ quý 4, thép/xây dựng quý 2-3, ngân hàng quý 4).<br>→ <a href="${this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh', -1)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">mở thẳng cùng kỳ năm trước ↗</a> để đặt cạnh nhau mà so`,
+      w: t => `Trang mặc định hiện <b>4 quý gần nhất</b>. Đọc <b>Doanh thu thuần</b> và <b>Lợi nhuận sau thuế</b>.<br><span class="ti ti-warn"></span> Phải so với <b>CÙNG QUÝ NĂM TRƯỚC</b>, không phải quý liền trước — mùa vụ ở VN rất mạnh (bán lẻ quý 4, thép/xây dựng quý 2-3, ngân hàng quý 4).<br>→ <a href="${this._CF(t, 'incsta', 'ket-qua-hoat-dong-kinh-doanh', -1)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">mở thẳng cùng kỳ năm trước ↗</a> để đặt cạnh nhau mà so<br><span class="ti ti-warn"></span> <b>CafeF có lúc gán nhãn ngược</b> hai dòng 19 (cổ đông công ty mẹ) và 20 (cổ đông không kiểm soát) — đã bắt được ở PET quý 3/2025: CafeF ghi mẹ 40,0 / CĐTS 105,2, còn VCI và KBS đều ghi ngược lại. <b>Đối chiếu bằng dòng LNST TỔNG</b> (dòng 18) — ba nguồn luôn khớp ở đó; tổng khớp mà phần mẹ lệch thì lỗi nhãn của CafeF, không phải máy sai.`,
       p: 'LNST cùng quý năm trước tăng <b>≥ 25%</b> và <b>đang tăng tốc</b> · doanh thu tăng <b>≥ 20%</b><br><span style="opacity:.75">Ngưỡng gốc của O\'Neil là EPS ≥ 20-25%. Giữ nguyên — không có lý do hạ chuẩn cho VN.</span>',
       f: '<b>Doanh thu đứng yên mà lợi nhuận tăng vọt = bẫy.</b> Ở VN nguồn phổ biến nhất là <b>hoàn nhập dự phòng</b>, <b>lãi từ thanh lý tài sản / công ty con</b>, hoặc <b>đánh giá lại tài sản</b>. Xem bước 2<br>Lợi nhuận âm quý gần nhất → loại' },
 
@@ -3638,7 +3638,13 @@ class Component extends DCLogic {
       const auto = f && f.calc && f.calc.npat_yoy_q != null;
       const q = f && f.q ? f.q : null;
       if (!q) return '';
-      const series = `LNST 4 quý: ${q.npat.map(n1).join(' · ')} tỷ<br>D.thu 4 quý: ${q.rev.map(n0).join(' · ')} tỷ<br><span style="color:var(--text3)">${(f.q_periods || []).join(' · ')}</span>`;
+      // LNST tổng đi kèm để đối chiếu tay không bị lạc: CafeF có lúc gán nhãn NGƯỢC
+      // hai dòng "công ty mẹ" / "cổ đông không kiểm soát" — PET Q3/2025 CafeF ghi mẹ
+      // 40,0 và CĐTS 105,2, còn VCI lẫn KBS đều ghi mẹ 105,2 và CĐTS 40,0. Tổng thì cả
+      // ba nguồn khớp nhau, nên nó là điểm tựa để biết mình đang so đúng cột hay không.
+      const tot = q.npat_tot && q.npat_tot.some(v => v != null)
+        ? `<br><span style="color:var(--text3)">LNST tổng: ${q.npat_tot.map(n1).join(' · ')} tỷ (gồm cả cổ đông không kiểm soát)</span>` : '';
+      const series = `LNST 4 quý: ${q.npat.map(n1).join(' · ')} tỷ${tot}<br>D.thu 4 quý: ${q.rev.map(n0).join(' · ')} tỷ<br><span style="color:var(--text3)">${(f.q_periods || []).join(' · ')}</span>`;
       const machine = auto
         ? `<div style="color:var(--green)">Máy tính được YoY: LNST ${pc(f.calc.npat_yoy_q)} · D.thu ${pc(f.calc.rev_yoy_q)}</div>`
         : `<div style="color:var(--amber)">Máy chỉ lấy được 4 quý gần nhất nên chưa có cùng kỳ năm trước — gõ số ở khối dưới</div>`;
