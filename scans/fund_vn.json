@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-12 12:49",
+  "checked_at": "2026-08-12 14:32",
   "source": "vnstock/VCI · ban cong dong chi tra 4 ky gan nhat",
   "thresholds": {
     "y_growth": 20.0,
