@@ -1,34 +1,21 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-08 10:39",
+  "checked_at": "2026-08-12 12:49",
   "max_pos_pct": 2.0,
   "ceil_manip": 4,
   "ceil_base_n": 60,
   "stats": {
-    "MSB": {
-      "symbol": "MSB",
+    "PET": {
+      "symbol": "PET",
       "exchange": "HOSE",
-      "bar_date": "2026-08-07",
-      "close": 16200,
-      "adtv": 116.4,
-      "vol20": 7240900,
-      "max_pos": 2327518090,
+      "bar_date": "2026-08-12",
+      "close": 40050,
+      "adtv": 15.2,
+      "vol20": 401085,
+      "max_pos": 303514320,
       "ceil": false,
-      "ceil_base": 0,
-      "manip": false,
-      "age": null
-    },
-    "STB": {
-      "symbol": "STB",
-      "exchange": "HOSE",
-      "bar_date": "2026-08-07",
-      "close": 74600,
-      "adtv": 316.4,
-      "vol20": 4383085,
-      "max_pos": 6327120950,
-      "ceil": false,
-      "ceil_base": 0,
+      "ceil_base": 2,
       "manip": false,
       "age": null
     }
