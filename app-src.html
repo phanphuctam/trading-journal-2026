@@ -2000,13 +2000,17 @@ class Component extends DCLogic {
     // Công tắc tay (nếu có) đè lên công tắc máy — nhưng vẫn phải để lại dấu vết trong
     // cảnh báo: "tôi tự bật" là một quyết định, và quyết định thì phải đọc lại được.
     const eff = this._regimeEff();
+    const why = eff.live
+      ? `VN-Index ${this._fmt(eff.live.close, 2)} ${eff.live.close > eff.live.sma50 ? 'trên' : 'dưới'} SMA50 ${this._fmt(eff.live.sma50, 2)}`
+      : (eff.auto && eff.auto.reason) || 'chưa có số liệu';
     if (t.a === 'Buy' && eff.state && eff.state !== 'ON') {
       w.push(eff.manual === 'OFF'
         ? `• Bạn đã tự đặt công tắc tổng sang ĐỨNG NGOÀI hôm nay. VN không cho bán khống — lúc này giữ tiền mặt.`
-        : `• Thị trường đang ĐỨNG NGOÀI: ${eff.auto.reason}. VN không cho bán khống — lúc này giữ tiền mặt.`);
+        : `• Thị trường đang ĐỨNG NGOÀI: ${why}. VN không cho bán khống — lúc này giữ tiền mặt.`);
     }
-    if (t.a === 'Buy' && eff.manual === 'ON' && eff.auto && eff.auto.state !== 'ON') {
-      w.push(`• Công tắc tổng đang BẬT BẰNG TAY: máy vẫn chấm đứng ngoài (${eff.auto.reason}). Bạn tự chịu trách nhiệm cho lệnh này.`);
+    const mach = (eff.live && eff.live.state) || (eff.auto && eff.auto.state);
+    if (t.a === 'Buy' && eff.manual === 'ON' && mach && mach !== 'ON') {
+      w.push(`• Công tắc tổng đang BẬT BẰNG TAY: máy vẫn chấm đứng ngoài (${why}). Bạn tự chịu trách nhiệm cho lệnh này.`);
     }
     // Yếu tố cơ bản (thêm 2026-08-08). Trước đây bảng Cơ bản chỉ là tờ giấy nháp:
     // đánh ✕ vào "kiểm toán ngoại trừ" xong vẫn ghi lệnh mua được, không một tiếng động.
@@ -3850,6 +3854,7 @@ class Component extends DCLogic {
       try { const r = await fetch(path, { cache: 'no-store' }); return r.ok ? await r.json() : null; }
       catch (e) { return null; }
     };
+    this._loadLive();                            // giá đang chạy, không chờ ba file dưới
     const [reg, st, fu] = await Promise.all([
       get('scans/regime_vn.json'), get('scans/watch_stats.json'),
       get('scans/fund_vn.json')]);
@@ -3876,7 +3881,48 @@ class Component extends DCLogic {
             && this._fundCache.funds[String(sym || '').toUpperCase()]) || null;
   }
 
-  reloadScan = () => { this._regimeCache = undefined; this._loadRegimeData(); }
+  reloadScan = () => { this._regimeCache = undefined; this._loadLive(); this._loadRegimeData(); }
+
+  // ══ CÔNG TẮC TỔNG THEO GIÁ ĐANG CHẠY ══
+  // Sửa 2026-08-12. Kết luận hôm trước — "không nguồn VN miễn phí nào cho trình duyệt
+  // gọi" — là SAI: mới chỉ thử TCBS (Cloudflare chặn), VNDirect (im), SSI/DNSE (thiếu
+  // ACAO). scanner.tradingview.com PHẢN CHIẾU Origin vào Access-Control-Allow-Origin
+  // (thử github.io, example.com và cả file:// đều qua), nên trình duyệt gọi thẳng được.
+  //
+  // Và nó trả sẵn SMA50/SMA200 — không phải tải 200 phiên về rồi tự tính như regime.py.
+  // Một request, trễ ~15 phút, thay vì chờ cron GitHub trễ cả ngày.
+  //
+  // VẪN GIỮ regime.py: ngày phân phối và FTD cần chuỗi lịch sử, endpoint này chỉ trả
+  // một điểm dữ liệu. Bot lo phần lịch sử, TradingView lo phần "ngay bây giờ".
+  //
+  // Dùng SMA chứ không EMA: Trend Template của Minervini và bảng của O'Neil đều là
+  // trung bình cộng. Đồ thị TradingView để mặc định EMA sẽ lệch — 12/08/2026 EMA50
+  // 1.786 (giá đã vượt) trong khi SMA50 1.796 (giá chưa vượt), hai kết luận trái nhau.
+  async _loadLive() {
+    try {
+      const r = await fetch('https://scanner.tradingview.com/symbol?symbol=HOSE%3AVNINDEX'
+        + '&fields=close,change,SMA50,SMA200,update_mode&no_404=true&t=' + Date.now(),
+        { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const d = await r.json();
+      if (!(d.close > 0 && d.SMA50 > 0 && d.SMA200 > 0)) throw new Error('thiếu số');
+      this._liveCache = {
+        close: d.close, sma50: d.SMA50, sma200: d.SMA200, change: d.change,
+        state: (d.close > d.SMA50 && d.SMA50 > d.SMA200) ? 'ON' : 'OFF',
+        delayed: /delayed/.test(d.update_mode || ''),
+        at: this._vnNow(),
+      };
+    } catch (e) {
+      // Hỏng thì để null và rơi về số của bot — không được chặn gì vì lý do này.
+      this._liveCache = null;
+    }
+    if (this.state.rightTab === 'watchlist') this._renderWatchlist();
+    // 90 giây/lần, và chỉ khi tab đang hiện. Endpoint trễ 15 phút nên hỏi dày hơn
+    // cũng không ra số mới, chỉ tốn request.
+    if (!this._liveTimer) {
+      this._liveTimer = setInterval(() => { if (!document.hidden) this._loadLive(); }, 90000);
+    }
+  }
 
   // ══ SỐ LIỆU CÔNG TẮC TỔNG CŨ ĐẾN ĐÂU ══
   // Không có cách nào lấy VN-Index thời gian thực từ trang tĩnh: TCBS đứng sau Cloudflare
@@ -3926,11 +3972,13 @@ class Component extends DCLogic {
     this._renderWatchlist();
   }
 
-  // Trạng thái CÓ HIỆU LỰC với cổng chặn lệnh: tay đè lên máy, không có tay thì theo máy.
+  // Trạng thái CÓ HIỆU LỰC với cổng chặn lệnh. Thứ tự đè: TAY > GIÁ ĐANG CHẠY > BOT.
+  // Bot xuống cuối vì nó là thứ cũ nhất — nó chỉ cầm lái khi TradingView không gọi được.
   _regimeEff() {
     const auto = (this._regimeCache && this._regimeCache.regime) || null;
+    const live = this._liveCache || null;
     const manual = this._regimeManual();
-    return { auto, manual, state: manual || (auto && auto.state) || null };
+    return { auto, live, manual, state: manual || (live && live.state) || (auto && auto.state) || null };
   }
 
   // ── Công tắc tổng: VN không cho bán khống, thị trường giảm thì lựa chọn duy nhất
@@ -3954,40 +4002,56 @@ class Component extends DCLogic {
       ? 'Vẫn chỉ vào lệnh đúng pivot đã đặt trong watchlist, stop −6% (backtest: tốt hơn cả −8% lẫn −10%).'
       : 'Giữ tiền mặt. Watchlist dưới đây chỉ để theo dõi nền giá — không phải tín hiệu mua.';
 
-    // Số liệu cũ đến đâu — thứ trước đây thiếu. "cập nhật 2026-08-11 16:28" đọc lướt
-    // trông như vừa cập nhật, trong khi thực tế là số của phiên hôm trước.
+    // Số liệu bot cũ đến đâu — "cập nhật 2026-08-11 16:28" đọc lướt trông như vừa
+    // cập nhật, trong khi thực tế là số của phiên hôm trước.
     const age = this._regimeAge(d);
-    const at = !d.checked_at ? '' :
-      `<span style="color:${age && age.stale ? 'var(--amber)' : 'var(--text3)'}"> · máy chấm ${esc(d.checked_at)}${
-        age ? ` (${age.txt}${age.stale ? ', ĐÃ CŨ' : ''})` : ''}</span>`;
+    const lv = eff.live;
+    const n2 = x => this._fmt(x, 2);
 
-    // Dòng "máy đang nói gì" khi công tắc tay đang đè lên — vẫn phải thấy được số máy,
-    // nếu không thì công tắc tay biến thành cái nút bấm cho sướng tay.
-    const autoLine = !man ? '' :
+    // Dòng số ĐANG CHẠY — nay là dòng chính, vì nó mới là thứ trả lời được câu
+    // "ngay bây giờ có được vào lệnh không".
+    const liveLine = !lv ? '' : `<div style="font-size:10px;color:var(--text2);margin-top:2px">
+      VN-Index <b style="color:${lv.change >= 0 ? 'var(--green)' : 'var(--red)'}">${n2(lv.close)}</b>
+      (${lv.change >= 0 ? '+' : ''}${n2(lv.change)}%) · SMA50 <b>${n2(lv.sma50)}</b> · SMA200 <b>${n2(lv.sma200)}</b>
+      <span style="color:var(--text3)">· TradingView, ${lv.delayed ? 'trễ ~15 phút' : 'thời gian thực'},
+      lúc ${String(lv.at.getHours()).padStart(2, '0')}:${String(lv.at.getMinutes()).padStart(2, '0')}</span></div>`;
+
+    // Dòng bot: giá ĐÓNG CỬA phiên gần nhất. Vẫn phải thấy, vì đây mới là con số
+    // khớp với quy tắc đã backtest — số đang chạy có thể lật lại trước khi đóng cửa.
+    const botLine = `<div style="font-size:9.5px;color:${age && age.stale && !lv ? 'var(--amber)' : 'var(--text3)'};margin-top:3px">
+      Theo giá <b>đóng cửa</b> (bot): ${esc(r.reason || '')}${d.checked_at ? ` · chấm ${esc(d.checked_at)}${age ? ` (${age.txt})` : ''}` : ''}</div>`;
+
+    // Khi công tắc tay đang đè lên, vẫn phải thấy máy đang nói gì — nếu không thì
+    // công tắc tay biến thành cái nút bấm cho sướng tay.
+    const manLine = !man ? '' :
       `<div style="font-size:9.5px;color:var(--text3);margin-top:3px">Máy đang chấm: <b>${
-        r.state === 'ON' ? 'được phép' : r.state === 'OFF' ? 'đứng ngoài' : 'chưa rõ'
-      }</b> — ${esc(r.reason || '')}. Công tắc tay chỉ có hiệu lực HÔM NAY, sáng mai máy cầm lái lại.</div>`;
+        eff.live ? (eff.live.state === 'ON' ? 'được phép' : 'đứng ngoài')
+        : r.state === 'ON' ? 'được phép' : r.state === 'OFF' ? 'đứng ngoài' : 'chưa rõ'
+      }</b>. Công tắc tay chỉ có hiệu lực HÔM NAY, sáng mai máy cầm lái lại.</div>`;
 
     const mbtn = (v, txt, c) => `<button onclick="window._tj.setRegimeManual(${v ? `'${v}'` : 'null'})" class="tj-abtn"
       style="background:${man === v || (!man && !v) ? c : 'transparent'};border-color:${c};color:${man === v || (!man && !v) ? 'var(--btn-fg)' : c};font-size:10px;padding:3px 8px;font-weight:700">${txt}</button>`;
 
     return `<div style="background:${bg};border:1px solid ${col};border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-2);line-height:1.5"
-        title="Quy tắc máy: VN-Index &gt; MA50 VÀ MA50 &gt; MA200 theo GIÁ ĐÓNG CỬA phiên gần nhất. Không đạt cả hai thì đứng ngoài.">
+        title="Quy tắc: VN-Index &gt; SMA50 VÀ SMA50 &gt; SMA200. Không đạt cả hai thì đứng ngoài.">
       <div style="font-size:11px;font-weight:700;color:${col}">${head}</div>
-      <div style="font-size:10px;color:var(--text2);margin-top:2px">${esc(man ? (man === 'ON' ? 'Bạn tự đánh giá: được phép vào lệnh' : 'Bạn tự đánh giá: đứng ngoài') : (r.reason || ''))}${man ? '' : at}</div>
-      ${autoLine}
+      ${man ? `<div style="font-size:10px;color:var(--text2);margin-top:2px">${man === 'ON' ? 'Bạn tự đánh giá: được phép vào lệnh' : 'Bạn tự đánh giá: đứng ngoài'}</div>` : liveLine}
+      ${manLine}
+      ${man ? '' : botLine}
       ${this._regimeEarly(r, esc)}
       <div style="font-size:9.5px;color:var(--text3);margin-top:4px">${tail}</div>
       <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px dashed ${col}">
-        <button onclick="window._tj.runBotRegime()" class="tj-abtn" style="background:transparent;border-color:${col};color:${col};font-size:10px;padding:3px 8px;font-weight:700"
-          title="Bấm bot chạy lại regime.py trên GitHub rồi nạp số mới về (~1-2 phút). Cron của GitHub trễ 1-1,5 tiếng và có ngày bỏ chạy, nên đây là đường bấm tay."><span class="ti ti-rotate"></span> Cập nhật ngay</button>
+        <button onclick="window._tj.reloadScan()" class="tj-abtn" style="background:transparent;border-color:${col};color:${col};font-size:10px;padding:3px 8px;font-weight:700"
+          title="Hỏi lại TradingView ngay (tự hỏi 90 giây/lần khi tab đang mở)."><span class="ti ti-rotate"></span> Làm mới</button>
+        <button onclick="window._tj.runBotRegime()" class="tj-abtn" style="background:transparent;border-color:var(--border);color:var(--text3);font-size:10px;padding:3px 8px"
+          title="Chạy lại regime.py trên GitHub để cập nhật NGÀY PHÂN PHỐI và FTD — hai thứ cần chuỗi lịch sử nên TradingView không trả được (~1-2 phút).">Chạy bot</button>
         <span style="font-size:9.5px;color:var(--text3);margin-left:4px">Tôi tự đánh giá:</span>
         ${mbtn(null, 'Theo máy', 'var(--text3)')}
         ${mbtn('ON', 'Cho phép', 'var(--green)')}
         ${mbtn('OFF', 'Đứng ngoài', 'var(--red)')}
         ${this._botMsgHtml()}
       </div>
-      <div style="font-size:9.5px;color:var(--text3);margin-top:5px">Máy chấm theo <b>giá đóng cửa</b>, không phải giá đang chạy — trong phiên chỉ số vượt MA50 rồi tụt lại dưới là chuyện thường. Trình duyệt không tự lấy giá VN thời gian thực được (mọi nguồn miễn phí đều chặn CORS), nên khi bạn đang nhìn đồ thị mà thấy khác bảng này thì dùng công tắc tay ở trên.</div>
+      <div style="font-size:9.5px;color:var(--text3);margin-top:5px">Dùng <b>SMA</b> (trung bình cộng) đúng như Trend Template của Minervini — đồ thị TradingView để mặc định <b>EMA</b> sẽ ra số khác và có lúc ngược kết luận. Số đang chạy chỉ để biết ngay; trong phiên chỉ số vượt SMA50 rồi tụt lại dưới trước khi đóng cửa là chuyện thường, nên dòng "theo giá đóng cửa" mới là con số khớp với quy tắc đã backtest. Thấy khác đồ thị của bạn thì dùng công tắc tay.</div>
     </div>`;
   }
 
@@ -4027,8 +4091,14 @@ class Component extends DCLogic {
   // Giữ lại đúng công tắc tổng, vì đó là câu TradingView không nói được.
   _regimeBox() {
     const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    const d = this._regimeCache;
-    if (d === undefined) return '';                       // chưa nạp xong
+    let d = this._regimeCache;
+    if (d === undefined && !this._liveCache) return '';   // chưa nạp xong
+    // Bot chưa có file nhưng TradingView gọi được thì vẫn chấm được công tắc — chỉ
+    // thiếu ngày phân phối và FTD (hai thứ cần chuỗi lịch sử).
+    if ((!d || !d.regime) && this._liveCache) {
+      const lv = this._liveCache;
+      d = { regime: { state: lv.state, reason: 'chưa có số liệu đóng cửa từ bot' } };
+    }
     if (!d || !d.regime) {
       return `<div style="background:var(--amber-soft);border:1px solid var(--amber);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-2);font-size:10px;color:var(--text2);line-height:1.5">
         <span class="ti ti-dot" style="color:var(--amber)"></span> Chưa có dữ liệu công tắc thị trường — coi như <b>đứng ngoài</b>.
