@@ -2641,11 +2641,9 @@ class Component extends DCLogic {
           <div class="tj-cardsub">${tr.wlSub}</div>
         </div>
         <div style="display:flex;gap:var(--sp-2);flex-shrink:0;align-items:center;flex-wrap:wrap">
-          <button class="tj-abtn" onclick="window._tj.openFA('')" style="background:transparent;border-color:var(--accent);color:var(--accent);font-weight:700" title="Bảng đọc yếu tố cơ bản — điền mã 1 lần, mọi link tự có sẵn"><span class="ti ti-flask"></span> Cơ bản</button>
-          <button class="tj-abtn" onclick="window._tj.openTA('')" style="background:transparent;border-color:var(--accent);color:var(--accent);font-weight:700" title="Bảng chấm kỹ thuật — 4 cửa xác nhận breakout, nền giá VCP, kế hoạch thoát"><span class="ti ti-trend-up"></span> Kỹ thuật</button>
           <button class="tj-abtn" onclick="window._tj.pushWatchlist()" title="${tr.wlPushTitle}" style="background:var(--accent);border-color:var(--accent);color:var(--btn-fg);font-weight:700"><span class="ti ti-upload"></span> ${tr.wlPush}</button>
           <button class="tj-abtn" onclick="window._tj.exportWatchlist()" style="background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700"><span class="ti ti-download"></span> ${tr.wlExport}</button>
-          <button class="tj-abtn" onclick="window._tj.reloadScan()" title="Nạp lại công tắc thị trường + số liệu watchlist" style="background:transparent"><span class="ti ti-rotate"></span></button>
+          <button class="tj-abtn" onclick="window._tj.reloadScan()" title="Hỏi lại TradingView + nạp lại số liệu watchlist (giá tự làm mới 90 giây/lần khi tab đang mở)" style="background:transparent"><span class="ti ti-rotate"></span></button>
         </div>
       </div>
       <div class="tj-cardbd">
@@ -4041,8 +4039,6 @@ class Component extends DCLogic {
       ${this._regimeEarly(r, esc)}
       <div style="font-size:9.5px;color:var(--text3);margin-top:4px">${tail}</div>
       <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px dashed ${col}">
-        <button onclick="window._tj.reloadScan()" class="tj-abtn" style="background:transparent;border-color:${col};color:${col};font-size:10px;padding:3px 8px;font-weight:700"
-          title="Hỏi lại TradingView ngay (tự hỏi 90 giây/lần khi tab đang mở)."><span class="ti ti-rotate"></span> Làm mới</button>
         <button onclick="window._tj.runBotRegime()" class="tj-abtn" style="background:transparent;border-color:var(--border);color:var(--text3);font-size:10px;padding:3px 8px"
           title="Chạy lại regime.py trên GitHub để cập nhật NGÀY PHÂN PHỐI và FTD — hai thứ cần chuỗi lịch sử nên TradingView không trả được (~1-2 phút).">Chạy bot</button>
         <span style="font-size:9.5px;color:var(--text3);margin-left:4px">Tôi tự đánh giá:</span>
