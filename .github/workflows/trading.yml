@@ -1,16 +1,32 @@
 name: Trading bot
 
+# ══ AI CHAY LUC NAO, VA VI SAO ══
+# Tu 2026-08-12 journal doc thang scanner.tradingview.com trong trinh duyet (1 request,
+# tra san SMA50/SMA200, tre ~15 phut). Nen CONG TAC TONG khong con can bot nua — bot chi
+# con lam nhung thu trinh duyet KHONG lam duoc:
+#
+#   · alert_watcher.py  — bao Telegram luc minh khong ngoi truoc man hinh. Day moi la
+#                         thu dang chay 30 phut/lan.
+#   · regime.py         — NGAY PHAN PHOI + FTD, can chuoi lich su nen endpoint mot-diem
+#                         cua TradingView khong tra duoc. Chay 1 lan/ngay SAU DONG CUA:
+#                         dem ngay phan phoi tren mot cay nen chua dong la dem sai.
+#   · watch_stats.py    — tran vi the + co doi lai, can 60 phien lich su.
+#   · fund_vn.py        — BCTC, khong co nguon nao khac.
+#   · fetch_fx.py       — ty gia, 1 request. Ngay 1 lan la du, khong can 13 lan.
+
 on:
   schedule:
-    - cron: '0 2 * * 6'          # 09:00 sang thu Bay VN — so lieu watchlist + check watchlist
-    - cron: '*/30 2-8 * * 1-5'   # phien HOSE (09:00-15:00 VN = 02:00-08:00 UTC); script tu bo qua ngoai gio
-  # Bam tay tu journal (nut "Cap nhat ngay" / "Cham bang may"). Cron cua GitHub tren
-  # ban mien phi bi tri hoan 1-1,5 tieng va bo bot lan chay — nen phai co duong bam tay,
-  # neu khong thi cong tac tong hien so lieu cua hom qua ma nguoi dung khong lam gi duoc.
+    - cron: '*/30 2-8 * * 1-5'   # phien HOSE (09:00-15:00 VN) — CHI canh bao Telegram
+    - cron: '0 8 * * 1-5'        # 15:00 VN, sau ATC — ngay phan phoi/FTD + ty gia
+    - cron: '0 2 * * 6'          # 09:00 sang thu Bay VN — so lieu watchlist + co ban
+
+  # Bam tay tu journal (nut "Chay bot" / "Cham bang may"). Can vi cron cua GitHub ban
+  # mien phi bi tri hoan 1-1,5 tieng va bo bot lan chay — do 12/08/2026: lich 13 lan/ngay
+  # nhung thuc te 5-6 lan, co ngay khong lan nao.
   workflow_dispatch:
     inputs:
       mode:
-        description: 'regime = chi cong tac tong VN-Index (~1 phut) | full = them so lieu watchlist + co ban (~10-30 phut)'
+        description: 'regime = ngay phan phoi/FTD (~1 phut) | full = them so lieu watchlist + co ban (~10-30 phut)'
         type: choice
         options: [regime, full]
         default: regime
@@ -44,55 +60,87 @@ jobs:
           key: vncache-${{ github.run_id }}
           restore-keys: vncache-
 
-      # Mot request, chay moi lan — journal dung lam ty gia mac dinh khi ghi lenh moi
-      - name: Cap nhat ty gia USD/VND
-        continue-on-error: true
-        run: python automation/fetch_fx.py
-
-      # Cong tac tong: chi 1 request (VN-Index) nen chay ca trong phien, khong doi
-      # den thu Bay. Cong chan lenh trong journal doc file nay, no phai luon tuoi.
-      - name: Cong tac tong VN-Index (trong phien)
-        if: github.event.schedule == '*/30 2-8 * * 1-5' || (github.event_name == 'workflow_dispatch' && inputs.mode != 'full')
-        continue-on-error: true
-        run: python automation/regime.py
-
-      - name: So lieu watchlist + check watchlist (9h sang thu Bay VN)
-        if: github.event.schedule == '0 2 * * 6' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full')
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python automation/regime.py --telegram
-          python automation/watch_stats.py
-          python automation/fund_vn.py
-          python automation/alert_watcher.py --force --market vn
-
-      - name: Check watchlist trong phien HOSE
+      # ── TRONG PHIEN: chi canh bao Telegram ──
+      # Truoc day buoc nay con chay regime.py 30 phut/lan. Bo di vi journal da doc
+      # thang TradingView — chay lai chi de ghi de mot con so tuong duong, va con
+      # sinh commit rac moi nua tieng.
+      - name: Canh bao watchlist qua Telegram (trong phien HOSE)
         if: github.event.schedule == '*/30 2-8 * * 1-5'
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python automation/alert_watcher.py --market vn
 
-      - name: Commit ket qua (regime + so lieu watchlist + co ban + state)
+      # ── SAU DONG CUA: nhung thu can nen DA DONG ──
+      - name: Ngay phan phoi + FTD + ty gia (sau ATC)
+        if: github.event.schedule == '0 8 * * 1-5' || (github.event_name == 'workflow_dispatch' && inputs.mode != 'full')
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          python automation/fetch_fx.py
+          python automation/regime.py --telegram
+
+      # ── THU BAY (hoac bam "Cham bang may"): so lieu nang ──
+      - name: So lieu watchlist + co ban
+        if: github.event.schedule == '0 2 * * 6' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full')
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python automation/fetch_fx.py
+          python automation/regime.py --telegram
+          python automation/watch_stats.py
+          python automation/fund_vn.py
+          python automation/alert_watcher.py --force --market vn
+
+      # ── COMMIT ──
+      # Run #127 (12/08/2026) that bai o dung day: `git push` bi tu choi vi remote da
+      # di truoc mot commit trong luc bot chay. Moi viec tinh toan deu xong xuoi, chi
+      # buoc day len la hong — nhung ca lan chay bi danh dau "failure".
+      #
+      # Cach sua: KHONG rebase (dinh conflict tren chinh file bot vua ghi). Thay vao do
+      # dua HEAD ve dung ban moi nhat cua remote bang `reset --mixed` — file bot vua sinh
+      # van nam nguyen tren dia — roi commit chung len tren. Bot luon thang o cac file
+      # nay vi no la nguoi duy nhat sinh ra chung.
+      - name: Commit ket qua
+        run: |
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # fund_hist.json PHAI duoc commit: vnstock ban cong dong chi tra 4 ky gan nhat,
           # file nay la noi tich luy dan de sau ~4 quy tu so duoc quy voi cung ky nam truoc.
           # Mat file = mat toan bo lich su, bat dau lai tu dau.
-          # Chi add file CO THAT: lan chay trong phien khong sinh fund_*.json, ma `git add`
-          # mot duong dan khong ton tai se lam hong ca buoc commit.
-          for f in scans/regime_vn.json scans/watch_stats.json scans/fx.json \
-                   scans/fund_vn.json scans/fund_hist.json automation/state.json; do
-            if [ -f "$f" ]; then git add "$f"; fi
+          FILES="scans/regime_vn.json scans/watch_stats.json scans/fx.json \
+                 scans/fund_vn.json scans/fund_hist.json automation/state.json"
+          for i in 1 2 3 4 5; do
+            git fetch -q origin "${GITHUB_REF_NAME}"
+            git reset -q --mixed FETCH_HEAD
+            # Chi add file CO THAT: lan chay trong phien khong sinh fund_*.json, ma
+            # `git add` mot duong dan khong ton tai se lam hong ca buoc nay.
+            # Phai dung `if` chu khong `[ -f x ] && git add x`: voi `set -e`, mot phep
+            # test that bai o cuoi vong lap se giet ca script.
+            for f in $FILES; do
+              if [ -f "$f" ]; then git add "$f"; fi
+            done
+            if git diff --cached --quiet; then
+              echo "Khong co so lieu nao doi — khong commit."
+              exit 0
+            fi
+            git commit -q -m "bot: regime VN/state $(date -u '+%Y-%m-%d %H:%M') UTC"
+            if git push -q origin "HEAD:${GITHUB_REF_NAME}"; then
+              echo "Da day len sau $i lan thu."
+              exit 0
+            fi
+            echo "Push bi tu choi (remote di truoc) — thu lai lan $((i + 1))…"
+            sleep $((i * 5))
           done
-          git diff --cached --quiet || { git commit -m "bot: regime VN/state $(date -u '+%Y-%m-%d %H:%M') UTC"; git push; }
+          echo "::error::Khong day duoc ket qua len sau 5 lan thu."
+          exit 1
 
 # Bo loc VCP tu dong da bo (2026-08-07): viec chon co phieu chuyen sang loc bang mat
-# tren TradingView. Con lai o day la thu TradingView khong lam duoc — cong tac tong
-# (regime.py), tran vi the + co ⚑ doi lai (watch_stats.py), va canh bao nhieu ma cung
-# luc qua Telegram (alert_watcher.py, ban free cua TradingView gioi han so alert).
+# tren TradingView. Con lai o day la thu TradingView (hoac trinh duyet) khong lam duoc.
 #
 # Bo loc My tam gac (mo lai khi phap ly cho phep giao dich lai):
 #   - cron thu Bay: chay lai scan_trend_template.py --no-push, dat CHART_LAYOUT_ID: zg2TshOU
