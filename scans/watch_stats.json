@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-13 09:32",
+  "checked_at": "2026-08-13 09:54",
   "max_pos_pct": 2.0,
   "ceil_manip": 4,
   "ceil_base_n": 60,
@@ -9,15 +9,15 @@
     "PET": {
       "symbol": "PET",
       "exchange": "HOSE",
-      "bar_date": "2026-07-31",
-      "close": 38000,
-      "adtv": 14.9,
-      "vol20": 405740,
-      "max_pos": 297511906,
+      "bar_date": "2026-08-13",
+      "close": 39850,
+      "adtv": 15.3,
+      "vol20": 403035,
+      "max_pos": 306213825,
       "ceil": false,
       "ceil_base": 2,
       "manip": false,
-      "age": 18.9
+      "age": null
     }
   }
 }
