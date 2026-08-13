@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-12 18:16",
+  "checked_at": "2026-08-13 08:36",
   "source": "vnstock/VCI · overview + co dong + su kien + tin",
   "room_tight": 1.0,
   "cal_soon_days": 14,
@@ -13,7 +13,7 @@
         "icb2": "5300",
         "icb4": "5379",
         "listing_date": "2007-09-12",
-        "market_cap_ty": 6174.3,
+        "market_cap_ty": 6243.9,
         "shares_m": 154.7,
         "free_float_pct": 70.0,
         "state_pct": 0.0,

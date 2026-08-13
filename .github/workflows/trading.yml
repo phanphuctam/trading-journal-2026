@@ -43,7 +43,15 @@ concurrency:
 jobs:
   bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 60          # vnstock ban mien phi gioi han 20 request/phut
+    timeout-minutes: 60
+    # VNSTOCK_API_KEY la KHOA TOC DO, khong phai khoa mo them du lieu. vnstock chan
+    # toc do phia client theo tier (vnai/beam/auth.py): khong key = 'guest' 20 req/phut,
+    # co key MIEN PHI = 'free' 60 req/phut. Cac script tu doc tier nen dat secret nay
+    # vao la lan chay ngan lai ~3 lan, khong phai sua code.
+    # Chua dat secret thi van chay binh thuong o muc guest — bien rong se rong.
+    # Lay key: dang nhap vnstocks.com/account#api-key
+    env:
+      VNSTOCK_API_KEY: ${{ secrets.VNSTOCK_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 

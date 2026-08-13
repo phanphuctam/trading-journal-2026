@@ -61,6 +61,58 @@ def send_telegram(cfg: dict, text: str) -> bool:
     return True
 
 
+def vnstock_sleep(margin: float = 0.85, fallback: float = 3.4) -> float:
+    """Giay nghi giua hai request vnstock, tinh tu HAN MUC THAT cua tai khoan.
+
+    vnstock chan toc do o PHIA CLIENT theo tier — bang nam cung trong thu vien da
+    cai (vnai/beam/auth.py, `Authenticator.TIER_LIMITS`):
+
+        guest  (khong co API key)      20 req/phut
+        free   (co API key MIEN PHI)   60 req/phut
+        bronze/silver/golden/diamond   180 den 600 req/phut (tra tien)
+
+    Truoc 13/08/2026 cac script go cung 3,4 giay — dung cho muc guest. Go cung
+    nghia la dang ky API key mien phi xong VAN chay cham gap ba lan ma khong ai
+    biet vi sao. Ham nay hoi thang thu vien nen chi can dat API key la nhanh len.
+
+    Cach dat key (chon MOT):
+      · Bien moi truong VNSTOCK_API_KEY  (dung cho GitHub Actions — khong ghi file)
+      · python -c "from vnstock import register_user; register_user('<KEY>')"
+        (ghi vao ~/.vnstock/api_key.json — dung cho may ca nhan)
+
+    `margin` chua 15% bien an toan: han muc dem theo cua so truot o may chu, chay
+    sat vach thi chi mot lan trung nhip la dinh 429 va mat ca lan chay. Doi mot
+    lan chay 4 phut lay rui ro hong ca lan chay la doi te.
+    """
+    import contextlib
+    import io
+
+    try:
+        # Nap vnai in ra banner quang cao — nuot di, day la ham chay ngam.
+        with contextlib.redirect_stdout(io.StringIO()):
+            import vnai
+            info = vnai.get_user_tier() or {}
+        per_min = (info.get("limits") or {}).get("per_minute")
+        if per_min and per_min > 0:
+            return round(60.0 / (per_min * margin), 2)
+    except Exception:
+        pass
+    return fallback
+
+
+def vnstock_tier() -> str:
+    """Ten tier hien tai ('guest' / 'free' / ...) de in ra cho nguoi doc biet."""
+    import contextlib
+    import io
+
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            import vnai
+            return str((vnai.get_user_tier() or {}).get("tier") or "?")
+    except Exception:
+        return "?"
+
+
 def get_quotes(symbols: list[str], market: str = "vietnam") -> dict:
     """Lay gia hien tai cho danh sach ma (1 request duy nhat).
 

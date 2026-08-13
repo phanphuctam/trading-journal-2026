@@ -52,7 +52,7 @@ from zoneinfo import ZoneInfo
 
 warnings.filterwarnings("ignore")
 
-from tv_common import BASE, load_json, save_json
+from tv_common import BASE, load_json, save_json, vnstock_sleep, vnstock_tier
 
 WATCHLIST = BASE / "watchlist.json"
 OUT = BASE.parent / "scans" / "profile_vn.json"
@@ -390,9 +390,11 @@ def build(sym, raw, today):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("symbols", nargs="*", help="ma can lay; de trong = watchlist")
-    ap.add_argument("--sleep", type=float, default=3.4,
-                    help="giay nghi giua 2 request (gioi han ~20 req/phut)")
+    ap.add_argument("--sleep", type=float, default=None,
+                    help="giay nghi giua 2 request; de trong = tu tinh theo tier tai khoan")
     args = ap.parse_args()
+    if args.sleep is None:
+        args.sleep = vnstock_sleep()
 
     syms = [s.upper() for s in args.symbols]
     if not syms:
@@ -406,7 +408,8 @@ def main():
 
     today = datetime.now(TZ).date()
     profiles, fails = {}, []
-    print(f"[i] Lay ho so {len(syms)} ma (~{len(syms) * 4 * args.sleep / 60:.1f} phut)…")
+    print(f"[i] Lay ho so {len(syms)} ma (~{len(syms) * 4 * args.sleep / 60:.1f} phut, "
+          f"tier '{vnstock_tier()}', nghi {args.sleep}s/request)…")
     for s in syms:
         try:
             profiles[s] = build(s, fetch(s, args.sleep), today)

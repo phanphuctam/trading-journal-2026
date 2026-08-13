@@ -7,7 +7,7 @@
   5. Check watchlist voi gia dong cua phien gan nhat -> bao pivot/stop
 
 Viec CHON CO PHIEU khong con o day: da chuyen sang loc bang mat tren TradingView
-(xem AGENTS.md). Ba buoc tren la nhung thu TradingView khong lam duoc.
+(xem automation/README.md). Bon buoc tren la thu TradingView khong lam duoc.
 
 Dung --force vi 9h sang co the ngoai gio giao dich.
 """

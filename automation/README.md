@@ -20,6 +20,46 @@ TradingView: trực quan hơn, nhìn thẳng vào đồ thị, linh hoạt hơn 
 `backtest_vn_params.py` — giữ vì đó là **bằng chứng**: lý do biết VCP-3 nén ăn tiền
 còn RS/Trend Template thì không. Muốn dựng lại scan cũ: `git log -- automation/scan_vn_vcp.py`.
 
+## API key vnstock — miễn phí, và nó chỉ mua TỐC ĐỘ
+
+Bảng giới hạn nằm cứng trong thư viện đã cài (`vnai/beam/auth.py`, `TIER_LIMITS`):
+
+| Tier | Cách có | Giới hạn |
+|---|---|---|
+| `guest` | không làm gì | **20 req/phút** · 1.200/giờ · 5.000/ngày |
+| `free` | đăng ký API key, **0 đồng** | **60 req/phút** · 3.600/giờ · 10.000/ngày |
+| `bronze` → `diamond` | trả tiền | 180 → 600 req/phút |
+
+Việc chặn tốc độ nằm ở **phía client**: `vnai/beam/quota.py` đọc bảng trên rồi tự
+chặn. Nghĩa là chỉ cần có key là ba script chạy nhanh gấp ba, không phải sửa gì —
+`vnstock_sleep()` trong `tv_common.py` tự hỏi thư viện rồi tính giãn cách.
+
+**API key KHÔNG mở thêm dữ liệu.** Giới hạn 4 kỳ báo cáo tài chính do máy chủ áp,
+và đó là thứ gói tài trợ bán. Đăng ký key chỉ đổi được tốc độ.
+
+Lấy key: đăng nhập <https://vnstocks.com/account#api-key>. Rồi chọn **một** cách:
+
+```bash
+# Máy cá nhân — ghi vào ~/.vnstock/api_key.json
+python -c "from vnstock import register_user; register_user('<KEY>')"
+
+# GitHub Actions — thêm secret tên VNSTOCK_API_KEY (workflow đã nối sẵn)
+```
+
+Kiểm tra đang ở tier nào: `python -c "from vnstock import check_status; check_status()"`
+
+### ⚠️ vnstock tự ghi file chỉ dẫn AI vào máy bạn
+
+Mỗi lần `import vnstock`, thư viện chạy một luồng ngầm
+(`vnai/beam/agents.py: setup_agent_environment`) tải nội dung từ
+`vnstocks.com/files/vibe-onboarding.md` rồi ghi/nối vào **bảy** vị trí:
+`<thư mục đang đứng>/AGENTS.md`, `~/.cursorrules`, `~/.windsurfrules`,
+`~/.clinerules`, `~/.clauderc`, `~/.gemini/config/AGENTS.md`,
+`~/.github/copilot-instructions.md`.
+
+Đó là lý do repo này từng có `AGENTS.md` ở hai chỗ. Đã bỏ theo dõi và cho vào
+`.gitignore` — xem lý do ghi trong đó. File trên máy thì vô hại, cứ để.
+
 ## Có gì trong thư mục này
 
 | File | Công dụng |

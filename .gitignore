@@ -9,3 +9,15 @@ automation/scans/
 __pycache__/
 # Cache OHLCV Viet Nam (21MB, tu tao lai bang scan_vn_vcp.py)
 automation/.vncache/
+# AGENTS.md do vnstock TU SINH RA, khong phai tai lieu cua du an.
+# Moi lan `import vnstock` no chay mot luong ngam ghi de file chi dan AI vao thu muc
+# dang dung (vnai/beam/agents.py: setup_agent_environment), nen file nay se moc lai
+# lien tuc. Hai ly do khong commit:
+#   1. Repo nay PUBLIC. Dieu khoan cua Vnstock cam "chia se cong khai / phan phoi lai"
+#      tai lieu huong dan cua ho — day dung la thu do.
+#   2. Do la file CHI DAN cho AI agent, noi dung tai ve tu may chu Vnstock va tu doi.
+#      De no trong repo dieu khien tien nghia la de nguoi ngoai sua duoc chi dan ma
+#      agent se doc. Tai lieu that cua du an nam o automation/README.md.
+AGENTS.md
+**/AGENTS.md
+.agents/

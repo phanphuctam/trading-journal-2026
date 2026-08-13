@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-12 18:16",
+  "checked_at": "2026-08-13 08:35",
   "source": "vnstock/VCI · ban cong dong chi tra 4 ky gan nhat",
   "thresholds": {
     "y_growth": 20.0,
@@ -148,13 +148,13 @@
         "nm_delta": -0.12,
         "val": {
           "as_of": "2026-Q2",
-          "pe": 20.1,
-          "pb": 2.48,
+          "pe": 20.3,
+          "pb": 2.51,
           "roe_ttm": 12.71,
           "roa_ttm": 2.34,
           "div_yield": 0.0,
           "debt_to_equity": 3.93,
-          "market_cap_ty": 6174.3
+          "market_cap_ty": 6243.9
         },
         "y_growth": [
           72.5,
