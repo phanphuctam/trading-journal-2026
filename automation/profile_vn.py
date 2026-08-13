@@ -52,7 +52,7 @@ from zoneinfo import ZoneInfo
 
 warnings.filterwarnings("ignore")
 
-from tv_common import BASE, load_json, save_json, vnstock_sleep, vnstock_tier
+from tv_common import BASE, load_json, save_json, vnstock_status
 
 WATCHLIST = BASE / "watchlist.json"
 OUT = BASE.parent / "scans" / "profile_vn.json"
@@ -393,8 +393,7 @@ def main():
     ap.add_argument("--sleep", type=float, default=None,
                     help="giay nghi giua 2 request; de trong = tu tinh theo tier tai khoan")
     args = ap.parse_args()
-    if args.sleep is None:
-        args.sleep = vnstock_sleep()
+    tier, args.sleep, warn = vnstock_status(args.sleep)
 
     syms = [s.upper() for s in args.symbols]
     if not syms:
@@ -409,7 +408,9 @@ def main():
     today = datetime.now(TZ).date()
     profiles, fails = {}, []
     print(f"[i] Lay ho so {len(syms)} ma (~{len(syms) * 4 * args.sleep / 60:.1f} phut, "
-          f"tier '{vnstock_tier()}', nghi {args.sleep}s/request)…")
+          f"tier '{tier}', nghi {args.sleep}s/request)…")
+    if warn:
+        print(warn)
     for s in syms:
         try:
             profiles[s] = build(s, fetch(s, args.sleep), today)

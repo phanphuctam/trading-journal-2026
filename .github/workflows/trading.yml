@@ -59,8 +59,12 @@ jobs:
         with:
           python-version: '3.13'
 
+      # GHIM vnai>=2.5.6: `pip install vnstock` chi doi vnai>=2.5.2, ma bang TIER_LIMITS
+      # (thu quyet dinh 20 hay 60 req/phut, 4 hay 8 ky BCTC) nam trong vnai. Pip giai
+      # phien ban cu hon thi script khong doc duoc tier, lang le lui ve muc guest —
+      # secret van dat day du ma khong an gi, va khong co gi bao.
       - name: Cai thu vien
-        run: pip install --quiet tradingview-screener requests pandas vnstock pyarrow
+        run: pip install --quiet tradingview-screener requests pandas pyarrow "vnstock>=4.0.5" "vnai>=2.5.6"
 
       # Cache OHLCV: lan dau tai ~400 ma (~25 phut), cac lan sau chi cap nhat duoi
       - name: Cache du lieu gia VN

@@ -38,7 +38,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 
-from tv_common import BASE, load_json, vnstock_sleep, vnstock_tier
+from tv_common import BASE, load_json, vnstock_status
 
 CACHE = BASE / ".vncache"
 WATCHLIST = BASE / "watchlist.json"
@@ -55,14 +55,15 @@ MAX_POS_PCT = 2.0      # tran vi the = % GTGD TB20
 def refresh(symbols, days=120, sleep=None):
     """Tai moi / cap nhat duoi cache. Toc do theo tier tai khoan, xem `vnstock_sleep`."""
     from vnstock import Quote
-    if sleep is None:
-        sleep = vnstock_sleep(fallback=3.2)
+    tier, sleep, warn = vnstock_status(sleep)
+    if warn:
+        print(warn)
     tz = ZoneInfo("Asia/Ho_Chi_Minh")
     end = datetime.now(tz).strftime("%Y-%m-%d")
     tail = (datetime.now(tz) - pd.Timedelta(days=days)).strftime("%Y-%m-%d")
     CACHE.mkdir(exist_ok=True)
     print(f"[i] Cap nhat {len(symbols)} ma (~{len(symbols) * sleep / 60:.0f} phut, "
-          f"tier '{vnstock_tier()}', nghi {sleep}s/request)…")
+          f"tier '{tier}', nghi {sleep}s/request)…")
     for s in symbols:
         f = CACHE / f"{s}.parquet"
         first = not f.exists()

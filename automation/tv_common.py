@@ -113,6 +113,33 @@ def vnstock_tier() -> str:
         return "?"
 
 
+def vnstock_status(sleep: float | None = None) -> tuple[str, float, str]:
+    """Tra (tier, giay_nghi, canh_bao) — goi mot lan o dau moi script dung vnstock.
+
+    Canh bao la de bat mot kieu hong CAM LANG: dat API key roi (bien moi truong hoac
+    ~/.vnstock/api_key.json) nhung tier van la 'guest'. Luc do script van chay, van
+    ra so, chi la cham gap ba va BCTC chi con 4 ky thay vi 8 — tuc buoc 1 quay ve
+    phai suy nguoc. Khong ai nhin ra dieu do trong mot trang log, nen phai het len.
+
+    Nguyen nhan thuong gap: pip giai vnai ban cu (bang TIER_LIMITS nam trong vnai),
+    key sai/het han, hoac may chay khong ra duoc mang.
+    """
+    tier = vnstock_tier()
+    if sleep is None:
+        sleep = vnstock_sleep()
+    has_key = bool(os.environ.get("VNSTOCK_API_KEY", "").strip()) or \
+        (Path.home() / ".vnstock" / "api_key.json").exists()
+    warn = ""
+    if has_key and tier == "guest":
+        warn = ("[!!] CO API KEY NHUNG TIER VAN LA 'guest' — dang chay cham gap ba va "
+                "BCTC chi 4 ky. Kiem: pip show vnai (can >= 2.5.6), key con han khong, "
+                "may co ra duoc mang khong.")
+    elif tier == "guest":
+        warn = ("[i] Chay KHONG API key: 20 req/phut, BCTC 4 ky. Key MIEN PHI tai "
+                "vnstocks.com/account#api-key cho 60 req/phut va 8 ky.")
+    return tier, sleep, warn
+
+
 def get_quotes(symbols: list[str], market: str = "vietnam") -> dict:
     """Lay gia hien tai cho danh sach ma (1 request duy nhat).
 

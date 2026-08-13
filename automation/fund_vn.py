@@ -47,7 +47,7 @@ from zoneinfo import ZoneInfo
 
 warnings.filterwarnings("ignore")
 
-from tv_common import BASE, load_json, save_json, vnstock_sleep, vnstock_tier
+from tv_common import BASE, load_json, save_json, vnstock_status
 
 WATCHLIST = BASE / "watchlist.json"
 OUT = BASE.parent / "scans" / "fund_vn.json"
@@ -775,8 +775,7 @@ def main():
     ap.add_argument("--sleep", type=float, default=None,
                     help="giay nghi giua 2 request; de trong = tu tinh theo tier tai khoan")
     args = ap.parse_args()
-    if args.sleep is None:
-        args.sleep = vnstock_sleep()
+    tier, args.sleep, warn = vnstock_status(args.sleep)
 
     syms = [s.upper() for s in args.symbols]
     if not syms:
@@ -790,14 +789,11 @@ def main():
 
     hist = load_json(HIST, {})
     funds, fails = {}, []
-    tier = vnstock_tier()
     print(f"[i] Lay bao cao tai chinh {len(syms)} ma "
           f"(~{len(syms) * 6 * args.sleep / 60:.1f} phut, tier '{tier}', "
           f"nghi {args.sleep}s/request)…")
-    if tier == "guest":
-        print("[i] Dang chay KHONG API key: 20 req/phut va BCTC chi 4 ky. Key MIEN PHI "
-              "(vnstocks.com/account#api-key) cho 60 req/phut va 8 ky — 8 quy nghia la "
-              "co san quy cung ky nam truoc, khong phai suy nguoc.")
+    if warn:
+        print(warn)
     for s in syms:
         try:
             funds[s] = build(s, fetch(s, args.sleep), hist)
