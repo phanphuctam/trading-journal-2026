@@ -2442,6 +2442,22 @@ class Component extends DCLogic {
   // "một ngày" về "vài phút", và phần còn lại thì để người tự quyết bằng công tắc tay.
   //
   // PAT phải bật thêm quyền Actions: Read and write. Token cũ chỉ có Contents RW sẽ 403.
+  // ══ KHOÁ CHỐNG BẤM LẶP ══
+  // 13/08/2026: một lần bấm "Chấm bằng máy" đẻ ra BẢY lần dispatch trong đúng một
+  // giây (run 159–165 trên GitHub, tất cả kết thúc "cancelled"). Nút không có khoá,
+  // nên mọi sự kiện click đều bắn thêm một lần chạy — giữ Enter trên nút đang có
+  // focus là bàn phím tự lặp ở tốc độ đó. Nhóm concurrency 'trading-bot' chỉ giữ
+  // MỘT lần chờ, nên mỗi lần mới lại huỷ lần trước: bấm càng nhiều càng không chạy.
+  _botLock(fn) {
+    if (this._botBusy) { this._toast('Bot đang chạy — chờ lần này xong đã.', 'var(--amber)'); return; }
+    this._botBusy = true;
+    this._renderFA(); this._renderTA(); this._renderWatchlist();   // nút chuyển sang mờ
+    return Promise.resolve().then(fn).finally(() => {
+      this._botBusy = false;
+      this._renderFA(); this._renderTA(); this._renderWatchlist();
+    });
+  }
+
   async _ghRunBot(mode, label) {
     const pat = this._ghPat(); if (!pat) return;
     const hdrs = this._ghHdrs(pat);
@@ -2460,6 +2476,14 @@ class Component extends DCLogic {
       + 'github.com/' + GH_REPO + '/actions/workflows/trading.yml → nút "Run workflow" → chọn mode → Run.\n'
       + '(Chạy xong quay lại đây bấm nút ⟳ để nạp số mới.)';
     this._botMsg(label + '…', 'var(--accent)');
+    // Danh sách lần chạy phải chụp TRƯỚC khi gửi lệnh, nếu không thì lần của mình đã
+    // nằm sẵn trong ảnh chụp và không còn cách nào tách nó ra khỏi các lần cũ.
+    const listRuns = async () => {
+      const q = await fetch(base + '/actions/workflows/trading.yml/runs?per_page=20',
+        { headers: hdrs, cache: 'no-store' });
+      return q.ok ? ((await q.json()).workflow_runs || []) : null;
+    };
+    const seen = (await listRuns()) || [];
     try {
       const t0 = Date.now();
       const r = await fetch(base + '/actions/workflows/trading.yml/dispatches', {
@@ -2474,24 +2498,40 @@ class Component extends DCLogic {
       if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error('HTTP ' + r.status + (e.message ? ' — ' + e.message : '')); }
 
       // Chờ chạy xong. regime chỉ 1 request VN-Index (~1 phút); full phải tải OHLCV +
-      // BCTC cho cả watchlist, vnstock bản cộng đồng giới hạn 20 request/phút nên lâu.
+      // BCTC cho cả watchlist nên lâu (giới hạn 60 req/phút nếu có API key, 20 nếu không).
       const limit = mode === 'full' ? 40 * 60000 : 6 * 60000;
-      let run = null;
+      // Bị huỷ liên tục trong bao lâu thì mới chịu báo hỏng. Xem khối xử lý 'cancelled'.
+      const cancelGrace = 3 * 60000;
+      let run = null, lastCancelled = null;
+      // Lần chạy nào KHÔNG có trong ảnh chụp trước lúc bấm thì mới là của mình.
+      // Trước đây nhận diện bằng mốc thời gian (`created_at >= t0 - 60s`), và cách đó
+      // vớ ngay phải lần chạy của người khác hoặc lần chạy vừa bị huỷ.
+      const before = new Set(seen.map(x => x.id));
+      const dead = new Set();          // lần chạy đã bị chen chỗ, đừng bám theo nữa
       while (Date.now() - t0 < limit) {
         // 6 giây trong 2 phút đầu (lúc còn xếp hàng, muốn biết ngay), sau đó 20 giây —
         // hỏi 6 giây/lần suốt 40 phút là 400 lượt gọi API cho một câu trả lời không đổi.
         await new Promise(s => setTimeout(s, Date.now() - t0 < 120000 ? 6000 : 20000));
-        const q = await fetch(base + '/actions/runs?event=workflow_dispatch&per_page=5',
-          { headers: hdrs, cache: 'no-store' });
-        if (!q.ok) continue;
-        const j = await q.json();
-        const cand = (j.workflow_runs || []).find(x => new Date(x.created_at).getTime() >= t0 - 60000);
-        if (cand) run = cand;
+        const all = await listRuns();
+        if (!all) continue;
+        const mine = all.filter(x => !before.has(x.id) && !dead.has(x.id));
+        run = mine.length ? mine[0] : null;
         const mins = Math.round((Date.now() - t0) / 60000);
         this._botMsg(`${label}… ${run ? run.status === 'in_progress' ? 'đang chạy' : run.status : 'đang xếp hàng'}`
           + (mins ? ` (${mins} phút)` : ''), 'var(--accent)');
-        if (run && run.status === 'completed') break;
+        if (!run || run.status !== 'completed') continue;
+        if (run.conclusion !== 'cancelled') break;
+        // BỊ HUỶ KHÔNG PHẢI LÀ HỎNG. Nhóm concurrency 'trading-bot' chỉ giữ đúng một
+        // lần chạy đang chờ: có lần mới hơn (bấm lại, hoặc cron tới giờ) là lần đang
+        // chờ bị huỷ. Đúng việc cần làm là bám theo lần mới, không phải báo lỗi —
+        // báo lỗi ở đây là nói "không chạy được" trong khi công việc vẫn đang chạy.
+        lastCancelled = run; dead.add(run.id); run = null;
+        if (Date.now() - t0 > cancelGrace) break;
       }
+      if (!run && lastCancelled)
+        throw new Error('Các lần chạy vừa gửi đều bị huỷ vì có lần chạy khác chen chỗ '
+          + '(cron tới giờ, hoặc bấm nút nhiều lần).\n\nĐợi 1-2 phút rồi bấm lại — '
+          + 'mở github.com/' + GH_REPO + '/actions để xem lần nào đang chạy.');
       if (!run || run.status !== 'completed') throw new Error('Quá thời gian chờ — mở github.com/' + GH_REPO + '/actions để xem.');
       if (run.conclusion !== 'success') throw new Error('Lần chạy kết thúc "' + run.conclusion + '" — mở github.com/' + GH_REPO + '/actions để xem log.');
 
@@ -2548,15 +2588,17 @@ class Component extends DCLogic {
       b ? `<span class="ti ti-rotate"></span> ${b.txt}` : ''}</span>`;
   }
 
-  runBotRegime = () => this._ghRunBot('regime', 'Đang cập nhật công tắc tổng')
+  runBotRegime = () => this._botLock(() => this._ghRunBot('regime', 'Đang cập nhật công tắc tổng'))
 
   // Chấm bằng máy = đẩy watchlist lên trước (mã mới thêm chưa có trên GitHub thì bot
   // không biết đường tính), rồi chạy watch_stats.py + fund_vn.py cho cả watchlist.
-  runBotScore = async () => {
+  // Khoá đặt ở ĐÂY chứ không ở trong _ghRunBot: bước đẩy watchlist chạy trước, và
+  // nếu chỉ khoá phần gửi lệnh thì bấm lặp vẫn đẩy watchlist chồng lên nhau.
+  runBotScore = () => this._botLock(async () => {
     const ok = await this.pushWatchlist(true);
     if (!ok) return;
     await this._ghRunBot('full', 'Đang chấm bằng máy (tải giá + BCTC)');
-  }
+  })
 
   // Nút "Chấm bằng máy" dùng chung cho tab Cơ bản và tab Kỹ thuật.
   // Bot chỉ tính cho các mã trong watchlist.json, nên mã gõ tay mà chưa thêm vào
@@ -2567,6 +2609,12 @@ class Component extends DCLogic {
       return `<span style="font-size:10px;color:var(--text3);line-height:1.5">Thêm <b>${t}</b> vào watchlist rồi mới chấm được bằng máy.</span>`;
     }
     const has = !!this._fund(t) || !!this._wstat(t) || !!this._prof(t);
+    // Đang chạy thì KHOÁ nút lại. Khoá logic ở _botLock là đủ để không bắn thêm lệnh,
+    // nhưng nút vẫn sáng thì người dùng cứ bấm và tưởng app treo — mà chính việc bấm
+    // thêm là thứ đẻ ra bảy lần chạy bị huỷ hôm 13/08.
+    if (this._botBusy) {
+      return `<button disabled class="tj-abtn" style="background:transparent;border-color:var(--border);color:var(--text3);font-weight:700;cursor:default;opacity:.6"><span class="ti ti-rotate"></span> Đang chạy…</button>`;
+    }
     return `<button onclick="window._tj.runBotScore()" class="tj-abtn"
       style="background:${has ? 'transparent' : 'var(--accent)'};border-color:var(--accent);color:${has ? 'var(--accent)' : 'var(--btn-fg)'};font-weight:700"
       title="Đẩy watchlist lên GitHub rồi chạy watch_stats.py + fund_vn.py + profile_vn.py cho toàn bộ watchlist, xong thì nạp số về đây. Mất 10-30 phút vì vnstock bản cộng đồng giới hạn 20 request/phút — cứ để tab mở."><span class="ti ti-zap"></span> ${has ? 'Chấm lại' : 'Chấm'} bằng máy</button>`;
@@ -4248,8 +4296,8 @@ class Component extends DCLogic {
       ${this._regimeEarly(r, esc)}
       <div style="font-size:9.5px;color:var(--text3);margin-top:4px">${tail}</div>
       <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px dashed ${col}">
-        <button onclick="window._tj.runBotRegime()" class="tj-abtn" style="background:transparent;border-color:var(--border);color:var(--text3);font-size:10px;padding:3px 8px"
-          title="Chạy lại regime.py trên GitHub để cập nhật NGÀY PHÂN PHỐI và FTD — hai thứ cần chuỗi lịch sử nên TradingView không trả được (~1-2 phút).">Chạy bot</button>
+        <button ${this._botBusy ? 'disabled' : 'onclick="window._tj.runBotRegime()"'} class="tj-abtn" style="background:transparent;border-color:var(--border);color:var(--text3);font-size:10px;padding:3px 8px;cursor:${this._botBusy ? 'default' : 'pointer'};opacity:${this._botBusy ? .6 : 1}"
+          title="Chạy lại regime.py trên GitHub để cập nhật NGÀY PHÂN PHỐI và FTD — hai thứ cần chuỗi lịch sử nên TradingView không trả được (~1-2 phút).">${this._botBusy ? 'Đang chạy…' : 'Chạy bot'}</button>
         <span style="font-size:9.5px;color:var(--text3);margin-left:4px">Tôi tự đánh giá:</span>
         ${mbtn(null, 'Theo máy', 'var(--text3)')}
         ${mbtn('ON', 'Cho phép', 'var(--green)')}
