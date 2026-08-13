@@ -3377,13 +3377,22 @@ class Component extends DCLogic {
                sub: thr == null ? sub : `cần ≥ ${thr}%` };
     };
 
+    // Vị trí CÙNG KỲ NĂM TRƯỚC trong dãy kỳ. Với API key miễn phí nguồn trả 8 quý
+    // nên kỳ này CÓ THẬT trong dữ liệu — điền sẵn luôn thay vì bắt gõ tay. Không có
+    // key thì chỉ 4 quý, tìm không thấy, ô để trống y như cũ.
+    const iLY = p => { const b = back(p); return b ? P.indexOf(b) : -1; };
+    const atLY = (a, p) => { const i = iLY(p); return i >= 0 ? at(a, i) : null; };
+
     if (k === 'vnq') return {
       unit: 'ty', hint: 'Bảng KQKD quý · dán cả cụm "46.312.274.000.000" cũng được, máy tự đổi ra tỷ',
       cols: qCols,
       rows: [
-        { k: 'npat', lab: 'LNST cổ đông mẹ', sub: 'dòng 19', fill: [at(q && q.npat, 0), null] },
-        { k: 'rev', lab: 'Doanh thu thuần', sub: 'dòng 3', fill: [at(q && q.rev, 0), null] },
-        { k: 'npat1', lab: 'LNST quý LIỀN TRƯỚC', fill: [at(q && q.npat, 1), null],
+        { k: 'npat', lab: 'LNST cổ đông mẹ', sub: 'dòng 19',
+          fill: [at(q && q.npat, 0), atLY(q && q.npat, P[0])] },
+        { k: 'rev', lab: 'Doanh thu thuần', sub: 'dòng 3',
+          fill: [at(q && q.rev, 0), atLY(q && q.rev, P[0])] },
+        { k: 'npat1', lab: 'LNST quý LIỀN TRƯỚC',
+          fill: [at(q && q.npat, 1), atLY(q && q.npat, P[1])],
           sub: `${P[1] || 'quý trước'} so ${back(P[1]) || 'cùng kỳ'} · tuỳ chọn, chỉ để đo GIA TỐC` },
       ],
       out: V => {
@@ -3660,7 +3669,13 @@ class Component extends DCLogic {
       return when ? `<div style="font-size:11.5px;color:var(--text3);font-family:inherit;margin-top:3px"><span class="ti ti-bars"></span> ${when} · vnstock</div>` : '';
     };
     const stamp = f ? stampOf('fund') : '';
-    const rv = a => (a || []).slice().reverse();      // vnstock trả mới nhất trước
+    // vnstock trả kỳ mới nhất trước → đảo lại cũ→mới khi vẽ.
+    // CẮT còn 6 kỳ: API key miễn phí nâng số kỳ từ 4 lên 8, tốt cho phép tính nhưng
+    // 8 cột số nhét vào cột phải của journal thì phải cuộn ngang mới đọc được. Mọi
+    // phép tính ở fund_vn.py vẫn chạy trên TRỌN BỘ dữ liệu — chỗ này chỉ là chỗ vẽ.
+    // Giữ 6 vì bước 1 cần nhìn được kỳ này VÀ cùng kỳ năm trước, tức cách nhau 5 cột.
+    const FA_MAXCOL = 6;
+    const rv = a => (a || []).slice(0, FA_MAXCOL).reverse();
 
     // Dãy số theo kỳ, mỗi kỳ MỘT CỘT. Trước đây in một dòng dài rồi để dòng kỳ ở dưới:
     // số không bao giờ thẳng cột với kỳ của nó, muốn biết 70,7 là quý nào phải đếm

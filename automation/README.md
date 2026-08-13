@@ -34,8 +34,16 @@ Việc chặn tốc độ nằm ở **phía client**: `vnai/beam/quota.py` đọ
 chặn. Nghĩa là chỉ cần có key là ba script chạy nhanh gấp ba, không phải sửa gì —
 `vnstock_sleep()` trong `tv_common.py` tự hỏi thư viện rồi tính giãn cách.
 
-**API key KHÔNG mở thêm dữ liệu.** Giới hạn 4 kỳ báo cáo tài chính do máy chủ áp,
-và đó là thứ gói tài trợ bán. Đăng ký key chỉ đổi được tốc độ.
+**Key còn mở thêm dữ liệu — đo thật ngày 13/08/2026:** báo cáo tài chính từ **4 kỳ
+lên 8 kỳ**, cả quý lẫn năm. Đây mới là phần giá trị nhất, hơn cả tốc độ:
+
+- **8 quý** ⇒ quý cùng kỳ năm trước **có sẵn trong báo cáo**. Bước 1 (chữ C của
+  CAN SLIM) đọc thẳng số thật, không phải suy ngược từ chuỗi luỹ kế nữa.
+- **8 năm** ⇒ bẫy "phục hồi giả" (4 → 5 → 6 → **2** → 2,5) mới thật sự nhìn ra.
+  Với 4 năm thì một mã sập ba năm rồi hồi một năm vẫn có thể trông như tăng đều.
+
+Phép suy ngược TTM vẫn giữ làm lưới đỡ: dùng khi chạy không key, khi kỳ cần so nằm
+ngoài 8 kỳ, hoặc khi lịch sử tích luỹ còn trống. **Số báo cáo thật luôn thắng.**
 
 Lấy key: đăng nhập <https://vnstocks.com/account#api-key>. Rồi chọn **một** cách:
 

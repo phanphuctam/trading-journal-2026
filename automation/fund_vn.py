@@ -6,15 +6,23 @@ so, tu tinh phan tram, roi chi luu lai mot cai tick ✓/✕. Ket qua la moi lan 
 ~20 phut va TOAN BO con so bi vut di — ba thang sau khong tra duoc luc do minh
 thay gi. Script nay lam phan may lam duoc, de nguoi chi con phan phan xet.
 
-QUAN TRONG — GIOI HAN DA KIEM CHUNG (vnstock ban cong dong, 08/2026):
-  · Bao cao tai chinh chi tra ve 4 KY GAN NHAT. Quy hien tai la Q2/2026 thi ky xa
-    nhat lay duoc la Q3/2025 — tuc bang goc KHONG CO Q2/2025 de so cung ky.
-    -> DA GO DUOC (12/08/2026), xem `rs_money` + `backfill_yoy` ben duoi: bang
-       `ratio_summary` co chuoi TTM tu 2018, ma TTM(t) - TTM(t-1) = Q(t) - Q(t-4).
-       Biet Q(t) thi suy nguoc ra Q(t-4). Buoc 1 (chu C cua CAN SLIM) nay tu cham
-       duoc NGAY, khong con phai doi 4 quy tich luy fund_hist.json.
-    -> fund_hist.json VAN GIU va van uu tien: so bao cao that chinh xac hon so suy
-       nguoc. Suy nguoc chi dien vao cho trong.
+SO KY LAY DUOC PHU THUOC API KEY (do that 13/08/2026):
+  · KHONG co key (tier 'guest'): 4 ky gan nhat.
+  · CO key MIEN PHI (tier 'free'): 8 ky, ca quy lan nam.
+  Khac biet nay khong phai "nhieu so hon cho vui":
+    - 8 quy nghia la CO SAN quy cung ky nam truoc de so — buoc 1 (chu C cua CAN
+      SLIM) doc thang tu bao cao, khong phai suy nguoc.
+    - 8 nam moi nhin ra duoc bay "phuc hoi gia" (4-5-6-2-2,5). Voi 4 nam thi mot
+      ma sap ba nam roi hoi mot nam van co the trong nhu dang tang truong deu.
+  Lay key: vnstocks.com/account#api-key. Xem automation/README.md.
+
+VAN GIU PHEP SUY NGUOC lam luoi do (`rs_money` + `backfill_yoy`): bang
+`ratio_summary` co chuoi TTM tu 2018, ma TTM(t) - TTM(t-1) = Q(t) - Q(t-4), nen
+biet Q(t) thi suy nguoc ra Q(t-4). Dung khi chay khong key, khi ky can so nam
+ngoai 8 ky, hoac khi lich su tich luy con trong. So BAO CAO THAT luon thang.
+Phep suy nguoc co CONG DOI CHIEU rieng, xem `ttm_dev` — bat buoc, khong bo qua.
+
+GIOI HAN KHAC (dung o moi tier):
   · Bang `ratio` (Finance.ratio) HONG: tra ve du lieu 2018 lap lai, nhan cot sai het.
     KHONG dung. Nhung `Company.ratio_summary` — mot bang KHAC — thi CHAY TOT va co
     du PE/PB/ROE/bien loi nhuan/NPL/CAR/CIR/CASA/LDR/NIM tu 2018 den quy gan nhat.
@@ -26,7 +34,7 @@ khac han doanh nghiep san xuat. Script nhan dien va doi chi tieu, khong bia so.
 Cach dung:
     python fund_vn.py                 # ma trong watchlist.json
     python fund_vn.py HPG MWG         # chi mot vai ma
-    python fund_vn.py --sleep 4       # cham hon neu bi chan (gioi han 20 req/phut)
+    python fund_vn.py --sleep 4       # cham hon neu bi chan (mac dinh tu tinh theo tier)
 """
 import argparse
 import json
@@ -55,6 +63,8 @@ Q_REV_MIN = 20.0            # doanh thu quy YoY >= 20%
 DILUTE_OK = 5.0             # so CP tang <= 5%/nam thi coi la on dinh
 DILUTE_BAD = 15.0           # tang > 15%/nam la pha loang nang
 OCF_OK = 0.8                # tong OCF 4 quy >= 0,8 x tong LNST
+OCF_WINDOW = 4              # so quy gop lai — MOT vong mua vu tron ven, khong doi
+PEAK_YEARS = 5              # soi nguoc bao nhieu nam de tim "dinh cu" (bay phuc hoi gia)
 NONCORE_WARN = 30.0         # > 30% LNTT den tu ngoai cot loi = dang nghi
 # Buoc 2b (vnmar): bien loi nhuan phai NO RA, khong can cao. Lay nguong tu chinh
 # bang trong app — "bien MO RONG qua tung quy". Chi so sanh voi CUNG KY NAM TRUOC
@@ -459,7 +469,15 @@ def build(sym, d, hist):
     y_ok = bool(y_growth) and all(g is not None and g >= Y_GROWTH_MIN for g in y_growth[:3]) \
         and len([g for g in y_growth[:3] if g is not None]) >= 3
     # Bay "phuc hoi gia": nam moi nhat van thap hon dinh cu (4-5-6-2-2,5)
-    valid_np = [v for v in npat_y if v is not None]
+    # Cua so soi nguoc PHAI chot bang con so, khong duoc de no chay theo so ky nguon
+    # tra ve: co API key thi nguon nhay tu 4 nam len 8 nam, va phep so nay lang le
+    # doi thanh "so voi dinh cua 8 nam". Dinh nam 2018-2019 truoc COVID thi rat nhieu
+    # doanh nghiep VN chua lay lai duoc — de nguyen la ca watchlist bi danh below_peak,
+    # tuc buoc 2 truot het, ma khong ai hieu vi sao. PEAK_YEARS = 5 phu tron mot chu
+    # ky (gom ca COVID) va dung dang bieu do 5 diem trong vi du cua O'Neil.
+    # Day la LUA CHON, khong phai chan ly — day so day du van nam trong fund_vn.json
+    # de tu nhin lai bang mat.
+    valid_np = [v for v in npat_y[:PEAK_YEARS] if v is not None]
     below_peak = bool(valid_np) and npat_y[0] is not None and npat_y[0] < max(valid_np[1:], default=0)
 
     # ROE = LNST nam moi nhat / VCSH binh quan dau-cuoi ky
@@ -485,9 +503,16 @@ def build(sym, d, hist):
     if is_bank:
         rev_growth = recv_vs = inv_vs = None      # ngan hang khong co phai thu/ton kho
 
-    # ── Buoc dong tien: tong OCF 4 quy so voi tong LNST 4 quy ──
-    ocf_sum = sum(v for v in ocf_q if v is not None) if any(v is not None for v in ocf_q) else None
-    npat_sum = sum(v for v in npat_q if v is not None) if any(v is not None for v in npat_q) else None
+    # ── Buoc dong tien: tong OCF 4 QUY so voi tong LNST 4 QUY ──
+    # PHAI cat dung 4 quy. Truoc 13/08/2026 doan nay cong TOAN BO ocf_q, va no dung
+    # vi nguon luc do chi tra ve dung 4 ky. Co API key thi nguon tra 8 ky, va cung
+    # doan code do lang le doi thanh "8 quy" — PET nhay tu -7,10x sang -2,98x ma
+    # khong dong nao bao. Nguong OCF_OK = 0,8 duoc dat cho cua so 4 quy (mot vong
+    # mua vu tron ven); doi cua so ma giu nguyen nguong la so sanh hai thu khac nhau.
+    ocf_w = ocf_q[:OCF_WINDOW]
+    npat_w = npat_q[:OCF_WINDOW]
+    ocf_sum = sum(v for v in ocf_w if v is not None) if any(v is not None for v in ocf_w) else None
+    npat_sum = sum(v for v in npat_w if v is not None) if any(v is not None for v in npat_w) else None
     ocf_ratio = None
     if ocf_sum is not None and npat_sum and npat_sum > 0:
         ocf_ratio = round(ocf_sum / npat_sum, 2)
@@ -770,8 +795,9 @@ def main():
           f"(~{len(syms) * 6 * args.sleep / 60:.1f} phut, tier '{tier}', "
           f"nghi {args.sleep}s/request)…")
     if tier == "guest":
-        print("[i] Dang chay khong API key (20 req/phut). Dang ky key MIEN PHI tai "
-              "vnstocks.com/account#api-key thi len 60 req/phut — nhanh gap ba.")
+        print("[i] Dang chay KHONG API key: 20 req/phut va BCTC chi 4 ky. Key MIEN PHI "
+              "(vnstocks.com/account#api-key) cho 60 req/phut va 8 ky — 8 quy nghia la "
+              "co san quy cung ky nam truoc, khong phai suy nguoc.")
     for s in syms:
         try:
             funds[s] = build(s, fetch(s, args.sleep), hist)
@@ -820,6 +846,9 @@ def main():
         if f["manual"]:
             print(f"        ✎ tu kiem tay {len(f['manual'])} cho: "
                   + ", ".join(sorted({m['k'] for m in f['manual']})))
+    if funds:
+        print(f"[i] Nguon tra ve {max(len(f['q_periods']) for f in funds.values())} quy / "
+              f"{max(len(f['y_periods']) for f in funds.values())} nam.")
     nq = sum(1 for f in funds.values() if f["calc"]["npat_yoy_q"] is None)
     if nq:
         print(f"[i] {nq} ma van chua co quy cung ky nam truoc (ca suy nguoc lan lich su deu "
