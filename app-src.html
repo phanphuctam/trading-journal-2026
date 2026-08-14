@@ -2765,14 +2765,19 @@ class Component extends DCLogic {
   // lại yêu cầu "12 tháng gần nhất" (bước 0) và "6-12 tháng" (chất xúc tác): link cũ
   // đưa người đọc về 2024 để trả lời câu hỏi "vì sao là BÂY GIỜ".
   //
-  // Đường này chỉ cần MÃ. CafeF bỏ qua phần slug tên công ty và tự sửa luôn cả sàn,
-  // rồi 301 về địa chỉ chuẩn — đã thử: gmd/pet → hose, shs/ceo/idc → tự đổi sang hastc.
-  // Nên `-x` ở đây là slug giả cố ý, không phải chỗ điền thiếu.
+  // Đường này chỉ cần MÃ và MỞ THẲNG TAB TIN TỨC. Hậu tố `-tin-tuc` là tên tab chứ
+  // không phải slug tên công ty, nên CafeF không cần biết công ty tên gì; nó cũng
+  // không cần đúng sàn — đã thử `/hose/` cho mã HNX: shs → "SHS: Tin tức - CTCP
+  // Chứng khoán Sài Gòn - Hà Nội", ceo và idc cũng ra đúng doanh nghiệp.
   //
   // KHÔNG dùng `cafef.vn/{mã}.html`: nó là trang TAG TỪ KHOÁ khớp lỏng sau khi bỏ dấu,
   // trả 200 cho mọi mã nhưng nhiều mã ra sai hẳn chủ đề — SAM→"Sâm", TIN→"Tín",
   // BOT→"Bọt", C4G→cầu sông Đà, L14→đậu phộng giống. Đúng vài mã thì càng nguy hiểm.
-  _CFCO = t => `https://cafef.vn/du-lieu/hose/${String(t).toLowerCase()}-x.chn`
+  _CFCO = t => `https://cafef.vn/du-lieu/hose/${String(t).toLowerCase()}-tin-tuc.chn`
+  // Nguồn tin thứ hai là FireAnt, KHÔNG phải Vietstock: `finance.vietstock.vn/MÃ/tin-tuc.htm`
+  // không tồn tại, nó đá về /Error/Index (thử 14/08/2026). Các trang Vietstock khác
+  // trong bảng này — hồ sơ, thống kê giao dịch, giao dịch nội bộ, lịch sự kiện — vẫn sống.
+  _FA_NEWS = t => `https://fireant.vn/ma-chung-khoan/${String(t).toUpperCase()}`
   _VS = (t, page) => `https://finance.vietstock.vn/${t}/${page}.htm`
   _SZ = (t, page) => `https://simplize.vn/co-phieu/${t}${page ? '/' + page : ''}`
   // Thị trường nào thì dùng bảng tiêu chí của thị trường đó — tiêu chí Mỹ áp
@@ -2802,8 +2807,9 @@ class Component extends DCLogic {
     { k: 'vndisc', g: '0 · Chất lượng công bố thông tin (đặc thù VN)', must: 1, s: 'CafeF · Hồ sơ doanh nghiệp → tab Tin tức & sự kiện',
       src: '<span class="ti ti-warn"></span> Không có trong Minervini/O\'Neil — bắt buộc bổ sung cho thị trường VN',
       u: t => this._CFCO(t),
-      w: t => `Mở tab <b>Tin tức &amp; sự kiện</b> trên trang này (tin xếp theo NGÀY), lướt 12 tháng gần nhất, tìm: <b>ý kiến kiểm toán ngoại trừ / lưu ý</b>, <b>hồi tố hoặc điều chỉnh lợi nhuận sau kiểm toán</b>, chậm nộp BCTC, bị nhắc nhở/cảnh báo/kiểm soát, <b>giao dịch với bên liên quan</b> giá trị lớn
-        <br>→ <a href="${this._VS(t, 'tin-tuc')}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">Vietstock · tin ${t} ↗</a> — nguồn thứ hai, cũng xếp theo ngày; hai nơi bỏ sót khác nhau
+      w: t => `Link mở thẳng tab <b>Tin tức</b> (xếp theo NGÀY). Lướt 12 tháng gần nhất, tìm: <b>ý kiến kiểm toán ngoại trừ / lưu ý</b>, <b>hồi tố hoặc điều chỉnh lợi nhuận sau kiểm toán</b>, chậm nộp BCTC, bị nhắc nhở/cảnh báo/kiểm soát, <b>giao dịch với bên liên quan</b> giá trị lớn
+        <br>Trang này chia sẵn các cột <b>Thay đổi nhân sự</b> · <b>Tăng vốn - Cổ phiếu quỹ</b> · <b>Tình hình SXKD</b> — đọc theo cột thì không bị tin thị trường chen ngang
+        <br>→ <a href="${this._FA_NEWS(t)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">FireAnt ${t} ↗</a> — nguồn thứ hai, bấm tab <b>Tin tức</b>; hai nơi bỏ sót khác nhau
         <br>→ <a href="https://cafef.vn/tim-kiem.chn?keywords=${t}" target="_blank" rel="noopener" style="color:var(--text3)">tìm rộng cả CafeF ↗</a> <span style="color:var(--text3)">— xếp theo độ liên quan chứ KHÔNG theo ngày, chỉ dùng để đào tin cũ khi đã có nghi vấn cụ thể</span>`,
       p: 'Không có dấu hiệu nào ở trên · BCTC nộp đúng hạn · chênh lệch trước/sau kiểm toán không đáng kể',
       f: '<b>Lợi nhuận sau kiểm toán lệch mạnh so với tự lập → loại thẳng, không cần đọc tiếp.</b> Đây là bước diệt nhiều mã nhất ở VN và không tồn tại trong sách vì SEC ép công bố chặt hơn nhiều.<br>Cổ phiếu diện cảnh báo/kiểm soát: loại, bất kể đồ thị đẹp cỡ nào' },
@@ -2892,9 +2898,9 @@ class Component extends DCLogic {
     { k: 'vncat', g: '8 · Chất xúc tác (chữ N của CAN SLIM)', must: 1, s: 'CafeF · Hồ sơ doanh nghiệp → tab Tin tức & sự kiện',
       src: "O'Neil Ch.3 (New) · Minervini Ch.7 — bảng VN trước đây THIẾU hẳn bước này",
       u: t => this._CFCO(t),
-      w: t => `Trả lời đúng một câu: <b>vì sao là BÂY GIỜ?</b> Mở tab <b>Tin tức &amp; sự kiện</b> (xếp theo NGÀY) và tìm sự kiện mới trong 6-12 tháng: <b>sản phẩm/nhà máy/công suất mới</b>, <b>đổi ban lãnh đạo</b>, <b>chu kỳ ngành đảo chiều</b> (giá thép, giá heo, cước vận tải, lãi suất), <b>chính sách vĩ mô</b> (đầu tư công, nâng hạng thị trường, sửa luật đất đai), <b>M&amp;A / thoái vốn nhà nước</b>
+      w: t => `Trả lời đúng một câu: <b>vì sao là BÂY GIỜ?</b> Link mở thẳng tab <b>Tin tức</b> (xếp theo NGÀY) — tìm sự kiện mới trong 6-12 tháng: <b>sản phẩm/nhà máy/công suất mới</b>, <b>đổi ban lãnh đạo</b>, <b>chu kỳ ngành đảo chiều</b> (giá thép, giá heo, cước vận tải, lãi suất), <b>chính sách vĩ mô</b> (đầu tư công, nâng hạng thị trường, sửa luật đất đai), <b>M&amp;A / thoái vốn nhà nước</b>
         <br><span class="ti ti-warn"></span> Câu hỏi là "BÂY GIỜ", nên <b>thứ tự theo ngày mới là thứ tự đúng</b> để đọc bước này — một danh sách xếp theo độ liên quan sẽ đẩy tin 2024 lên đầu và bạn sẽ chấm đạt bằng một chất xúc tác đã tắt từ lâu
-        <br>→ <a href="${this._VS(t, 'tin-tuc')}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">Vietstock · tin ${t} ↗</a>`,
+        <br>→ <a href="${this._FA_NEWS(t)}" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">FireAnt ${t} ↗</a> — tab <b>Tin tức</b> có cả bài phân tích của công ty chứng khoán, thứ CafeF không đăng`,
       p: 'Chỉ ra được <b>một sự kiện cụ thể, gọi được tên</b>, giải thích vì sao lợi nhuận tăng tốc từ đây<br><span style="opacity:.75">O\'Neil: 95% siêu cổ phiếu đều có một "cái mới" tại thời điểm bắt đầu chạy. Không có chất xúc tác thì nền giá đẹp cũng chỉ là đồ thị đẹp.</span>',
       f: '<b>Không gọi tên được chất xúc tác = chưa hiểu vì sao mình mua.</b> Lúc giá giảm 5% bạn sẽ không biết nên cắt hay giữ.<br><span class="ti ti-warn"></span> <b>Ở VN bước này quan trọng hơn ở Mỹ, không phải kém hơn.</b> Nghiên cứu ABSA + XGBoost trên rổ VN30 (2019-2024): kết hợp đọc tin tức với tín hiệu kỹ thuật cho lợi nhuận <b>16,7%</b> so với <b>7,1%</b> khi chỉ dùng kỹ thuật. VN là thị trường chạy theo câu chuyện mạnh hơn Mỹ nhiều.<br>Nhưng phân biệt cho kỹ: <b>tin đồn "sắp có tin" không phải chất xúc tác</b> — nó là bẫy. Chất xúc tác phải là sự kiện <b>đã xảy ra hoặc đã công bố chính thức</b> và đo được vào doanh thu' },
 
@@ -3100,7 +3106,7 @@ class Component extends DCLogic {
       src: '<span class="ti ti-warn"></span> Không có trong sách — rủi ro đặc thù TTCK Việt Nam (tài liệu mục 7)',
       u: t => this._CFCO(t),
       w: t => `Mã có đang thuộc <b>diện cảnh báo / kiểm soát / hạn chế giao dịch</b> không · có <b>bị cắt margin</b> không · trong 60 phiên gần đây có bao nhiêu <b>phiên đóng giá trần</b> (máy đã đếm — xem cờ <span class="ti ti-flag"></span> ở tab Watch)
-        <br>Trạng thái diện cảnh báo nằm ở tab <b>Tin tức &amp; sự kiện</b> của trang này — đó là một thông báo có ngày, nên phải đọc theo ngày mới biết nó còn hiệu lực hay đã được gỡ`,
+        <br>Link mở thẳng tab <b>Tin tức</b>: trạng thái diện cảnh báo là một thông báo có ngày, nên phải đọc theo ngày mới biết nó còn hiệu lực hay đã được gỡ`,
       p: 'Không thuộc diện nào · không bị cắt margin · không có cụm phiên trần bất thường trong nền',
       f: '<b><span class="ti ti-flag"></span> Nhiều phiên trần trong nền là vân tay quen thuộc của đội lái</b> — kéo trần vài phiên với khối lượng tự đối ứng để VẼ RA một cái nền đẹp. Đây là thứ mắt KHÔNG bắt được, vì nền bị làm giá trông rất đẹp; đó chính là mục đích của làm giá. <b>Nền càng đẹp càng phải nghi.</b><br><b>Bị cắt margin = lực bán kỹ thuật xuất hiện bất kể cơ bản</b>, vì người đang dùng đòn bẩy buộc phải bán ra.<br><b><span class="ti ti-lock"></span> Phiên đóng giá trần:</b> trắng bên bán, mua không khớp được, hôm sau gap-up và điểm vào lệch xa pivot — tự nó đã vi phạm cửa 4' },
 
