@@ -1,11 +1,345 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-13 16:09",
+  "checked_at": "2026-08-14 10:30",
   "source": "vnstock/VCI · overview + co dong + su kien + tin",
   "room_tight": 1.0,
   "cal_soon_days": 14,
   "profiles": {
+    "GMD": {
+      "overview": {
+        "name": "Tập đoàn Gemadept",
+        "sector": "Industrial Goods & Services",
+        "icb2": "2700",
+        "icb4": "2777",
+        "listing_date": "2002-04-22",
+        "market_cap_ty": 33982.1,
+        "shares_m": 432.9,
+        "free_float_pct": 95.0,
+        "state_pct": 0.0,
+        "foreign_pct": 40.09,
+        "foreign_max_pct": 49.0,
+        "room_left_pct": 8.91,
+        "room_full": false,
+        "target_price": 95500.0,
+        "upside_pct": 21.66,
+        "analyst": "Huy Hoang"
+      },
+      "holders": {
+        "n": 77,
+        "top1_pct": 5.43,
+        "top5_pct": 13.48,
+        "top": [
+          {
+            "name": "Quỹ ETF DCVFMVN DIAMOND",
+            "pct": 5.43
+          },
+          {
+            "name": "KIM Vietnam Growth Equity Fund",
+            "pct": 2.24
+          },
+          {
+            "name": "Ngân hàng Deutsche Aktiengesellschaft",
+            "pct": 1.96
+          },
+          {
+            "name": "Deutsche Bank Aktiengesellchaft, London Branch",
+            "pct": 1.96
+          },
+          {
+            "name": "VOF Investment Limited",
+            "pct": 1.89
+          },
+          {
+            "name": "Tmam Vietnam Equity Mother Fund",
+            "pct": 1.88
+          },
+          {
+            "name": "Trần Doãn Phi Anh",
+            "pct": 1.81
+          },
+          {
+            "name": "Nguyễn Thị Hồng",
+            "pct": 1.75
+          }
+        ]
+      },
+      "events": {
+        "soon": [],
+        "dilute": [
+          {
+            "name": "Phát hành cổ phiếu",
+            "title": "Phát hành cổ phiếu - Phát hành cho CBCNV tỉ lệ 1.5%",
+            "exright": "2026-07-31",
+            "record": "2026-07-31",
+            "public": "2026-08-04",
+            "ratio": 0.015,
+            "value_per_share": null
+          },
+          {
+            "name": "Phát hành cổ phiếu",
+            "title": "Phát hành cổ phiếu - Cổ phiếu thưởng tỉ lệ 50.0%",
+            "exright": null,
+            "record": null,
+            "public": "2026-05-08",
+            "ratio": 0.5,
+            "value_per_share": null
+          },
+          {
+            "name": "Niêm yết thêm",
+            "title": "GMD - Niêm yết bổ sung 6.302.800 cổ phiếu",
+            "exright": null,
+            "record": null,
+            "public": "2025-10-24",
+            "ratio": null,
+            "value_per_share": null
+          },
+          {
+            "name": "Phát hành cổ phiếu",
+            "title": "Phát hành cổ phiếu - Phát hành cho CBCNV tỉ lệ 1.5%",
+            "exright": "2025-10-02",
+            "record": "2025-10-02",
+            "public": "2025-10-06",
+            "ratio": 0.015,
+            "value_per_share": null
+          }
+        ],
+        "insider": [
+          {
+            "name": "Giao dịch nội bộ: Giao dịch cá nhân",
+            "title": "Trần Đức Thuận - Đăng kí Mua 31,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch cá nhân",
+            "title": "Vũ Thị Hoàng Bắc - Đăng kí Mua 37,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch cá nhân",
+            "title": "Lưu Tường Giai - Đăng kí Mua 40,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch cá nhân",
+            "title": "Đỗ Công Khanh - Đăng kí Mua 105,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch cá nhân",
+            "title": "Phạm Quốc Long - Đăng kí Mua 105,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch cá nhân",
+            "title": "Nguyễn Thế Dũng - Đăng kí Mua 105,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch người liên quan",
+            "title": "Nguyễn Thị Hồng Nga - Đăng kí Mua 60,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch cá nhân",
+            "title": "Nguyễn Minh Nguyệt - Đăng kí Mua 105,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch cá nhân",
+            "title": "Bùi Thị Thu Hương - Đăng kí Mua 105,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch cá nhân",
+            "title": "Nguyễn Thanh Bình - Đăng kí Mua 105,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch cá nhân",
+            "title": "Vũ Ninh - Đăng kí Mua 105,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          },
+          {
+            "name": "Giao dịch nội bộ: Giao dịch người liên quan",
+            "title": "Chu Đức Trung - Đăng kí Mua 32,000 GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-04",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "mua"
+          }
+        ],
+        "cash_div": [
+          {
+            "name": "Trả cổ tức bằng tiền mặt",
+            "title": "Trả cổ tức bằng tiền mặt - Cả năm 2025 - 2,200 VND",
+            "exright": "2026-05-21",
+            "record": "2026-05-22",
+            "public": "2026-05-15",
+            "ratio": 0.22,
+            "value_per_share": 2200.0
+          },
+          {
+            "name": "Trả cổ tức bằng tiền mặt",
+            "title": "Trả cổ tức bằng tiền mặt - Cả năm 2024 - 2,000 VND",
+            "exright": "2025-07-09",
+            "record": "2025-07-10",
+            "public": "2025-07-03",
+            "ratio": 0.2,
+            "value_per_share": 2000.0
+          }
+        ],
+        "n_sell": 0,
+        "n_buy": 14
+      },
+      "news": {
+        "n": 50,
+        "red": [],
+        "amber": [
+          {
+            "flag": "bien dong nhan su cap cao",
+            "t": "GMD: Thông báo thay đổi nhân sự - Miễn nhiệm thành viên HĐQT",
+            "d": "2026-05-08"
+          }
+        ],
+        "recent": [
+          {
+            "t": "GMD: Nghị quyết HĐQT về việc tăng vốn điều lệ và sửa đổi điều lệ",
+            "d": "2026-08-12"
+          },
+          {
+            "t": "GMD: Thông báo nhận được công văn của UBCKNN về tài liệu báo cáo phát hành cổ phiếu theo chương trình lựa chọn cho người lao động",
+            "d": "2026-08-07"
+          },
+          {
+            "t": "GMD: Công ty thông báo thay cho CĐNB và NLQ về kết quả giao dịch mua cổ phiếu ESPP năm 2025 theo danh sách đính kèm",
+            "d": "2026-08-04"
+          },
+          {
+            "t": "GMD: Thông báo về việc ký hợp đồng với đơn vị kiểm toán BCTC năm 2026",
+            "d": "2026-08-04"
+          },
+          {
+            "t": "GMD: Thông báo thay đổi số lượng cổ phiếu có quyền biểu quyết đang lưu hành",
+            "d": "2026-08-04"
+          },
+          {
+            "t": "GMD: Báo cáo kết quả phát hành ESPP 2025",
+            "d": "2026-08-04"
+          },
+          {
+            "t": "GMD: Báo cáo tình hình Quản trị công ty 6 tháng đầu năm 2026",
+            "d": "2026-07-31"
+          },
+          {
+            "t": "GMD: Giấy chứng nhận đăng ký doanh nghiệp thay đổi lần thứ 8",
+            "d": "2026-07-27"
+          },
+          {
+            "t": "GMD: GCN Đăng ký doanh nghiệp Công ty TNHH Vận tải Thế Hệ Xanh (đăng ký lần đầu ngày 21/07/2026)",
+            "d": "2026-07-24"
+          },
+          {
+            "t": "GMD: CBTT thay cho CĐNB và người có liên quan đăng ký mua cổ phiếu ESPP",
+            "d": "2026-07-21"
+          },
+          {
+            "t": "GMD: Thông báo phát hành CP theo chương trình lựa chọn cho NLĐ",
+            "d": "2026-07-10"
+          },
+          {
+            "t": "GMD: Thông báo nhận được công văn của UBCKNN về tài liệu báo cáo phát hành cổ phiếu ESOP",
+            "d": "2026-07-03"
+          }
+        ]
+      },
+      "auto": {
+        "vndisc": 0,
+        "vnfo": 0,
+        "vndil": -1,
+        "vnins": 1,
+        "vncald": 0
+      },
+      "manual": [
+        {
+          "k": "vndisc",
+          "why": "máy chỉ quét TIÊU ĐỀ của 50 tin gần nhất và không thấy từ khoá báo động — đây KHÔNG phải kết luận “sạch”. Ý kiến kiểm toán nằm trong file BCTC chứ không nằm ở tiêu đề tin",
+          "where": "CafeF · tin doanh nghiệp + BCTC kiểm toán năm gần nhất"
+        },
+        {
+          "k": "vnfo",
+          "why": "máy không đọc được mua/bán ròng của khối ngoại (vnstock bản cộng đồng khoá endpoint này) — phải tự xem",
+          "where": "Vietstock · Thống kê giao dịch, tab GD nước ngoài"
+        },
+        {
+          "k": "vndil",
+          "why": "có 4 sự kiện làm tăng số cổ phiếu trong 12 tháng (niêm yết thêm / phát hành / cổ tức bằng cổ phiếu). Máy không biết cái nào ĐÃ xong và cái nào còn là kế hoạch treo trên đầu",
+          "where": "Vietstock · Hồ sơ doanh nghiệp + nghị quyết ĐHCĐ"
+        },
+        {
+          "k": "vncald",
+          "why": "ngày công bố BCTC quý KHÔNG có trong bảng sự kiện — ở VN nó không được ấn định trước, chỉ có hạn chót 20-30 ngày sau khi chốt quý",
+          "where": "canh cuối tháng 1/4/7/10"
+        }
+      ]
+    },
     "PET": {
       "overview": {
         "name": "Dịch vụ Tổng hợp Dầu khí",
@@ -13,7 +347,7 @@
         "icb2": "5300",
         "icb4": "5379",
         "listing_date": "2007-09-12",
-        "market_cap_ty": 6243.9,
+        "market_cap_ty": 6127.9,
         "shares_m": 154.7,
         "free_float_pct": 70.0,
         "state_pct": 0.0,

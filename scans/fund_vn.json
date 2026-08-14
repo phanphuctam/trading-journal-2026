@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-13 16:09",
+  "checked_at": "2026-08-14 10:29",
   "source": "vnstock/VCI · ban cong dong chi tra 4 ky gan nhat",
   "thresholds": {
     "y_growth": 20.0,
@@ -12,6 +12,231 @@
     "ocf": 0.8
   },
   "funds": {
+    "GMD": {
+      "sector": "corp",
+      "manual": [
+        {
+          "k": "vnq",
+          "why": "chuỗi luỹ kế lợi nhuận LỆCH 1.83% so với tổng 4 quý báo cáo (ngưỡng 1.0%) — nguồn tự mâu thuẫn nên máy TỪ CHỐI suy ngược cùng kỳ. Bước này phải đọc tay hoàn toàn",
+          "where": "CafeF · KQKD quý, mở thêm tab cùng kỳ năm trước"
+        },
+        {
+          "k": "vnbs",
+          "why": "máy chỉ so TỔNG tồn kho với doanh thu. Nguyên vật liệu tăng có thể là tin TỐT (gom hàng giá rẻ trước chu kỳ), chỉ thành phẩm tăng mới là hàng ế — máy không tách được hai cái đó",
+          "where": "CafeF · Thuyết minh hàng tồn kho"
+        },
+        {
+          "k": "vndil",
+          "why": "số cổ phiếu suy từ VỐN GÓP nên chỉ thấy phần ĐÃ phát hành xong. Kế hoạch phát hành riêng lẻ / ESOP đã thông qua nhưng CHƯA thực hiện không hiện ở đây",
+          "where": "danh sách sự kiện ngay bên dưới + Vietstock · Hồ sơ doanh nghiệp"
+        }
+      ],
+      "check": {
+        "bs_dev_pct": 0.0,
+        "ok": true,
+        "npat_basis": "parent",
+        "npat_basis_q": "parent",
+        "backfilled": 4,
+        "ttm_dev_npat": 1.83,
+        "ttm_dev_rev": 0.0,
+        "ttm_dev_max": 1.0
+      },
+      "q_periods": [
+        "2026-Q2",
+        "2026-Q1",
+        "2025-Q4",
+        "2025-Q3",
+        "2025-Q2",
+        "2025-Q1",
+        "2024-Q4",
+        "2024-Q3"
+      ],
+      "y_periods": [
+        "2025",
+        "2024",
+        "2023",
+        "2022",
+        "2021",
+        "2020",
+        "2019",
+        "2018"
+      ],
+      "q": {
+        "rev": [
+          1761.6,
+          1452.4,
+          1624.9,
+          1560.5,
+          1493.7,
+          1276.9,
+          1411.5,
+          1264.1
+        ],
+        "npat": [
+          1133.5,
+          534.2,
+          592.2,
+          315.2,
+          445.3,
+          403.0,
+          230.7,
+          335.0
+        ],
+        "npat_tot": [
+          1285.4,
+          650.2,
+          738.3,
+          432.4,
+          604.1,
+          527.7,
+          374.1,
+          448.4
+        ],
+        "ocf": [
+          691.3,
+          392.9,
+          533.4,
+          518.4,
+          942.7,
+          147.6,
+          577.9,
+          398.3
+        ],
+        "recv": [
+          1477.5,
+          1238.5,
+          1398.7,
+          1303.0,
+          1359.6,
+          1129.4,
+          1235.6,
+          1310.0
+        ],
+        "inv": [
+          148.9,
+          102.2,
+          92.5,
+          85.1,
+          95.5,
+          75.0,
+          83.4,
+          72.3
+        ],
+        "noncore_pct": [
+          69.8,
+          51.9,
+          41.4,
+          46.8,
+          26.8,
+          44.9,
+          16.0,
+          30.2
+        ]
+      },
+      "y": {
+        "rev": [
+          5956.0,
+          4832.0,
+          3845.8,
+          3898.2,
+          3206.3,
+          2605.7,
+          2642.9,
+          2707.6
+        ],
+        "npat": [
+          1755.6,
+          1455.5,
+          2250.6,
+          993.9,
+          612.2,
+          370.9,
+          517.0,
+          1847.7
+        ],
+        "equity": [
+          13139.8,
+          12381.9,
+          8580.5,
+          6926.1,
+          6319.0,
+          5901.5,
+          5875.8,
+          5880.3
+        ],
+        "shares_m": [
+          426.5,
+          414.0,
+          305.9,
+          301.4,
+          301.4,
+          301.4,
+          296.9,
+          296.9
+        ]
+      },
+      "calc": {
+        "npat_yoy_q": 154.6,
+        "rev_yoy_q": 17.9,
+        "yoy_src": "bc",
+        "gm_q": [
+          49.43,
+          43.82,
+          48.6,
+          42.69,
+          48.33,
+          43.98,
+          42.7,
+          45.99
+        ],
+        "nm_q": [
+          64.35,
+          36.78,
+          36.45,
+          20.2,
+          29.81,
+          31.56,
+          16.34,
+          26.5
+        ],
+        "nm_ly": 29.81,
+        "nm_delta": 34.54,
+        "val": {
+          "as_of": "2026-Q2",
+          "pe": 13.0,
+          "pb": 2.47,
+          "roe_ttm": 19.41,
+          "roa_ttm": 12.78,
+          "div_yield": 0.0,
+          "debt_to_equity": 0.36,
+          "market_cap_ty": 33982.1
+        },
+        "y_growth": [
+          20.6,
+          -35.3,
+          126.4
+        ],
+        "y_ok3": false,
+        "below_peak": true,
+        "roe": 13.8,
+        "share_yoy": 3.0,
+        "rev_growth_y": 23.3,
+        "recv_vs_rev": 13.2,
+        "inv_vs_rev": 10.9,
+        "ocf_ratio": 0.83,
+        "noncore_pct": 69.8,
+        "bank": null
+      },
+      "auto": {
+        "vnq": -1,
+        "vnone": -1,
+        "vnnam": -1,
+        "vnbs": 1,
+        "vncf": 1,
+        "vndil": 1,
+        "vnmar": 1
+      }
+    },
     "PET": {
       "sector": "corp",
       "manual": [
@@ -198,13 +423,13 @@
         "nm_delta": -0.12,
         "val": {
           "as_of": "2026-Q2",
-          "pe": 20.3,
-          "pb": 2.51,
+          "pe": 19.9,
+          "pb": 2.46,
           "roe_ttm": 12.71,
           "roa_ttm": 2.34,
           "div_yield": 0.0,
           "debt_to_equity": 3.93,
-          "market_cap_ty": 6243.9
+          "market_cap_ty": 6127.9
         },
         "y_growth": [
           72.5,
