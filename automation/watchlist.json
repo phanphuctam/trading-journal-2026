@@ -1,5 +1,12 @@
 [
   {
+    "symbol": "GMD",
+    "pivot": 82200,
+    "stop": 74000,
+    "note": "",
+    "cc": "VND"
+  },
+  {
     "symbol": "PET",
     "pivot": 41000,
     "stop": 36900,
