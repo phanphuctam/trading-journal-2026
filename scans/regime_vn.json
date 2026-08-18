@@ -1,17 +1,17 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-17 15:52",
+  "checked_at": "2026-08-18 15:45",
   "regime": {
     "index": "VNINDEX",
-    "date": "2026-08-17",
-    "close": 1727.46,
-    "ma50": 1791.59,
-    "ma200": 1775.91,
+    "date": "2026-08-18",
+    "close": 1732.02,
+    "ma50": 1790.36,
+    "ma200": 1776.16,
     "above_ma50": false,
     "ma50_above_ma200": true,
     "state": "OFF",
-    "reason": "VN-Index 1,727 duoi MA50 1,792",
+    "reason": "VN-Index 1,732 duoi MA50 1,790",
     "dist_days": 5,
     "dist_lookback": 25,
     "dist_danger": 5,
@@ -42,7 +42,7 @@
       "date": "2026-07-30",
       "day": 6,
       "chg": 2.35,
-      "ago": 12
+      "ago": 13
     }
   },
   "entries_allowed": false
