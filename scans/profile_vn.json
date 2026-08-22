@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-15 09:57",
+  "checked_at": "2026-08-22 10:00",
   "source": "vnstock/VCI · overview + co dong + su kien + tin",
   "room_tight": 1.0,
   "cal_soon_days": 14,
@@ -13,22 +13,22 @@
         "icb2": "2700",
         "icb4": "2777",
         "listing_date": "2002-04-22",
-        "market_cap_ty": 34068.6,
+        "market_cap_ty": 33505.9,
         "shares_m": 432.9,
         "free_float_pct": 95.0,
         "state_pct": 0.0,
-        "foreign_pct": 40.08,
+        "foreign_pct": 39.49,
         "foreign_max_pct": 49.0,
-        "room_left_pct": 8.92,
+        "room_left_pct": 9.51,
         "room_full": false,
         "target_price": 95500.0,
-        "upside_pct": 21.35,
+        "upside_pct": 23.39,
         "analyst": "Huy Hoang"
       },
       "holders": {
         "n": 77,
         "top1_pct": 5.43,
-        "top5_pct": 13.48,
+        "top5_pct": 13.78,
         "top": [
           {
             "name": "Quỹ ETF DCVFMVN DIAMOND",
@@ -39,16 +39,16 @@
             "pct": 2.24
           },
           {
-            "name": "Ngân hàng Deutsche Aktiengesellschaft",
-            "pct": 1.96
+            "name": "VOF Investment Limited",
+            "pct": 2.19
           },
           {
             "name": "Deutsche Bank Aktiengesellchaft, London Branch",
             "pct": 1.96
           },
           {
-            "name": "VOF Investment Limited",
-            "pct": 1.89
+            "name": "Ngân hàng Deutsche Aktiengesellschaft",
+            "pct": 1.96
           },
           {
             "name": "Tmam Vietnam Equity Mother Fund",
@@ -105,6 +105,16 @@
           }
         ],
         "insider": [
+          {
+            "name": "Giao dịch nội bộ: Giao dịch tổ chức",
+            "title": "Vof Pe Holding 5 Limited - Đăng kí Bán GMD",
+            "exright": null,
+            "record": null,
+            "public": "2026-08-20",
+            "ratio": null,
+            "value_per_share": null,
+            "side": "ban"
+          },
           {
             "name": "Giao dịch nội bộ: Giao dịch cá nhân",
             "title": "Trần Đức Thuận - Đăng kí Mua 31,000 GMD",
@@ -214,16 +224,6 @@
             "ratio": null,
             "value_per_share": null,
             "side": "mua"
-          },
-          {
-            "name": "Giao dịch nội bộ: Giao dịch người liên quan",
-            "title": "Chu Đức Trung - Đăng kí Mua 32,000 GMD",
-            "exright": null,
-            "record": null,
-            "public": "2026-08-04",
-            "ratio": null,
-            "value_per_share": null,
-            "side": "mua"
           }
         ],
         "cash_div": [
@@ -246,7 +246,7 @@
             "value_per_share": 2000.0
           }
         ],
-        "n_sell": 0,
+        "n_sell": 1,
         "n_buy": 14
       },
       "news": {
@@ -260,6 +260,10 @@
           }
         ],
         "recent": [
+          {
+            "t": "GMD: Báo cáo thay đổi sở hữu của nhóm nhà đầu tư nước ngoài có liên quan là CĐ lớn",
+            "d": "2026-08-20"
+          },
           {
             "t": "GMD: Nghị quyết HĐQT về việc tăng vốn điều lệ và sửa đổi điều lệ",
             "d": "2026-08-12"
@@ -303,10 +307,6 @@
           {
             "t": "GMD: Thông báo phát hành CP theo chương trình lựa chọn cho NLĐ",
             "d": "2026-07-10"
-          },
-          {
-            "t": "GMD: Thông báo nhận được công văn của UBCKNN về tài liệu báo cáo phát hành cổ phiếu ESOP",
-            "d": "2026-07-03"
           }
         ]
       },
@@ -314,7 +314,7 @@
         "vndisc": 0,
         "vnfo": 0,
         "vndil": -1,
-        "vnins": 1,
+        "vnins": -1,
         "vncald": 0
       },
       "manual": [
@@ -334,6 +334,11 @@
           "where": "Vietstock · Hồ sơ doanh nghiệp + nghị quyết ĐHCĐ"
         },
         {
+          "k": "vnins",
+          "why": "1 lượt đăng ký BÁN của nội bộ/cổ đông lớn trong 6 tháng. Máy đọc từ bảng sự kiện nên không biết khối lượng, và không biết đã bán hết hay chưa",
+          "where": "Vietstock · Giao dịch cổ đông nội bộ"
+        },
+        {
           "k": "vncald",
           "why": "ngày công bố BCTC quý KHÔNG có trong bảng sự kiện — ở VN nó không được ấn định trước, chỉ có hạn chót 20-30 ngày sau khi chốt quý",
           "where": "canh cuối tháng 1/4/7/10"
@@ -351,7 +356,7 @@
         "shares_m": 154.7,
         "free_float_pct": 70.0,
         "state_pct": 0.0,
-        "foreign_pct": 0.77,
+        "foreign_pct": 0.76,
         "foreign_max_pct": null,
         "room_left_pct": null,
         "room_full": false,
@@ -527,6 +532,10 @@
         "amber": [],
         "recent": [
           {
+            "t": "PET: Nghị quyết HĐQT về việc bảo lãnh cho POTS được cấp hạn mức tín dụng tại VPB",
+            "d": "2026-08-19"
+          },
+          {
             "t": "PET: Nghị quyết HĐQT về việc điều chỉnh tăng hạn mức bảo lãnh cho PSD được cấp tín dụng tại PFS",
             "d": "2026-08-11"
           },
@@ -569,10 +578,6 @@
           {
             "t": "Nửa đầu năm 2026, Petrosetco (PET) ghi nhận lãi tăng mạnh, dòng tiền kinh doanh chính âm hơn 1.050 tỷ đồng",
             "d": "2026-07-31"
-          },
-          {
-            "t": "PET: Báo cáo tình hình quản trị công ty 06 tháng đầu năm 2026",
-            "d": "2026-07-30"
           }
         ]
       },
@@ -591,7 +596,7 @@
         },
         {
           "k": "vnfo",
-          "why": "nguồn không có TRẦN ROOM của mã này (ngoại đang giữ 0.77%) — máy không biết mã có kín room hay không",
+          "why": "nguồn không có TRẦN ROOM của mã này (ngoại đang giữ 0.76%) — máy không biết mã có kín room hay không",
           "where": "HOSE · danh sách tỷ lệ sở hữu nước ngoài tối đa"
         },
         {
