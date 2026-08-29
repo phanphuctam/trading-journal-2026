@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-22 10:00",
+  "checked_at": "2026-08-29 15:51",
   "source": "vnstock/VCI · ban cong dong chi tra 4 ky gan nhat",
   "thresholds": {
     "y_growth": 20.0,
@@ -17,7 +17,7 @@
       "manual": [
         {
           "k": "vnq",
-          "why": "chuỗi luỹ kế lợi nhuận LỆCH 1.8% so với tổng 4 quý báo cáo (ngưỡng 1.0%) — nguồn tự mâu thuẫn nên máy TỪ CHỐI suy ngược cùng kỳ. Bước này phải đọc tay hoàn toàn",
+          "why": "chuỗi luỹ kế lợi nhuận LỆCH 1.77% so với tổng 4 quý báo cáo (ngưỡng 1.0%) — nguồn tự mâu thuẫn nên máy TỪ CHỐI suy ngược cùng kỳ. Bước này phải đọc tay hoàn toàn",
           "where": "CafeF · KQKD quý, mở thêm tab cùng kỳ năm trước"
         },
         {
@@ -37,7 +37,7 @@
         "npat_basis": "parent",
         "npat_basis_q": "parent",
         "backfilled": 4,
-        "ttm_dev_npat": 1.8,
+        "ttm_dev_npat": 1.77,
         "ttm_dev_rev": 0.0,
         "ttm_dev_max": 1.0
       },
@@ -203,13 +203,13 @@
         "nm_delta": 34.54,
         "val": {
           "as_of": "2026-Q2",
-          "pe": 12.8,
-          "pb": 2.43,
+          "pe": 13.1,
+          "pb": 2.5,
           "roe_ttm": 19.41,
           "roa_ttm": 12.78,
           "div_yield": 0.0,
           "debt_to_equity": 0.36,
-          "market_cap_ty": 33505.9
+          "market_cap_ty": 34415.0
         },
         "y_growth": [
           20.6,
@@ -423,13 +423,13 @@
         "nm_delta": -0.12,
         "val": {
           "as_of": "2026-Q2",
-          "pe": 19.8,
-          "pb": 2.44,
+          "pe": 19.6,
+          "pb": 2.42,
           "roe_ttm": 12.71,
           "roa_ttm": 2.34,
           "div_yield": 0.0,
           "debt_to_equity": 3.93,
-          "market_cap_ty": 6081.4
+          "market_cap_ty": 6019.5
         },
         "y_growth": [
           72.5,
