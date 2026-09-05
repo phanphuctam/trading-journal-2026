@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-08-29 15:51",
+  "checked_at": "2026-09-05 13:51",
   "source": "vnstock/VCI · ban cong dong chi tra 4 ky gan nhat",
   "thresholds": {
     "y_growth": 20.0,
@@ -17,7 +17,7 @@
       "manual": [
         {
           "k": "vnq",
-          "why": "chuỗi luỹ kế lợi nhuận LỆCH 1.77% so với tổng 4 quý báo cáo (ngưỡng 1.0%) — nguồn tự mâu thuẫn nên máy TỪ CHỐI suy ngược cùng kỳ. Bước này phải đọc tay hoàn toàn",
+          "why": "chuỗi luỹ kế lợi nhuận LỆCH 1.75% so với tổng 4 quý báo cáo (ngưỡng 1.0%) — nguồn tự mâu thuẫn nên máy TỪ CHỐI suy ngược cùng kỳ. Bước này phải đọc tay hoàn toàn",
           "where": "CafeF · KQKD quý, mở thêm tab cùng kỳ năm trước"
         },
         {
@@ -37,7 +37,7 @@
         "npat_basis": "parent",
         "npat_basis_q": "parent",
         "backfilled": 4,
-        "ttm_dev_npat": 1.77,
+        "ttm_dev_npat": 1.75,
         "ttm_dev_rev": 0.0,
         "ttm_dev_max": 1.0
       },
@@ -73,7 +73,7 @@
           1264.1
         ],
         "npat": [
-          1133.5,
+          1124.2,
           534.2,
           592.2,
           315.2,
@@ -83,7 +83,7 @@
           335.0
         ],
         "npat_tot": [
-          1285.4,
+          1288.4,
           650.2,
           738.3,
           432.4,
@@ -93,7 +93,7 @@
           448.4
         ],
         "ocf": [
-          691.3,
+          632.4,
           392.9,
           533.4,
           518.4,
@@ -103,7 +103,7 @@
           398.3
         ],
         "recv": [
-          1477.5,
+          1500.9,
           1238.5,
           1398.7,
           1303.0,
@@ -123,7 +123,7 @@
           72.3
         ],
         "noncore_pct": [
-          69.8,
+          66.2,
           51.9,
           41.4,
           46.8,
@@ -176,11 +176,11 @@
         ]
       },
       "calc": {
-        "npat_yoy_q": 154.6,
+        "npat_yoy_q": 152.5,
         "rev_yoy_q": 17.9,
         "yoy_src": "bc",
         "gm_q": [
-          49.43,
+          52.47,
           43.82,
           48.6,
           42.69,
@@ -190,7 +190,7 @@
           45.99
         ],
         "nm_q": [
-          64.35,
+          63.82,
           36.78,
           36.45,
           20.2,
@@ -200,16 +200,16 @@
           26.5
         ],
         "nm_ly": 29.81,
-        "nm_delta": 34.54,
+        "nm_delta": 34.01,
         "val": {
           "as_of": "2026-Q2",
-          "pe": 13.1,
-          "pb": 2.5,
-          "roe_ttm": 19.41,
-          "roa_ttm": 12.78,
+          "pe": 12.9,
+          "pb": 2.44,
+          "roe_ttm": 19.34,
+          "roa_ttm": 12.74,
           "div_yield": 0.0,
           "debt_to_equity": 0.36,
-          "market_cap_ty": 34415.0
+          "market_cap_ty": 33592.5
         },
         "y_growth": [
           20.6,
@@ -223,8 +223,8 @@
         "rev_growth_y": 23.3,
         "recv_vs_rev": 13.2,
         "inv_vs_rev": 10.9,
-        "ocf_ratio": 0.83,
-        "noncore_pct": 69.8,
+        "ocf_ratio": 0.81,
+        "noncore_pct": 66.2,
         "bank": null
       },
       "auto": {
@@ -241,6 +241,11 @@
       "sector": "corp",
       "manual": [
         {
+          "k": "vnq",
+          "why": "chuỗi luỹ kế lợi nhuận LỆCH 2.82% so với tổng 4 quý báo cáo (ngưỡng 1.0%) — nguồn tự mâu thuẫn nên máy TỪ CHỐI suy ngược cùng kỳ. Bước này phải đọc tay hoàn toàn",
+          "where": "CafeF · KQKD quý, mở thêm tab cùng kỳ năm trước"
+        },
+        {
           "k": "vnbs",
           "why": "máy chỉ so TỔNG tồn kho với doanh thu. Nguyên vật liệu tăng có thể là tin TỐT (gom hàng giá rẻ trước chu kỳ), chỉ thành phẩm tăng mới là hàng ế — máy không tách được hai cái đó",
           "where": "CafeF · Thuyết minh hàng tồn kho"
@@ -256,9 +261,9 @@
         "ok": true,
         "npat_basis": "parent",
         "npat_basis_q": "parent",
-        "backfilled": 8,
-        "ttm_dev_npat": 0.0,
-        "ttm_dev_rev": 0.0,
+        "backfilled": 4,
+        "ttm_dev_npat": 2.82,
+        "ttm_dev_rev": 0.06,
         "ttm_dev_max": 1.0
       },
       "q_periods": [
@@ -283,7 +288,7 @@
       ],
       "q": {
         "rev": [
-          6967.8,
+          6951.0,
           6129.1,
           7599.1,
           5483.8,
@@ -293,7 +298,7 @@
           5653.3
         ],
         "npat": [
-          59.7,
+          68.6,
           72.2,
           70.7,
           105.2,
@@ -303,7 +308,7 @@
           47.9
         ],
         "npat_tot": [
-          101.2,
+          95.6,
           100.8,
           102.5,
           145.2,
@@ -313,7 +318,7 @@
           74.5
         ],
         "ocf": [
-          -156.3,
+          -308.2,
           -894.1,
           -65.8,
           -1070.4,
@@ -323,7 +328,7 @@
           45.4
         ],
         "recv": [
-          5975.6,
+          5101.6,
           5504.9,
           4663.3,
           3909.0,
@@ -333,7 +338,7 @@
           3122.9
         ],
         "inv": [
-          1976.8,
+          1919.1,
           1462.1,
           1630.7,
           1417.5,
@@ -343,7 +348,7 @@
           1265.6
         ],
         "noncore_pct": [
-          53.6,
+          60.1,
           87.6,
           95.9,
           83.0,
@@ -396,11 +401,11 @@
         ]
       },
       "calc": {
-        "npat_yoy_q": 29.2,
-        "rev_yoy_q": 47.8,
+        "npat_yoy_q": 48.6,
+        "rev_yoy_q": 47.4,
         "yoy_src": "bc",
         "gm_q": [
-          6.16,
+          5.72,
           5.88,
           4.33,
           5.01,
@@ -410,7 +415,7 @@
           4.58
         ],
         "nm_q": [
-          0.86,
+          0.99,
           1.18,
           0.93,
           1.92,
@@ -420,16 +425,16 @@
           0.85
         ],
         "nm_ly": 0.98,
-        "nm_delta": -0.12,
+        "nm_delta": 0.01,
         "val": {
           "as_of": "2026-Q2",
-          "pe": 19.6,
-          "pb": 2.42,
+          "pe": 19.1,
+          "pb": 2.36,
           "roe_ttm": 12.71,
           "roa_ttm": 2.34,
           "div_yield": 0.0,
           "debt_to_equity": 3.93,
-          "market_cap_ty": 6019.5
+          "market_cap_ty": 5864.8
         },
         "y_growth": [
           72.5,
@@ -443,8 +448,8 @@
         "rev_growth_y": 14.6,
         "recv_vs_rev": 95.4,
         "inv_vs_rev": -5.1,
-        "ocf_ratio": -7.1,
-        "noncore_pct": 53.6,
+        "ocf_ratio": -7.38,
+        "noncore_pct": 60.1,
         "bank": null
       },
       "auto": {
