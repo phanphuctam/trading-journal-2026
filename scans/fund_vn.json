@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-09-05 13:51",
+  "checked_at": "2026-09-12 14:03",
   "source": "vnstock/VCI · ban cong dong chi tra 4 ky gan nhat",
   "thresholds": {
     "y_growth": 20.0,
@@ -17,7 +17,7 @@
       "manual": [
         {
           "k": "vnq",
-          "why": "chuỗi luỹ kế lợi nhuận LỆCH 1.75% so với tổng 4 quý báo cáo (ngưỡng 1.0%) — nguồn tự mâu thuẫn nên máy TỪ CHỐI suy ngược cùng kỳ. Bước này phải đọc tay hoàn toàn",
+          "why": "chuỗi luỹ kế lợi nhuận LỆCH 1.71% so với tổng 4 quý báo cáo (ngưỡng 1.0%) — nguồn tự mâu thuẫn nên máy TỪ CHỐI suy ngược cùng kỳ. Bước này phải đọc tay hoàn toàn",
           "where": "CafeF · KQKD quý, mở thêm tab cùng kỳ năm trước"
         },
         {
@@ -37,7 +37,7 @@
         "npat_basis": "parent",
         "npat_basis_q": "parent",
         "backfilled": 4,
-        "ttm_dev_npat": 1.75,
+        "ttm_dev_npat": 1.71,
         "ttm_dev_rev": 0.0,
         "ttm_dev_max": 1.0
       },
@@ -203,13 +203,13 @@
         "nm_delta": 34.01,
         "val": {
           "as_of": "2026-Q2",
-          "pe": 12.9,
-          "pb": 2.44,
+          "pe": 12.4,
+          "pb": 2.34,
           "roe_ttm": 19.34,
           "roa_ttm": 12.74,
           "div_yield": 0.0,
           "debt_to_equity": 0.36,
-          "market_cap_ty": 33592.5
+          "market_cap_ty": 32293.8
         },
         "y_growth": [
           20.6,
@@ -241,11 +241,6 @@
       "sector": "corp",
       "manual": [
         {
-          "k": "vnq",
-          "why": "chuỗi luỹ kế lợi nhuận LỆCH 2.82% so với tổng 4 quý báo cáo (ngưỡng 1.0%) — nguồn tự mâu thuẫn nên máy TỪ CHỐI suy ngược cùng kỳ. Bước này phải đọc tay hoàn toàn",
-          "where": "CafeF · KQKD quý, mở thêm tab cùng kỳ năm trước"
-        },
-        {
           "k": "vnbs",
           "why": "máy chỉ so TỔNG tồn kho với doanh thu. Nguyên vật liệu tăng có thể là tin TỐT (gom hàng giá rẻ trước chu kỳ), chỉ thành phẩm tăng mới là hàng ế — máy không tách được hai cái đó",
           "where": "CafeF · Thuyết minh hàng tồn kho"
@@ -261,9 +256,9 @@
         "ok": true,
         "npat_basis": "parent",
         "npat_basis_q": "parent",
-        "backfilled": 4,
-        "ttm_dev_npat": 2.82,
-        "ttm_dev_rev": 0.06,
+        "backfilled": 8,
+        "ttm_dev_npat": 0.0,
+        "ttm_dev_rev": 0.0,
         "ttm_dev_max": 1.0
       },
       "q_periods": [
@@ -428,13 +423,13 @@
         "nm_delta": 0.01,
         "val": {
           "as_of": "2026-Q2",
-          "pe": 19.1,
-          "pb": 2.36,
-          "roe_ttm": 12.71,
-          "roa_ttm": 2.34,
+          "pe": 18.7,
+          "pb": 2.37,
+          "roe_ttm": 13.06,
+          "roa_ttm": 2.46,
           "div_yield": 0.0,
-          "debt_to_equity": 3.93,
-          "market_cap_ty": 5864.8
+          "debt_to_equity": 3.58,
+          "market_cap_ty": 5926.7
         },
         "y_growth": [
           72.5,
