@@ -698,13 +698,6 @@ select.tj-ctl{cursor:pointer;padding-right:var(--sp-1)}
 .tj-inp-num{width:64px;height:var(--ctl-h);border:1px solid var(--border2);border-radius:var(--r-sm);padding:0 var(--sp-2);font-size:var(--fs-num-md);font-family:var(--mono);font-weight:700;text-align:center;background:var(--panel);font-variant-numeric:tabular-nums;flex-shrink:0}
 /* Toán tử nối (% NAV = · % · =) — cùng cỡ, cùng màu, nằm giữa dòng với ô nhập */
 .tj-op{font-size:var(--fs-note);color:var(--text3);font-weight:700;white-space:nowrap;line-height:1}
-/* ── Chia 3 nhịp ────────────────────────────────────────────────────────────── */
-.tj-trbox{display:flex;flex-direction:column;padding:var(--sp-3);border-left:3px solid var(--accent);background:var(--panel);border-radius:0 var(--r-md) var(--r-md) 0;min-width:0}
-/* Ô số thứ tự cố định → ①②③ cùng kích thước và cùng tâm với con số bên cạnh */
-.tj-trnum{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;flex-shrink:0;font-size:15px;line-height:1;font-weight:700;color:var(--accent)}
-/* Dòng "cộng dồn" bị đẩy xuống đáy → cùng khoảng cách tới đáy hộp ở cả ba nhịp */
-.tj-trfoot{margin-top:auto;padding-top:var(--sp-2);border-top:1px dashed var(--border);font-size:var(--fs-note);color:var(--text3);line-height:1.4}
-.tj-trbox .tj-sub{margin-bottom:var(--sp-3)}
 /* ── Bảng nhật ký ───────────────────────────────────────────────────────────── */
 .tj-table{width:100%;border-collapse:collapse;font-size:var(--fs-body);table-layout:auto}
 .tj-th{padding:var(--sp-2);font-size:var(--fs-eyebrow);font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:var(--ls-eyebrow);border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:1;white-space:nowrap}
@@ -811,7 +804,6 @@ details.tjfold>summary:hover::before{color:var(--accent)}
   .tj-formgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .tj-deprow{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .tj-ministrip{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-  .tj-tranche{grid-template-columns:minmax(0,1fr)!important}
   /* Ba khối rủi ro nằm ngang ở màn hẹp thì mỗi khối còn ~110px, số bị cắt và tiêu đề
      gãy làm ba dòng. Xếp chồng thì mỗi khối được nguyên chiều rộng. */
   .tj-riskrow{flex-direction:column!important}
@@ -965,7 +957,7 @@ details.tjfold>summary:hover::before{color:var(--accent)}
       <div class="tj-riskcell" style="flex:1;border-right:1px solid var(--border)">
         <div class="tj-hd"><span class="ti ti-h ti-target"></span><span class="tj-lb">{{ lbOneR }}</span></div>
         <div class="tj-riskval">
-          <input id="riskPctInput" class="tj-inp-num" type="number" min="0.05" max="10" step="0.05" onchange="{{ onRiskPct }}" title="Phần trăm tổng tài sản bạn chấp nhận mất nếu lệnh này chạm cắt lỗ. Tài liệu SEPA bản Việt hoá khuyến nghị 0,5-0,75% cho TTCK Việt Nam (mới bắt đầu: 0,5%)." style="color:var(--amber)">
+          <input id="riskPctInput" class="tj-inp-num" type="number" min="0.05" max="10" step="0.05" onchange="{{ onRiskPct }}" title="Phần trăm tổng tài sản bạn chấp nhận mất nếu lệnh này chạm cắt lỗ." style="color:var(--amber)">
           <span class="tj-op">% NAV =</span>
           <span class="tj-num tj-num-lg" style="color:var(--amber)">{{ onePercent }}</span>
         </div>
@@ -986,26 +978,6 @@ details.tjfold>summary:hover::before{color:var(--accent)}
         <div class="tj-sub3">{{ lbMaxPosSub }}</div>
       </div>
     </div>
-    <!-- CHIA 3 NHỊP — thêm 2026-08-10.
-         Trần vị thế ở trên là con số của CẢ LỆNH, không phải của lần bấm đầu tiên.
-         Lỗi dễ mắc nhất là dồn hết trần vào nhịp 1 rồi hết đạn khi cổ phiếu chạy.
-         Quy trình 3 nhịp (mục 5.3) sinh ra vì T+2: 2,5 phiên đầu không cắt được,
-         nên chỉ đặt 1/3 rủi ro vào chỗ chưa xác nhận được gì. -->
-    <div id="tjTrancheBox" style="margin:0 0 var(--sp-3)"></div>
-    <!-- KỊCH BẢN 3 PHIÊN SÀN — thêm 2026-08-09.
-         Thẻ định cỡ ở trên trả lời "được mua bao nhiêu". Nó KHÔNG trả lời câu đắt hơn:
-         "nếu ngay sau khi mua có 3 phiên sàn liên tiếp thì mất bao nhiêu?". Ở VN câu
-         đó có thật vì T+2 — hàng chưa về thì không bán được, dù đã biết mình sai từ
-         phiên đầu. Chuỗi sàn xảy ra vài lần mỗi chu kỳ, thường do giải chấp dây chuyền.
-         Ngưỡng 2% NAV lấy từ tài liệu SEPA bản Việt hoá mục 4.1. -->
-    <div id="tjFloorBox" style="margin:0 0 var(--sp-3)"></div>
-    <!-- THOÁT KHI NÀO — thêm 2026-08-09.
-         Thẻ định cỡ trả lời "vào bao nhiêu". Không chỗ nào trong journal trả lời câu
-         đi cùng nó: "ra lúc nào, và SL là khoảng cách tính từ đâu tới đâu". Quy tắc bán
-         nằm rải trong bảng kỹ thuật (bước 9), nhưng lúc đang cầm một lệnh thì không ai
-         mở checklist ra đọc — nó phải đứng ngay cạnh con số định cỡ. -->
-    <div id="tjExitBox" style="margin:0 0 var(--sp-3)"></div>
-
     <!-- FORM CARD — second -->
     <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3);animation:fadeUp .3s ease">
       <div onclick="{{ toggleForm }}" class="tj-cardhd" style="cursor:pointer">
@@ -1282,8 +1254,10 @@ const TJ_MILES = [900,1800,5000,10000,50000];
 const TJ_PAL = ['#D1BEFF','#BEFFCB','#FF6B6D','#7A5AD9','#1E8743','#FFB49B','#85806D','#C4ADFF','#969696'];
 // ── Châm ngôn chạy trên header ───────────────────────────────────────────────
 // Trích từ vault Obsidian (Desktop/CLAUDE CODE/Obsidian/01 Sách/Trading - Đầu tư).
-// Số trang ghi kèm để tra lại nguyên văn khi cần; câu nào Minervini/O'Neil dẫn của
-// người khác thì để tên người nói thật, không gán nhầm cho hai ông.
+// Câu nào Minervini/O'Neil dẫn của người khác thì để tên người nói thật, không gán
+// nhầm cho hai ông. Những câu chỉ đúng với cổ phiếu (EPS, nhóm ngành, ngày bùng nổ
+// theo đà, mục tiêu 20-25%) đã gỡ khi chuyển sang forex/vàng/BTC — cái còn lại là
+// phần nói về rủi ro, kỷ luật và cắt lỗ, đúng ở mọi thị trường.
 const TJ_MQ_DIR = 'left';    // 'left' = chữ trôi sang trái (vào từ mép phải) · 'right' = ngược lại
 const TJ_MQ_SPEED = 42;      // px mỗi giây — nhỏ hơn thì chạy chậm hơn
 const TJ_QUOTES = [
@@ -1294,24 +1268,15 @@ const TJ_QUOTES = [
   ['Mấu chốt không phải là biết cổ phiếu sẽ làm gì tiếp theo, mà là biết được bạn nên làm điều gì.','Minervini'],
   ['Chỉ có một cách duy nhất để bảo vệ danh mục khỏi lỗ lớn: cắt sớm khi khoản lỗ còn nhỏ. Đừng để bông tuyết nhỏ thành quả cầu tuyết khổng lồ.','Minervini'],
   ['Tôi muốn sở hữu quả bóng tennis, không phải quả trứng gà.','Minervini'],
-  ['Nếu trên đời tồn tại Chén Thánh, đó chính là sự thu hẹp độ biến động — VCP.','Minervini'],
-  ['Chỉ có một cách duy nhất để một cổ phiếu trở thành siêu hạng: nó phải liên tục thiết lập đỉnh cao mới.','Minervini'],
   ['Đừng bao giờ tin vào mức giá đầu tiên trừ khi vị thế đó có lãi.','Minervini'],
   ['Một hệ thống giao dịch cũng giống như đám cưới. Nếu bạn không chung thủy, đừng hy vọng nó mang lại hạnh phúc.','Minervini'],
-  ['Tôi chỉ vào lệnh khi hội đủ: cơ bản tốt, hành động giá xác nhận, khối lượng ủng hộ và thị trường chung thuận lợi.','Minervini'],
   ['Hãy tháo chạy trước và đặt câu hỏi sau. Đừng tranh cãi với bảng điện.','Minervini'],
   ['Bất kỳ khi nào bạn nhìn thấy một nơi rõ ràng để đặt lệnh dừng lỗ, thì mọi người cũng nhìn thấy nó.','Minervini'],
   ['Luyện tập nhiều không giúp bạn giỏi. Chỉ luyện tập đúng mới giúp bạn giỏi.','Vince Lombardi'],
   ['Losers average losers — chỉ kẻ thua cuộc mới bình quân giá xuống vị thế đang lỗ.','Paul Tudor Jones'],
-  ['Không có cổ phiếu tốt — tất cả chúng đều tồi, trừ khi chúng lên giá.',"O'Neil"],
   ['Thực tế luôn luôn tốt hơn quan điểm của đa số mọi người.',"O'Neil"],
   ['Bạn không thể mua một chiếc Mercedes với giá của một chiếc Chevrolet.',"O'Neil"],
-  ['Thu lợi 20–25% khi có thể; cắt lỗ tối đa 7–8% dưới giá mua.',"O'Neil"],
-  ['Tỉ lệ biến động của EPS là yếu tố riêng rẽ quan trọng nhất trong việc chọn lựa cổ phiếu.',"O'Neil"],
   ['Trên chiến trường thị trường chứng khoán, cũng chỉ có những người quyết đoán và những xác chết mà thôi.',"O'Neil"],
-  ['Chưa từng có chu kỳ tăng trưởng nào bắt đầu mà không có ngày bùng nổ theo đà về cả giá lẫn khối lượng.',"O'Neil"],
-  ['Đừng lung lạc trước sự nổi tiếng và phổ biến rộng rãi của một cổ phiếu.',"O'Neil"],
-  ['Gần một nửa biến động giá của một cổ phiếu đến từ nhóm ngành của nó.',"O'Neil"],
   ['Bò làm ra tiền, gấu cũng làm ra tiền, chỉ có lũ heo là bị mổ thịt.','Ngạn ngữ Phố Wall'],
   ['Chỉ có kẻ ngốc mới giữ cổ phiếu để chờ giá lên đến đỉnh.','Joe Kennedy'],
   ['Thị trường không bao giờ sai, chỉ có quan điểm đánh giá của bạn là thường xuyên sai lầm.','Jesse Livermore'],
@@ -1344,7 +1309,7 @@ const TJ_TR = {
     wlPushNoChange:'Watchlist không đổi so với bản trên GitHub',wlPushErr:'Lỗi đẩy watchlist lên GitHub:',
     ghPatPrompt:'Dán GitHub Personal Access Token (fine-grained, chỉ cấp quyền Contents Read/Write cho repo trading-journal-2026).\nToken chỉ lưu trong trình duyệt này (localStorage).',
     ghBadToken:'Token bị GitHub từ chối (401/403) — đã xoá khỏi trình duyệt. Bấm lại để nhập token mới.',
-    wlSym:'Mã',wlPivot:'Pivot',wlStop:'Stop',wlNote:'Ghi chú (setup, lý do...)',
+    wlSym:'Mã (HPG · EURUSD · XAUUSD · BTCUSD)',wlPivot:'Pivot',wlStop:'Stop',wlNote:'Ghi chú (setup, lý do...)',
     wlExport:'watchlist.json',wlEmpty:'Chưa có mã nào — thêm mã ở trên.',
     wlNeed:'Cần nhập Mã và giá Pivot (> 0)',wlHint:'Bấm Push GitHub — bot sẽ báo Telegram khi giá vượt pivot, gần pivot hoặc chạm stop. (watchlist.json + script chỉ là đường dự phòng.)',
     wlToastAdd:'Đã thêm vào watchlist',wlToastExport:'Đã xuất watchlist.json',
@@ -1441,7 +1406,7 @@ const TJ_TR = {
     wlPushNoChange:'Watchlist unchanged vs the GitHub copy',wlPushErr:'Failed to push watchlist to GitHub:',
     ghPatPrompt:'Paste a GitHub Personal Access Token (fine-grained, Contents Read/Write on the trading-journal-2026 repo only).\nStored only in this browser (localStorage).',
     ghBadToken:'GitHub rejected the token (401/403) — removed from this browser. Click again to enter a new one.',
-    wlSym:'Symbol',wlPivot:'Pivot',wlStop:'Stop',wlNote:'Note (setup, reason...)',
+    wlSym:'Symbol (HPG · EURUSD · XAUUSD · BTCUSD)',wlPivot:'Pivot',wlStop:'Stop',wlNote:'Note (setup, reason...)',
     wlExport:'watchlist.json',wlEmpty:'No symbols yet — add one above.',
     wlNeed:'Symbol and Pivot price (> 0) required',wlHint:'Hit Push GitHub — the bot alerts on Telegram when price breaks pivot, nears pivot or hits stop. (watchlist.json + script is the fallback path.)',
     wlToastAdd:'Added to watchlist',wlToastExport:'watchlist.json exported',
@@ -1776,7 +1741,9 @@ class Component extends DCLogic {
 
   // Một hàm cho cả hai bảng: chúng khác nhau đúng ở trường lấy dấu và bảng tên hạng.
   _gradeStats(field, names) {
-    const a = this._computed(), m = {};
+    // Chỉ lệnh cổ phiếu VN mới có dấu Cơ bản / Kỹ thuật. Đếm cả lệnh vàng và forex
+    // vào đây thì hai bảng này chỉ còn là một đống 'chưa đọc' không nói lên gì.
+    const a = this._computed().filter(t => this._mkt(t.s) === 'VN'), m = {};
     a.forEach(t => {
       const g = t[field];
       const k = g ? (names[g.g] || g.g) : 'Lệnh ghi trước khi có dấu';
@@ -1994,6 +1961,9 @@ class Component extends DCLogic {
   // và không có stop. Cổng này bắt đúng ba dấu hiệu đó trước khi lệnh được ghi.
   _planWarnings(t) {
     const w = [], sym = (t.s || '').toUpperCase();
+    // Công tắc VN-Index, bảng Cơ bản và bảng Kỹ thuật đều là chuyện của cổ phiếu
+    // Việt Nam. Một lệnh XAUUSD không có BCTC để đọc và không hỏi VN-Index bao giờ.
+    const vn = this._mkt(sym) === 'VN';
     if (!this.state.watchlist.some(x => String(x.symbol || '').toUpperCase() === sym)) {
       w.push(`• ${sym} KHÔNG có trong watchlist — đây là lệnh ngoài kế hoạch.`);
     }
@@ -2003,19 +1973,19 @@ class Component extends DCLogic {
     const why = eff.live
       ? `VN-Index ${this._fmt(eff.live.close, 2)} ${eff.live.close > eff.live.sma50 ? 'trên' : 'dưới'} SMA50 ${this._fmt(eff.live.sma50, 2)}`
       : (eff.auto && eff.auto.reason) || 'chưa có số liệu';
-    if (t.a === 'Buy' && eff.state && eff.state !== 'ON') {
+    if (vn && t.a === 'Buy' && eff.state && eff.state !== 'ON') {
       w.push(eff.manual === 'OFF'
         ? `• Bạn đã tự đặt công tắc tổng sang ĐỨNG NGOÀI hôm nay. VN không cho bán khống — lúc này giữ tiền mặt.`
         : `• Thị trường đang ĐỨNG NGOÀI: ${why}. VN không cho bán khống — lúc này giữ tiền mặt.`);
     }
     const mach = (eff.live && eff.live.state) || (eff.auto && eff.auto.state);
-    if (t.a === 'Buy' && eff.manual === 'ON' && mach && mach !== 'ON') {
+    if (vn && t.a === 'Buy' && eff.manual === 'ON' && mach && mach !== 'ON') {
       w.push(`• Công tắc tổng đang BẬT BẰNG TAY: máy vẫn chấm đứng ngoài (${why}). Bạn tự chịu trách nhiệm cho lệnh này.`);
     }
     // Yếu tố cơ bản (thêm 2026-08-08). Trước đây bảng Cơ bản chỉ là tờ giấy nháp:
     // đánh ✕ vào "kiểm toán ngoại trừ" xong vẫn ghi lệnh mua được, không một tiếng động.
     // Một checklist không nối vào cổng chặn thì sớm muộn cũng bị bỏ qua.
-    if (t.a === 'Buy') {
+    if (vn && t.a === 'Buy') {
       const fa = this._faStat(sym);
       if (fa.bad.length)      w.push(`• Cơ bản: đã tự tay đánh HỎNG ${fa.bad.length} tiêu chí BẮT BUỘC — ${fa.bad.join(', ')}.`);
       else if (!fa.read)      w.push(`• Chưa đọc yếu tố cơ bản của ${sym} (nút "Cơ bản" ở tab Watch). Mua mà chưa biết doanh nghiệp lãi thật hay lãi giấy.`);
@@ -2024,7 +1994,7 @@ class Component extends DCLogic {
     }
     // Yếu tố kỹ thuật (thêm 2026-08-09). Cùng lý do với cơ bản: một bảng chấm không nối
     // vào cổng chặn thì lúc FOMO sẽ không ai mở nó ra.
-    if (t.a === 'Buy') {
+    if (vn && t.a === 'Buy') {
       const ta = this._taStat(sym);
       if (ta.bad.length)      w.push(`• Kỹ thuật: đã tự tay đánh HỎNG ${ta.bad.length} cửa BẮT BUỘC — ${ta.bad.join(', ')}.`);
       else if (!ta.read)      w.push(`• Chưa chấm kỹ thuật cho ${sym} (tab "Kỹ thuật"). Bốn cửa xác nhận breakout chưa qua cửa nào.`);
@@ -2063,7 +2033,7 @@ class Component extends DCLogic {
     //    quy tắc 1R = 1% NAV. Stop càng sát thì vị thế càng TO, và vị thế to gặp chuỗi
     //    sàn thì không thoát được vì T+2. Đây đúng là cái bẫy tài liệu cảnh báo:
     //    nguy hiểm không nằm ở mã chọn sai, mà ở cỡ vị thế quen tay theo thị trường Mỹ.
-    if (wl && wl.stop != null && wl.stop > 0 && entry > wl.stop) {
+    if (this._mkt(sym) === 'VN' && wl && wl.stop != null && wl.stop > 0 && entry > wl.stop) {
       const slPct = (entry - wl.stop) / entry * 100, rk = this.state.riskPct;
       if (slPct > 0 && rk > 0) {
         const posPct = rk / slPct * 100;            // %NAV = %rủi ro ÷ %cắt lỗ
@@ -2085,7 +2055,7 @@ class Component extends DCLogic {
     // không trả lời được câu đáng giá nhất: "lệnh thắng lúc mua có hạng cơ bản gì?".
     // Sửa lệnh cũ thì giữ nguyên dấu cũ — cùng lý do với tỉ giá.
     if (isEdit) { if (old && old.fa) t.fa = old.fa; if (old && old.ta) t.ta = old.ta; if (old && old.wr) t.wr = old.wr; }
-    else {
+    else if (this._mkt(t.s) === 'VN') {
       const f = this._faStat(t.s); t.fa = { g: f.grade, ok: f.ok, n: f.total, b: f.bad };
       // Đóng dấu hạng KỸ THUẬT lúc vào lệnh, cùng lý do với hạng cơ bản: bảng kỹ thuật
       // lưu theo mã và sẽ bị chấm đè ở lần sau, nên không chụp ở đây thì mất vĩnh viễn
@@ -2096,7 +2066,7 @@ class Component extends DCLogic {
     const warns = this._planWarnings(t);
     if (warns.length && !(isEdit && old && old.np)) {
       const head = `⚠ LỆNH NGOÀI HỆ THỐNG\n\n${warns.join('\n')}\n\n`;
-      const faBad = t.a === 'Buy' ? this._faStat(t.s).bad : [];
+      const faBad = (t.a === 'Buy' && this._mkt(t.s) === 'VN') ? this._faStat(t.s).bad : [];
       if (faBad.length) {
         // Hỏng tiêu chí BẮT BUỘC thì không cho bấm OK cho xong. Phải gõ ra một câu:
         // ma sát vừa đủ để không bấm theo phản xạ, và ba tháng sau đọc lại còn biết
@@ -2354,7 +2324,7 @@ class Component extends DCLogic {
     const stopV = parseFloat(this._gv('wlStop'));
     const note = (this._gv('wlNote') || '').trim();
     if (!sym || !(pivot > 0)) { alert(tr.wlNeed); return; }
-    const cc = this._scanMkt() === 'VN' ? 'VND' : 'USD';
+    const cc = this._mkt(sym) === 'VN' ? 'VND' : 'USD';
     // Bỏ trống ô stop thì điền sẵn −6% dưới pivot. Quy tắc này trước nằm trong nút
     // "chọn từ scan"; scan đã gỡ nên chuyển vào đây để nó không mất theo.
     // Theo backtest_vn_params.py (HOSE 2018-2026, 8 vị thế, thoát khi thủng MA50):
@@ -2373,7 +2343,13 @@ class Component extends DCLogic {
 
   delWatch = (i) => {
     const watchlist = this.state.watchlist.filter((_, x) => x !== i);
-    this.setState({ watchlist }, () => { this._persistWl(); this._renderWatchlist(); });
+    // Xoá nốt mã VN cuối cùng thì hai tab chấm cổ phiếu biến mất khỏi thanh tab —
+    // nếu đang đứng trong một trong hai tab đó thì phải đưa người dùng về tab Watch,
+    // không để lại một khung trống không có nút nào quay lại.
+    const back = this.state.rightTab === 'fund' || this.state.rightTab === 'tech';
+    const stillVN = watchlist.some(w => this._mkt(w.symbol) === 'VN');
+    this.setState({ watchlist, ...(back && !stillVN ? { rightTab: 'watchlist' } : {}) },
+      () => { this._persistWl(); this._renderWatchlist(); });
   }
 
   exportWatchlist = () => {
@@ -2620,6 +2596,35 @@ class Component extends DCLogic {
       title="Đẩy watchlist lên GitHub rồi chạy watch_stats.py + fund_vn.py + profile_vn.py cho toàn bộ watchlist, xong thì nạp số về đây. Mất 10-30 phút vì vnstock bản cộng đồng giới hạn 20 request/phút — cứ để tab mở."><span class="ti ti-zap"></span> ${has ? 'Chấm lại' : 'Chấm'} bằng máy</button>`;
   }
 
+  // ══ THỊ TRƯỜNG CỦA MỘT MÃ ══
+  // Mã HOSE/HNX/UPCoM luôn đúng 3 chữ cái (HPG, FPT, VCB). Mọi thứ khác — EURUSD,
+  // XAUUSD, BTCUSD — là forex/vàng/crypto: không có báo cáo tài chính, không có
+  // T+2, không chịu ảnh hưởng của VN-Index. Phân biệt ở đây để những hộp và cảnh
+  // báo sinh ra cho cổ phiếu Việt Nam không bật lên trên một lệnh vàng.
+  // Vài mã 3 chữ cái quen tay lại KHÔNG phải cổ phiếu VN. Danh sách này đã đối chiếu
+  // với cả HOSE/HNX/UPCoM: không mã nào trùng. Những mã trùng thật thì cố tình không
+  // có ở đây vì chúng là cổ phiếu VN — GAS (PV Gas), OIL (PV Oil), USD (Công trình
+  // đô thị Sóc Trăng), CAD (Cadovimex), UNI (Sao Mai Việt), LTC, NAS.
+  _NOT_VN = new Set(['BTC','ETH','XAU','XAG','XRP','BNB','SOL','ADA','DOT','BCH','TRX','XPT','XPD']);
+
+  _mkt(sym) {
+    const s = String(sym || '').toUpperCase().trim();
+    return (/^[A-Z]{3}$/.test(s) && !this._NOT_VN.has(s)) ? 'VN' : 'FX';
+  }
+
+  // Có mã Việt Nam nào trong watchlist không — quyết định việc hiện tab Cơ bản,
+  // tab Kỹ thuật và hộp công tắc VN-Index. Không còn mã VN nào thì ba thứ đó chỉ
+  // là chữ thừa.
+  _hasVN() { return (this.state.watchlist || []).some(w => this._mkt(w.symbol) === 'VN'); }
+
+  // Mã gửi sang TradingView: cổ phiếu VN cần tiền tố sàn, còn EURUSD/XAUUSD/BTCUSD
+  // thì để nguyên cho TradingView tự chọn nguồn. Gõ sẵn "OANDA:XAUUSD" cũng được.
+  _tvSym(sym) {
+    const s = String(sym || '').toUpperCase().trim();
+    return s.includes(':') ? s : (this._mkt(s) === 'VN' ? 'HOSE:' + s : s);
+  }
+  _tvUrl(sym) { return `https://www.tradingview.com/chart/?symbol=${encodeURIComponent(this._tvSym(sym))}`; }
+
   _renderWatchlist() {
     const el = document.getElementById('watchlistBox'); if (!el) return;
     const tr = this._tr(), wl = this.state.watchlist;
@@ -2670,9 +2675,8 @@ class Component extends DCLogic {
     const rows = wl.length ? wl.map((w, i) => `
       <div style="display:grid;grid-template-columns:60px 1fr 1fr 1.6fr auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--border)">
         <div style="min-width:0">
-          <a href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent('HOSE:' + String(w.symbol || '').toUpperCase())}" target="_blank" rel="noopener" title="Mở đồ thị trên TradingView" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${esc(w.symbol)} ↗</a>
-          ${fab(w.symbol)}
-          ${tab(w.symbol)}
+          <a href="${this._tvUrl(w.symbol)}" target="_blank" rel="noopener" title="Mở đồ thị trên TradingView" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--accent);text-decoration:none">${esc(w.symbol)} ↗</a>
+          ${this._mkt(w.symbol) === 'VN' ? fab(w.symbol) + tab(w.symbol) : ''}
         </div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px">${this._px(w.pivot, w)}</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:${w.stop != null ? 'var(--red)' : 'var(--text3)'}">${w.stop != null ? this._px(w.stop, w) : '—'}</div>
@@ -2682,8 +2686,9 @@ class Component extends DCLogic {
         </div>
         <span onclick="window._tj.delWatch(${i})" class="tj-iact" style="flex-shrink:0"><span class="ti ti-trash"></span></span>
       </div>`).join('') : `<div style="color:var(--text3);font-size:12px;padding:6px 0">${tr.wlEmpty}</div>`;
+    const vn = this._hasVN();
     el.innerHTML = `
-    ${this._regimeBox()}
+    ${vn ? this._regimeBox() : ''}
     <div class="tj-card" style="border-radius:var(--r-xl);margin-bottom:var(--sp-3)">
       <div class="tj-cardhd">
         <div class="tj-cell" style="gap:2px">
@@ -2708,7 +2713,7 @@ class Component extends DCLogic {
         <div class="tj-sub3" style="font-size:var(--fs-micro);margin-top:var(--sp-2)"><span class="ti ti-h ti-bulb"></span>${tr.wlHint}</div>
       </div>
     </div>`;
-    this._loadRegimeData();
+    if (vn) this._loadRegimeData();
   }
 
   // Bộ lọc Mỹ tạm gác (pháp lý chưa cho chuyển tiền ra nước ngoài) — code vẫn còn
@@ -4422,124 +4427,9 @@ class Component extends DCLogic {
       ${card(tr.kpiROI, sgn(s.totNet)+this._fmt(s.capNow?s.totNet/s.capNow*100:0,1)+'%', s.totNet>=0?'var(--green)':'var(--red)', `${tr.kpiOnCap} · ${this.state.deposits.length} ${tr.kpiTimes}`, false)}
       ${card(tr.kpiDD, this._fmt(s.maxDD,1)+'%', 'var(--red)', `${tr.kpiPeak} ${this._m(s.peak,0)} · ${s.win}W / ${s.loss}L`, false)}
     </div>${this._advStripHTML(s, tr)}`;
-    this._renderFloorBox(s);
   }
 
-  // ══ KỊCH BẢN XẤU NHẤT CỦA THỊ TRƯỜNG T+2 ══
-  // Ba phiên sàn HOSE liên tiếp = −19,6% (0,93³). Người mua ở Mỹ không cần con số này
-  // vì họ cắt được ngay trong ngày; ở VN sớm nhất là chiều T+2. Tài liệu SEPA bản Việt
-  // hoá gọi đây là "điểm chết người nhất": không phải chọn sai mã, mà là bê nguyên cỡ
-  // vị thế quen tay của thị trường Mỹ sang một thị trường không cho thoát.
-  _renderFloorBox(s) {
-    const el = document.getElementById('tjFloorBox'); if (!el) return;
-    const sl = this.state.slPct, rk = this.state.riskPct, eq = s.eq;
-    this._renderTrancheBox(s);
-    if (!(sl > 0) || !(rk > 0) || !(eq > 0)) { el.innerHTML = ''; this._renderExitBox(); return; }
-    const posPct = rk / sl * 100;           // trần vị thế = %rủi ro ÷ %cắt lỗ
-    const floorPct = posPct * 0.196;
-    const bad = floorPct > 2;
-    const col = bad ? 'var(--amber)' : 'var(--green)';
-    const safeRisk = 0.02 * sl / 0.196;     // %rủi ro tối đa để kịch bản này ≤ 2% NAV
-    el.innerHTML = this._foldBox('floor',
-      `background:${bad ? 'var(--amber-soft)' : 'transparent'};border:1px solid ${bad ? 'var(--amber)' : 'var(--border)'}`,
-      `Ba phiên sàn HOSE liên tiếp = 0,93³ − 1 = −19,6%. Vì T+2, phiên đầu tiên thực sự bán được là T+2 chiều — nếu T+2 cũng nằm sàn thì không khớp, phải chờ T+3. Nó xảy ra vài lần mỗi chu kỳ ở VN, thường do giải chấp margin dây chuyền.`,
-      // Tiêu đề gấp lại vẫn phải mang con số — nếu gấp xong không còn thông tin nào thì
-      // nó thành một cái nút không ai bấm, và cảnh báo coi như không tồn tại.
-      `<b style="color:${col}"><span class="ti ti-trend-dn"></span> Kịch bản 3 phiên sàn: −${this._fmt(floorPct, 2)}% NAV</b>
-       <span style="color:var(--text3)">— ${bad ? 'vượt ngưỡng 2%' : 'trong ngưỡng 2%'}</span>`,
-      `vị thế đầy ${this._fmt(posPct, 1)}% NAV × (−19,6%) = <b style="color:${col}">−${this._fmt(floorPct, 2)}% NAV</b>
-      ${bad ? `— vượt ngưỡng 2% NAV. Muốn về dưới 2% thì <b>hạ rủi ro/lệnh xuống ≤ ${this._fmt(safeRisk, 2)}%</b> (đừng nới ô cắt lỗ — nó phải nói đúng chỗ bạn thật sự cắt).` : '— trong ngưỡng 2% NAV của kịch bản xấu nhất.'}
-      <div style="font-size:11.5px;color:var(--text3);margin-top:4px;line-height:1.6">Cắt lỗ ${this._fmt(sl, 1)}% là con số của <b>backtest_vn_params.py</b> (HOSE 2018-2026: stop 6% → CAGR 10,1% / sụt giảm −19,1%, tốt hơn stop 8% và 10%). Tài liệu SEPA bản Việt hoá khuyến nghị 8-10% theo giá đóng cửa và rủi ro 0,5-0,75% NAV/lệnh — <b>giữ cắt lỗ theo backtest vì nó chạy trên đúng dữ liệu sàn này</b>, thu nhỏ vị thế bằng ô rủi ro.</div>`);
-    this._renderExitBox();
-  }
-
-  // ══ CHIA 3 NHỊP ══
-  // Trần vị thế là tổng của cả ba lần bấm, không phải của lần đầu. Hộp này chia sẵn
-  // để lúc vào lệnh không phải nhẩm — và để thấy rõ sau nhịp 1 mới gánh 1/3 rủi ro.
-  // Cột "cộng dồn" quan trọng hơn cột "mỗi nhịp": nó là con số phải so với sổ lệnh.
-  _renderTrancheBox(s) {
-    const el = document.getElementById('tjTrancheBox'); if (!el) return;
-    const sl = this.state.slPct, rk = this.state.riskPct, eq = s.eq;
-    if (!(sl > 0) || !(rk > 0) || !(eq > 0)) { el.innerHTML = ''; return; }
-    const d = this.state.ccy === 'VND' ? 0 : 2;
-    const maxPos = eq * (rk / 100) / (sl / 100), one = maxPos / 3, oneR = eq * rk / 100;
-    // Ba hộp là flex-column: dòng "cộng dồn" đẩy xuống đáy bằng margin-top:auto nên
-    // nó nằm cùng một độ cao ở cả ba hộp, dù phần mô tả ở giữa dài ngắn khác nhau.
-    // Số thứ tự nằm trong ô vuông cố định 18×18 → cùng kích thước và căn giữa cả hai
-    // trục so với con số bên cạnh, không phụ thuộc font hệ thống vẽ ①②③ to nhỏ ra sao.
-    const cell = (n, head, when, cum, rTxt) => `
-      <div class="tj-trbox">
-        <div style="display:flex;align-items:center;gap:var(--sp-2)">
-          <span class="tj-trnum">${n}</span>
-          <span class="tj-num tj-num-lg" style="color:var(--accent)">${this._m(one, d)}</span>
-        </div>
-        <div style="font-size:var(--fs-body);color:var(--text);font-weight:700;line-height:1.35;margin-top:var(--sp-2)">${head}</div>
-        <div class="tj-sub" style="margin-top:var(--sp-1)">${when}</div>
-        <div class="tj-trfoot">cộng dồn <b>${this._m(cum, d)}</b> · <b>${rTxt}</b></div>
-      </div>`;
-    el.innerHTML = `
-      <div class="tj-card" style="padding:var(--sp-3)">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:var(--sp-2);flex-wrap:wrap;margin-bottom:var(--sp-3)">
-          <span class="tj-hd tj-hd-t"><span class="ti ti-h ti-puzzle"></span><span>Chia 3 nhịp — mỗi nhịp <span style="font-family:var(--mono);color:var(--accent)">${this._m(one, d)}</span></span></span>
-          <span class="tj-sub3">trần ${this._m(maxPos, d)} là <b>tổng cả 3 nhịp</b> · 1R = ${this._m(oneR, d)}</span>
-        </div>
-        <div class="tj-tranche" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-2)">
-          ${cell('①', 'Phiên breakout', 'ATC hoặc cuối phiên chiều, đủ 4 cửa xác nhận.', one, '0,33R')}
-          ${cell('②', 'Hàng về T+2', 'Hoặc retest pivot khối lượng thấp — giá vẫn trên pivot, không có phiên phân phối.', one * 2, '0,67R')}
-          ${cell('③', 'Nền tiếp theo', 'Thoát nền kế tiếp, hoặc phần trước đã lãi ≥ 1R. Chỉ thêm khi ĐANG LÃI.', maxPos, '1,00R')}
-        </div>
-        <div class="tj-sub3" style="line-height:var(--lh-loose);margin-top:var(--sp-3)">
-          Mua thêm ở giá cao hơn mà <b>giữ nguyên giá cắt lỗ</b> thì tổng lỗ vượt 1R — sau nhịp ② hãy kéo stop nhịp ① lên hoà vốn. Không đủ điều kiện nhịp ② thì <b>dừng ở 1/3 là kết quả đúng</b>, không phải làm dở.
-        </div>
-      </div>`;
-  }
-
-  // ══ HỘP GẤP LẠI ĐƯỢC ══
-  // Hai hộp này là tài liệu tham chiếu: đọc kỹ một lần, sau đó chỉ mở khi cần tra lại.
-  // Để mở sẵn thì chúng đẩy nhật ký lệnh xuống dưới màn hình mỗi lần vào app.
-  // Dùng <details> gốc của trình duyệt thay vì tự viết: nó có sẵn phím tắt, đọc màn
-  // hình hiểu được, và không cần state trong React. Chỉ cần nhớ trạng thái đóng/mở
-  // vào localStorage, vì mỗi lần vẽ lại là innerHTML bị ghi đè.
-  _foldBox(key, boxStyle, title, summaryHtml, bodyHtml) {
-    const open = localStorage.getItem('tj_fold_' + key) === '1';
-    const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-    return `<details class="tjfold" ${open ? 'open' : ''} ontoggle="window._tj.saveFold('${key}',this.open)"
-        style="${boxStyle};border-radius:var(--r-lg);padding:var(--sp-3);font-size:var(--fs-body);color:var(--text2);line-height:var(--lh-loose)"
-        title="${esc(title)}">
-      <summary style="cursor:pointer;outline:none;user-select:none">${summaryHtml}</summary>
-      <div style="margin-top:var(--sp-2)">${bodyHtml}</div>
-    </details>`;
-  }
   saveFold = (k, v) => { try { localStorage.setItem('tj_fold_' + k, v ? '1' : '0'); } catch (e) {} }
-
-  // ══ THOÁT KHI NÀO ══
-  // Năm cửa thoát, xếp theo thứ tự thực tế gặp phải chứ không theo thứ tự trong sách.
-  // Ba cửa đầu là BẮT BUỘC bán; hai cửa sau là chủ động. Con số trong đây bám thẳng
-  // vào ô cắt lỗ đang đặt, để không phải nhẩm lại mỗi lần.
-  _renderExitBox() {
-    const el = document.getElementById('tjExitBox'); if (!el) return;
-    const sl = this.state.slPct;
-    if (!(sl > 0)) { el.innerHTML = ''; return; }
-    const row = (n, col, head, body) => `<div style="display:flex;gap:7px;padding:4px 0;line-height:1.65">
-      <span style="color:${col};font-weight:700;flex-shrink:0">${n}</span>
-      <span><b style="color:${col}">${head}</b> ${body}</span></div>`;
-    el.innerHTML = this._foldBox('exit', 'background:var(--card);border:1px solid var(--border)',
-      'Năm cửa thoát, ba cửa đầu là bắt buộc bán. Con số bám theo ô cắt lỗ đang đặt.',
-      `<b><span class="ti ti-door"></span> Thoát khi nào</b> <span style="color:var(--text3)">· 1R = ${this._fmt(sl, 1)}% giá · 2R = +${this._fmt(sl * 2, 1)}%</span>`,
-      `<div style="font-size:11.5px;color:var(--text3);line-height:1.65;margin-bottom:6px">
-        <b>Ô "cắt lỗ ${this._fmt(sl, 1)}%" ở trên là khoảng cách từ GIÁ VÀO tới GIÁ CẮT LỖ</b>, không phải % tài sản. Vào 100.000₫ thì cắt ở <b>${this._fmt(100000 * (1 - sl / 100), 0)}₫</b>. Mất bấy nhiêu tiền = đúng ô rủi ro %NAV bên trái.
-      </div>
-      ${row('①', 'var(--red)', 'Chạm cắt lỗ —', `giá <b>ĐÓNG CỬA</b> dưới −${this._fmt(sl, 1)}% so với giá vào → bán, không đàm phán. Cắt theo giá đóng cửa vì biên độ ±7% + sổ lệnh mỏng làm giá quét stop trong phiên rồi hồi là chuyện thường.`)}
-      ${row('②', 'var(--red)', 'Breakout hỏng —', `đóng cửa tụt lại <b>dưới pivot</b> trong 1-3 phiên → bán ngay, <b>không chờ đủ −${this._fmt(sl, 1)}%</b>. Đây là loại lệnh sai rẻ nhất, đừng để nó đắt lên.`)}
-      ${row('③', 'var(--red)', 'Gãy cấu trúc —', `đóng cửa thủng <b>đáy nền</b>, hoặc thủng <b>MA20/MA50</b> kèm khối lượng lớn, hoặc 3 đáy thấp dần → bán dù chưa tới −${this._fmt(sl, 1)}%. Tín hiệu cấu trúc <b>ưu tiên hơn</b> ngưỡng %.`)}
-      ${row('④', 'var(--amber)', 'Dời stop —', `lãi ≥ <b>2R (+${this._fmt(sl * 2, 1)}% giá)</b> → kéo stop lên hoà vốn. <b>Không bao giờ để lệnh đã lãi 15-20% quay lại thành lỗ.</b>`)}
-      ${row('⑤', 'var(--green)', 'Chốt lời —', `bán vào lúc cổ phiếu đang MẠNH, không chờ nó yếu. Dấu hiệu đỉnh cao trào: 6-10 phiên tăng liên tiếp · khoảng trống kiệt sức · phiên khối lượng lớn nhất mà giá không tiến. Hoặc: EPS giảm tốc 2 quý liên tiếp · tin tốt tràn ngập mà giá không tăng nữa.`)}
-      <div style="font-size:11.5px;color:var(--text3);line-height:1.65;margin-top:6px;border-top:1px dashed var(--border);padding-top:6px">
-        <b>Không có mục tiêu giá cứng.</b> Tỉ lệ 2:1 là chuẩn của <b>cả chuỗi lệnh</b> (lãi TB ≥ 2× lỗ TB), không phải của từng lệnh — không cần ôm tới +${this._fmt(sl * 2, 1)}% mới được chốt. Backtest VCP của dự án: thắng 38,6%, lãi TB +25,9% / lỗ TB −6,9% = 3,75:1 — vài lệnh chạy xa kéo trung bình lên, phần lớn đóng sớm hơn.<br>
-        <b>Stop tự động — dùng được, nhưng biết ba giới hạn.</b> VPS SmartOne có lệnh điều kiện (Stop Order · Stoploss/Take profit · Trailing Stop). Nhưng: ① chỉ đặt được cho <b>cổ phiếu đã về tài khoản</b> — 2,5 phiên đầu sau khi mua vẫn là stop tinh thần, không có cách nào khác; ② lệnh nằm ở <b>hệ thống CTCK, không phải ở sở</b> — chạm ngưỡng nó mới đẩy một lệnh thường vào sàn, nên <b>kích hoạt không có nghĩa là khớp</b>: mã nằm sàn trắng bên mua thì lệnh bán treo nguyên; ③ nó kích hoạt <b>trong phiên</b>, ngược với quy tắc ① cắt theo giá đóng cửa — đặt đúng −${this._fmt(sl, 1)}% thì một cú quét trong phiên là bị bán oan.<br>
-        <b>Cách dùng:</b> đặt lệnh điều kiện <b>thấp hơn</b> mức cắt tinh thần một chút, coi nó là lưới an toàn cho những phiên không ngồi trước bảng. Quyết định cắt chính vẫn ra ở <b>ATC</b> theo giá đóng cửa.
-      </div>`);
-  }
 
   _advStripHTML(s, tr) {
     const sgn = v => v >= 0 ? '+' : '';
@@ -4859,6 +4749,7 @@ class Component extends DCLogic {
       { t:tr.colTotR, r:1, mono:true, get: x => sgn(x.totR,this._fmt(x.totR,1)+'R'), col: x => x.totR>=0?'var(--green)':'var(--red)' },
       { t:tr.colNet+' '+this._ccySym(), r:1, mono:true, get: x => sgn(x.totNet,this._m(x.totNet)), col: x => x.totNet>=0?'var(--green)':'var(--red)' },
     ];
+    const faRows = this._faStats(), taRows = this._taStats();
     const faCol = { t:'HẠNG CƠ BẢN', get: x => {
       const c = x.gk === 'kill' ? 'var(--red)' : (x.gk === 'A' || x.gk === 'B') ? 'var(--green)'
         : x.gk === 'part' ? 'var(--amber)' : 'var(--text2)';
@@ -4868,11 +4759,11 @@ class Component extends DCLogic {
       this._statsTableHtml(this._setupStats(), tr.setupTitle, '<span class="ti ti-h ti-bars"></span>', [
         { t:tr.colSetup, get: x => x.name==='NOT IN PLAN'?'<span style="color:var(--red);font-weight:700">NOT IN PLAN</span>':x.name },
         ...numCols])
-      + this._statsTableHtml(this._faStats(),
-          'Hạng cơ bản lúc vào lệnh — tiêu chí nào thật sự đẻ ra tiền trên HOSE', '<span class="ti ti-h ti-flask"></span>', [faCol, ...numCols])
-      + this._statsTableHtml(this._taStats(),
-          'Số cửa kỹ thuật đã qua lúc vào lệnh — 4 cửa xác nhận có đáng công không', '<span class="ti ti-h ti-trend-up"></span>',
-          [{ ...faCol, t: 'HẠNG KỸ THUẬT' }, ...numCols])
+      + (faRows.length ? this._statsTableHtml(faRows,
+          'Hạng cơ bản lúc vào lệnh — chỉ tính lệnh cổ phiếu VN', '<span class="ti ti-h ti-flask"></span>', [faCol, ...numCols]) : '')
+      + (taRows.length ? this._statsTableHtml(taRows,
+          'Số cửa kỹ thuật đã qua lúc vào lệnh — chỉ tính lệnh cổ phiếu VN', '<span class="ti ti-h ti-trend-up"></span>',
+          [{ ...faCol, t: 'HẠNG KỸ THUẬT' }, ...numCols]) : '')
       + this._faReasonHtml();
   }
 
@@ -5427,6 +5318,10 @@ class Component extends DCLogic {
       background: s.rightTab===name?'var(--accent-soft)':'transparent',
       color: s.rightTab===name?'var(--accent)':'var(--text3)',
     });
+    // Tab Cơ bản và Kỹ thuật là hai bảng chấm cổ phiếu Việt Nam. Watchlist không còn
+    // mã VN nào thì chúng không có gì để chấm — ẩn hẳn thay vì để hai tab mở ra trang
+    // trắng. Thêm lại một mã VN là hai tab tự hiện lại cùng toàn bộ dữ liệu đã chấm.
+    const vnOn = this._hasVN();
     // Chỉ còn màu: font/cỡ/line-height của 5 chỉ số header do class .tj-num-lg quyết định
     const monoSt = col => ({ color: col });
     return {
@@ -5517,7 +5412,9 @@ class Component extends DCLogic {
       tabTaStyle: { display: s.rightTab==='tech'?'block':'none' },
       tabOverviewStyle: tabSt('overview'), tabSetupsStyle: tabSt('setups'), tabSystemStyle: tabSt('system'),
       tabEmotionsStyle: tabSt('emotions'), tabCalendarStyle: tabSt('calendar'), tabHeatmapStyle: tabSt('heatmap'),
-      tabWatchBtnStyle: tabSt('watchlist'), tabFundBtnStyle: tabSt('fund'), tabTechBtnStyle: tabSt('tech'),
+      tabWatchBtnStyle: tabSt('watchlist'),
+      tabFundBtnStyle: { ...tabSt('fund'), display: vnOn ? 'inline-flex' : 'none' },
+      tabTechBtnStyle: { ...tabSt('tech'), display: vnOn ? 'inline-flex' : 'none' },
       // Handlers
       toggleForm: () => this.setState(s=>{ const v=!s.formOpen; this.saveFold('form',v); return {formOpen:v}; }),
       toggleActions: () => this.setState(s=>({actionsOpen:!s.actionsOpen})),

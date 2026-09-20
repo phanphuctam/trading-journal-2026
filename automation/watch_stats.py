@@ -29,6 +29,7 @@ Cach dung:
     python watch_stats.py               # cap nhat cache roi tinh
     python watch_stats.py --offline     # chi dung cache co san
 """
+import re
 import argparse
 import json
 import time
@@ -50,6 +51,12 @@ CEIL_DEFAULT = 6.8
 CEIL_BASE_N = 60       # dem phien tran trong bao nhieu phien gan nhat
 CEIL_MANIP = 4         # >= bao nhieu phien tran trong nen thi nghi "doi lai"
 MAX_POS_PCT = 2.0      # tran vi the = % GTGD TB20
+
+
+# Watchlist nay dung chung cho ca co phieu VN lan forex/vang/BTC. Ma HOSE/HNX/
+# UPCOM luon dung 3 chu cai; EURUSD, XAUUSD, BTCUSD thi vnstock khong tra duoc
+# gi ca — bo qua tu day cho khoi ton request va khoi in mot dong loi moi lan chay.
+VN_SYM = re.compile(r"^[A-Z]{3}$")
 
 
 def refresh(symbols, days=120, sleep=None):
@@ -127,7 +134,8 @@ def main():
     args = ap.parse_args()
 
     wl = load_json(WATCHLIST, [])
-    syms = sorted({str(w.get("symbol", "")).upper() for w in wl if w.get("symbol")})
+    syms = sorted({str(w.get("symbol", "")).upper() for w in wl
+                   if VN_SYM.match(str(w.get("symbol", "")).upper())})
     if not syms:
         print("watchlist.json trong — khong co ma nao de tinh.")
         OUT.parent.mkdir(exist_ok=True)

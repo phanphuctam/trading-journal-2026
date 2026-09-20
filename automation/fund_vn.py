@@ -36,6 +36,7 @@ Cach dung:
     python fund_vn.py HPG MWG         # chi mot vai ma
     python fund_vn.py --sleep 4       # cham hon neu bi chan (mac dinh tu tinh theo tier)
 """
+import re
 import argparse
 import json
 import sys
@@ -120,6 +121,12 @@ RS_BANK = {"npl": ["npl"],                            # no xau / tong du no
            "car": ["car"],                            # chi co o dong RATIO_YEAR
            "casa": ["casa_ratio"],
            "ldr": ["ldr_loan_deposit_ratio"]}
+
+
+# Watchlist nay dung chung cho ca co phieu VN lan forex/vang/BTC. Ma HOSE/HNX/
+# UPCOM luon dung 3 chu cai; EURUSD, XAUUSD, BTCUSD thi vnstock khong tra duoc
+# gi ca — bo qua tu day cho khoi ton request va khoi in mot dong loi moi lan chay.
+VN_SYM = re.compile(r"^[A-Z]{3}$")
 
 
 def periods_of(df):
@@ -780,7 +787,8 @@ def main():
     syms = [s.upper() for s in args.symbols]
     if not syms:
         wl = load_json(WATCHLIST, [])
-        syms = sorted({str(w.get("symbol", "")).upper() for w in wl if w.get("symbol")})
+        syms = sorted({str(w.get("symbol", "")).upper() for w in wl
+                       if VN_SYM.match(str(w.get("symbol", "")).upper())})
     if not syms:
         print("watchlist.json trong — khong co ma nao de lay.")
         OUT.parent.mkdir(exist_ok=True)

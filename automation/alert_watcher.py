@@ -9,6 +9,7 @@ Cach dung:
     python alert_watcher.py --force         # chay ke ca khi san dong cua
     python alert_watcher.py --test          # gui tin nhan test Telegram
 """
+import re
 import argparse
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -18,6 +19,12 @@ from tv_common import BASE, load_config, load_json, save_json, send_telegram, ge
 ET = ZoneInfo("America/New_York")
 VN = ZoneInfo("Asia/Ho_Chi_Minh")
 TZ = {"us": ET, "vn": VN}
+
+
+# Watchlist nay dung chung cho ca co phieu VN lan forex/vang/BTC. Ma HOSE/HNX/
+# UPCOM luon dung 3 chu cai; EURUSD, XAUUSD, BTCUSD thi vnstock khong tra duoc
+# gi ca — bo qua tu day cho khoi ton request va khoi in mot dong loi moi lan chay.
+VN_SYM = re.compile(r"^[A-Z]{3}$")
 
 
 def market_is_open(market="vn", now=None) -> bool:
@@ -63,6 +70,10 @@ def main():
     today = datetime.now(TZ.get(args.market, VN)).strftime("%Y-%m-%d")
     approach_pct = float(cfg.get("approach_pct", 1.5))
 
+    watchlist = [w for w in watchlist if VN_SYM.match(str(w.get("symbol", "")).upper())]
+    if not watchlist:
+        print("watchlist.json khong co ma co phieu VN nao — khong co gi de theo doi.")
+        return
     symbols = sorted({w["symbol"].upper() for w in watchlist})
     quotes = get_quotes(symbols, market="america" if args.market == "us" else "vietnam")
 

@@ -64,6 +64,12 @@ INSIDER_BACK = 180      # nhin lai bao nhieu ngay cho giao dich noi bo
 DILUTE_BACK = 365       # nhin lai bao nhieu ngay cho su kien pha loang
 
 
+# Watchlist nay dung chung cho ca co phieu VN lan forex/vang/BTC. Ma HOSE/HNX/
+# UPCOM luon dung 3 chu cai; EURUSD, XAUUSD, BTCUSD thi vnstock khong tra duoc
+# gi ca — bo qua tu day cho khoi ton request va khoi in mot dong loi moi lan chay.
+VN_SYM = re.compile(r"^[A-Z]{3}$")
+
+
 def nod(s):
     """Bo dau tieng Viet + ha chu thuong. Doi chieu tu khoa thi khong duoc phu
     thuoc vao viec nguon ghi co dau hay khong, hoa hay thuong."""
@@ -398,7 +404,8 @@ def main():
     syms = [s.upper() for s in args.symbols]
     if not syms:
         wl = load_json(WATCHLIST, [])
-        syms = sorted({str(w.get("symbol", "")).upper() for w in wl if w.get("symbol")})
+        syms = sorted({str(w.get("symbol", "")).upper() for w in wl
+                       if VN_SYM.match(str(w.get("symbol", "")).upper())})
     OUT.parent.mkdir(exist_ok=True)
     if not syms:
         print("watchlist.json trong — khong co ma nao de lay.")
