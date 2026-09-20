@@ -1356,7 +1356,7 @@ const TJ_TR = {
     fDis:'Kỷ luật (1–5)',fMae:'MAE (R)',fMfe:'MFE (R)',
     disOpts:['5 · Tuân thủ 100% plan','4 · Lỗi nhỏ','3 · Vi phạm vừa','2 · Vi phạm nặng','1 · Phá luật hoàn toàn'],
     mEdge:'Edge Ratio',mEdgeSub:'(mục tiêu > 1.0)',mComp:'Tuân thủ',mCompSub:'(mục tiêu > 90%)',
-    sysQualityTitle:'Chất lượng hệ thống',sysQualitySub:'Thước đo Minervini · phí đã tính trong Net P/L',
+    sysQualityTitle:'Chất lượng hệ thống',sysQualitySub:'Phí đã tính trong Net P/L',
     sysEdge:'Edge Ratio — Kỳ vọng hiệu chỉnh',sysEdgeSub:'(WR × TB thắng) ÷ (LR × TB thua)',
     sysPayoff:'Payoff — TB thắng / TB thua',
     sysLGLL:'Lãi lớn nhất / Lỗ lớn nhất',
@@ -1368,12 +1368,6 @@ const TJ_TR = {
     sysBellTitle:'Bell Curve — Phân phối R-Multiple',sysBellSub:'Lỗ phải cắt ngắn (trái) · lãi phải kéo dài (phải)',
     sysBellWarn:'{n} lệnh lỗ sâu hơn -1.5R — vi phạm nguyên tắc cắt lỗ',
     sysBellOk:'✓ Không có lệnh nào lỗ sâu hơn -1.5R — cắt lỗ đúng kỷ luật',
-    sysExpoTitle:'Progressive Exposure',sysExpoSub:'Quy mô vị thế theo phong độ 10 lệnh đóng gần nhất',
-    expoUp:'TĂNG PHƠI NHIỄM',expoUpSub:'20–25% tài sản/vị thế · hệ thống đang đồng bộ với thị trường',
-    expoStd:'QUY MÔ CHUẨN',expoStdSub:'10–15% tài sản/vị thế · duy trì kỷ luật hiện tại',
-    expoPilot:'VỊ THẾ MỒI',expoPilotSub:'5–10% tài sản/vị thế · thử nghiệm nhỏ, có lãi thật mới tăng quy mô',
-    expoCash:'ĐỨNG NGOÀI',expoCashSub:'Ưu tiên tiền mặt · chờ chuỗi lệnh mồi có lãi trở lại',
-    expoWr:'WR 10 lệnh gần nhất',expoSumR:'Tổng R 10 lệnh',expoPos:'≈ ${a} – ${b} / vị thế',
     sysMaeTitle:'MAE / MFE — Chất lượng SL & điểm thoát',
     sysMaeWin:'MAE TB lệnh thắng',sysMaeWinSub:'Lệnh thắng từng âm sâu TB bấy nhiêu R → căn chỉnh độ rộng SL',
     sysMfeLoss:'MFE TB lệnh thua',sysMfeLossSub:'Lệnh thua từng lãi TB bấy nhiêu R → cân nhắc dời SL hòa vốn sớm hơn',
@@ -1453,7 +1447,7 @@ const TJ_TR = {
     fDis:'Discipline (1–5)',fMae:'MAE (R)',fMfe:'MFE (R)',
     disOpts:['5 · Followed plan 100%','4 · Minor slip','3 · Moderate violation','2 · Major violation','1 · Broke all rules'],
     mEdge:'Edge Ratio',mEdgeSub:'(target > 1.0)',mComp:'Compliance',mCompSub:'(target > 90%)',
-    sysQualityTitle:'System Quality',sysQualitySub:'Minervini metrics · fees included in Net P/L',
+    sysQualityTitle:'System Quality',sysQualitySub:'Fees included in Net P/L',
     sysEdge:'Edge Ratio — Adjusted Expectancy',sysEdgeSub:'(WR × AvgWin) ÷ (LR × AvgLoss)',
     sysPayoff:'Payoff — AvgWin / AvgLoss',
     sysLGLL:'Largest Gain / Largest Loss',
@@ -1465,12 +1459,6 @@ const TJ_TR = {
     sysBellTitle:'Bell Curve — R-Multiple Distribution',sysBellSub:'Losses cut short (left) · winners run long (right)',
     sysBellWarn:'{n} trades lost deeper than -1.5R — stop-loss rule violated',
     sysBellOk:'✓ No trade lost deeper than -1.5R — stops honored',
-    sysExpoTitle:'Progressive Exposure',sysExpoSub:'Position sizing from the last 10 closed trades',
-    expoUp:'SCALE UP',expoUpSub:'20–25% of assets/position · system in sync with the market',
-    expoStd:'STANDARD SIZE',expoStdSub:'10–15% of assets/position · keep current discipline',
-    expoPilot:'PILOT SIZE',expoPilotSub:'5–10% of assets/position · small tests, scale up only after real gains',
-    expoCash:'STAY OUT',expoCashSub:'Cash first · wait until pilot trades work again',
-    expoWr:'WR last 10',expoSumR:'Σ R last 10',expoPos:'≈ ${a} – ${b} / position',
     sysMaeTitle:'MAE / MFE — Stop & Exit Quality',
     sysMaeWin:'Avg MAE of winners',sysMaeWinSub:'How deep winners went red (R) → tune stop width',
     sysMfeLoss:'Avg MFE of losers',sysMfeLossSub:'How far losers were green (R) → move stop to break-even sooner',
@@ -1704,15 +1692,11 @@ class Component extends DCLogic {
     const avgMaeW = maeWN ? maeWSum / maeWN : null;
     const avgMfeL = mfeLN ? mfeLSum / mfeLN : null;
     const exitEff = effN ? effSum / effN * 100 : null;
-    const last10 = a.slice(-10);
-    const win10 = last10.filter(t => t._all > 0).length;
-    const wr10 = last10.length ? win10 / last10.length * 100 : 0;
-    const sumR10 = last10.reduce((x, t) => x + (+t.r || 0), 0);
     return { a, eq, capNow, win, loss, gW, gL, totNet, totR, peak, maxDD, n, wr, pf,
       avgR, avgWin, avgLoss, expectancy, maxWStreak, maxLStreak, curStreak,
       LG, LL, holdW, holdL, holdRatio, edge, payoff, lgll, curDD, recov,
       compRate, avgDis, disN, disOK, avgMaeW, avgMfeL, exitEff, maeWN, mfeLN, effN,
-      last10N: last10.length, wr10, sumR10, deepLoss };
+      deepLoss };
   }
 
   _setupStats() {
@@ -4524,31 +4508,6 @@ class Component extends DCLogic {
       : `<div style="margin-top:9px;border-radius:8px;padding:7px 10px;font-size:10.5px;background:var(--green-soft);color:var(--green);font-weight:600">${tr.sysBellOk}</div>`;
     const bell = `<div style="display:flex;align-items:flex-end;gap:2px;padding-top:6px;min-height:118px">${bars}</div>${bellNote}`;
 
-    let tier, tierSub, tierG;
-    if (s.last10N < 5) { tier = tr.expoPilot; tierSub = tr.expoPilotSub; tierG = 'a'; }
-    else if (s.wr10 >= 60 && s.sumR10 > 0) { tier = tr.expoUp; tierSub = tr.expoUpSub; tierG = 'g'; }
-    else if (s.wr10 >= 40 && s.sumR10 >= 0) { tier = tr.expoStd; tierSub = tr.expoStdSub; tierG = 'g'; }
-    else if (s.wr10 >= 25 || s.sumR10 > -3) { tier = tr.expoPilot; tierSub = tr.expoPilotSub; tierG = 'a'; }
-    else { tier = tr.expoCash; tierSub = tr.expoCashSub; tierG = 'r'; }
-    const range = tier === tr.expoUp ? [0.20, 0.25] : tier === tr.expoStd ? [0.10, 0.15] : tier === tr.expoPilot ? [0.05, 0.10] : [0, 0];
-    const posTxt = range[1] > 0 ? tr.expoPos.replace('{a}', this._fmt(s.eq * range[0], 0)).replace('{b}', this._fmt(s.eq * range[1], 0)) : '';
-    const expo = `
-      <div style="border-radius:10px;padding:12px 14px;background:${gsoft(tierG)};margin-top:4px">
-        <div style="font-size:15px;font-weight:800;letter-spacing:.02em;color:${gcol(tierG)}">${tier}</div>
-        <div style="font-size:10.5px;color:var(--text2);margin-top:3px;line-height:1.5">${tierSub}</div>
-        ${posTxt ? `<div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${gcol(tierG)};margin-top:5px">${posTxt}</div>` : ''}
-      </div>
-      <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-2)">
-        <div class="tj-cell" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3)">
-          <div class="tj-lb">${tr.expoWr}</div>
-          <div class="tj-num tj-num-md" style="color:${s.wr10 >= 50 ? 'var(--green)' : 'var(--red)'}">${this._fmt(s.wr10, 0)}%</div>
-        </div>
-        <div class="tj-cell" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-2) var(--sp-3)">
-          <div class="tj-lb">${tr.expoSumR}</div>
-          <div class="tj-num tj-num-md" style="color:${s.sumR10 >= 0 ? 'var(--green)' : 'var(--red)'}">${s.sumR10 >= 0 ? '+' : ''}${this._fmt(s.sumR10, 1)}R</div>
-        </div>
-      </div>`;
-
     let maefe;
     if (s.avgMaeW == null && s.avgMfeL == null && s.exitEff == null) {
       maefe = `<div style="font-size:11px;color:var(--text3);padding:8px 0;line-height:1.6">${tr.sysNoMae}</div>`;
@@ -4562,7 +4521,6 @@ class Component extends DCLogic {
     el.innerHTML =
       card('<span class="ti ti-h ti-sliders"></span>' + tr.sysQualityTitle, tr.sysQualitySub, quality) +
       card('<span class="ti ti-h ti-bars"></span>' + tr.sysBellTitle, tr.sysBellSub, bell) +
-      card('<span class="ti ti-h ti-gauge"></span>' + tr.sysExpoTitle, tr.sysExpoSub, expo) +
       card('<span class="ti ti-h ti-target"></span>' + tr.sysMaeTitle, '', maefe);
   }
 
