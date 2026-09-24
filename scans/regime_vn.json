@@ -1,13 +1,13 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-09-24 10:13",
+  "checked_at": "2026-09-24 10:47",
   "regime": {
     "index": "VNINDEX",
     "date": "2026-09-24",
-    "close": 1787.6,
-    "ma50": 1774.45,
-    "ma200": 1794.86,
+    "close": 1783.67,
+    "ma50": 1774.37,
+    "ma200": 1794.84,
     "above_ma50": true,
     "ma50_above_ma200": false,
     "state": "OFF",
