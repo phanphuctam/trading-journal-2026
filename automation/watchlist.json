@@ -1,5 +1,12 @@
 [
   {
+    "symbol": "PET",
+    "pivot": 47000,
+    "stop": 44180,
+    "note": "",
+    "cc": "VND"
+  },
+  {
     "symbol": "DHC",
     "pivot": 39000,
     "stop": 36660,
