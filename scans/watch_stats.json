@@ -1,7 +1,7 @@
 {
   "app": "trading-journal",
   "market": "VN",
-  "checked_at": "2026-09-24 10:47",
+  "checked_at": "2026-09-24 10:50",
   "max_pos_pct": 2.0,
   "ceil_manip": 4,
   "ceil_base_n": 60,
@@ -10,12 +10,25 @@
       "symbol": "DHC",
       "exchange": "HOSE",
       "bar_date": "2026-09-24",
-      "close": 38800,
+      "close": 38900,
       "adtv": 15.1,
-      "vol20": 411210,
-      "max_pos": 301225665,
+      "vol20": 411365,
+      "max_pos": 301370225,
       "ceil": false,
       "ceil_base": 1,
+      "manip": false,
+      "age": null
+    },
+    "PET": {
+      "symbol": "PET",
+      "exchange": "HOSE",
+      "bar_date": "2026-09-24",
+      "close": 45550,
+      "adtv": 21.2,
+      "vol20": 521180,
+      "max_pos": 424427765,
+      "ceil": false,
+      "ceil_base": 2,
       "manip": false,
       "age": null
     }
