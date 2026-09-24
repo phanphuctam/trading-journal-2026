@@ -1,16 +1,9 @@
 [
   {
-    "symbol": "GMD",
-    "pivot": 82200,
-    "stop": 74000,
+    "symbol": "DHC",
+    "pivot": 39000,
+    "stop": 36660,
     "note": "",
-    "cc": "VND"
-  },
-  {
-    "symbol": "PET",
-    "pivot": 41000,
-    "stop": 36900,
-    "note": "CB 1/16 đạt · hỏng: Lợi nhuận quý, Lợi nhuận năm, Chất lượng lợi nhuận",
     "cc": "VND"
   }
 ]
