@@ -2327,13 +2327,7 @@ class Component extends DCLogic {
 
   delWatch = (i) => {
     const watchlist = this.state.watchlist.filter((_, x) => x !== i);
-    // Xoá nốt mã VN cuối cùng thì hai tab chấm cổ phiếu biến mất khỏi thanh tab —
-    // nếu đang đứng trong một trong hai tab đó thì phải đưa người dùng về tab Watch,
-    // không để lại một khung trống không có nút nào quay lại.
-    const back = this.state.rightTab === 'fund' || this.state.rightTab === 'tech';
-    const stillVN = watchlist.some(w => this._mkt(w.symbol) === 'VN');
-    this.setState({ watchlist, ...(back && !stillVN ? { rightTab: 'watchlist' } : {}) },
-      () => { this._persistWl(); this._renderWatchlist(); });
+    this.setState({ watchlist }, () => { this._persistWl(); this._renderWatchlist(); });
   }
 
   exportWatchlist = () => {
@@ -2596,9 +2590,9 @@ class Component extends DCLogic {
     return (/^[A-Z]{3}$/.test(s) && !this._NOT_VN.has(s)) ? 'VN' : 'FX';
   }
 
-  // Có mã Việt Nam nào trong watchlist không — quyết định việc hiện tab Cơ bản,
-  // tab Kỹ thuật và hộp công tắc VN-Index. Không còn mã VN nào thì ba thứ đó chỉ
-  // là chữ thừa.
+  // Có mã Việt Nam nào trong watchlist không — nay chỉ còn quyết định hộp công tắc
+  // VN-Index ở tab Watch. Không theo dõi mã VN nào thì chỉ số VN-Index không nói lên
+  // điều gì về danh mục. (Tab Cơ bản / Kỹ thuật thì LUÔN hiện, xem renderVals.)
   _hasVN() { return (this.state.watchlist || []).some(w => this._mkt(w.symbol) === 'VN'); }
 
   // Mã gửi sang TradingView: cổ phiếu VN cần tiền tố sàn, còn EURUSD/XAUUSD/BTCUSD
@@ -5276,10 +5270,6 @@ class Component extends DCLogic {
       background: s.rightTab===name?'var(--accent-soft)':'transparent',
       color: s.rightTab===name?'var(--accent)':'var(--text3)',
     });
-    // Tab Cơ bản và Kỹ thuật là hai bảng chấm cổ phiếu Việt Nam. Watchlist không còn
-    // mã VN nào thì chúng không có gì để chấm — ẩn hẳn thay vì để hai tab mở ra trang
-    // trắng. Thêm lại một mã VN là hai tab tự hiện lại cùng toàn bộ dữ liệu đã chấm.
-    const vnOn = this._hasVN();
     // Chỉ còn màu: font/cỡ/line-height của 5 chỉ số header do class .tj-num-lg quyết định
     const monoSt = col => ({ color: col });
     return {
@@ -5370,9 +5360,11 @@ class Component extends DCLogic {
       tabTaStyle: { display: s.rightTab==='tech'?'block':'none' },
       tabOverviewStyle: tabSt('overview'), tabSetupsStyle: tabSt('setups'), tabSystemStyle: tabSt('system'),
       tabEmotionsStyle: tabSt('emotions'), tabCalendarStyle: tabSt('calendar'), tabHeatmapStyle: tabSt('heatmap'),
-      tabWatchBtnStyle: tabSt('watchlist'),
-      tabFundBtnStyle: { ...tabSt('fund'), display: vnOn ? 'inline-flex' : 'none' },
-      tabTechBtnStyle: { ...tabSt('tech'), display: vnOn ? 'inline-flex' : 'none' },
+      // Hai tab chấm cổ phiếu VN LUÔN hiện. Trước đây chúng ẩn khi watchlist không còn
+      // mã VN — nhưng bảng Cơ bản có ô nhập mã riêng, gõ mã nào cũng đọc được, và thứ
+      // tự đúng là đánh giá TRƯỚC rồi thấy đạt mới cho vào watchlist. Gắn điều kiện
+      // hiển thị vào watchlist là làm ngược quy trình.
+      tabWatchBtnStyle: tabSt('watchlist'), tabFundBtnStyle: tabSt('fund'), tabTechBtnStyle: tabSt('tech'),
       // Handlers
       toggleForm: () => this.setState(s=>{ const v=!s.formOpen; this.saveFold('form',v); return {formOpen:v}; }),
       toggleActions: () => this.setState(s=>({actionsOpen:!s.actionsOpen})),
