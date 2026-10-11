@@ -17,10 +17,12 @@ name: Trading bot
 #   · fetch_fx.py       — ty gia, 1 request. Ngay 1 lan la du, khong can 13 lan.
 
 on:
-  schedule:
-    - cron: '*/30 2-8 * * 1-5'   # phien HOSE (09:00-15:00 VN) — CHI canh bao Telegram
-    - cron: '0 8 * * 1-5'        # 15:00 VN, sau ATC — ngay phan phoi/FTD + ty gia
-    - cron: '0 2 * * 6'          # 09:00 sang thu Bay VN — so lieu watchlist + co ban
+  # TAM NGUNG TOAN BO LICH (2026-10-11): chua can toi journal. Mo lai = bo dau # o 4 dong
+  # duoi. Cac buoc ben duoi van so khop dung chuoi cron nay nen khong can sua gi them.
+  # schedule:
+  #   - cron: '*/30 2-8 * * 1-5'   # phien HOSE (09:00-15:00 VN) — CHI canh bao Telegram
+  #   - cron: '0 8 * * 1-5'        # 15:00 VN, sau ATC — ngay phan phoi/FTD + ty gia
+  #   - cron: '0 2 * * 6'          # 09:00 sang thu Bay VN — so lieu watchlist + co ban
 
   # Bam tay tu journal (nut "Chay bot" / "Cham bang may"). Can vi cron cua GitHub ban
   # mien phi bi tri hoan 1-1,5 tieng va bo bot lan chay — do 12/08/2026: lich 13 lan/ngay
